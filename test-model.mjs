@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {normalizeLab,calculatePhenoAge,validateLabs,sampleLabs,eligibility,assessClinical,validateQuestionnaire,sleepReference,insights,alcoholGrams,sections} from './public/model.mjs';
+const raw=sampleLabs(),x=normalizeLab(raw),age=45;
+const xb=-19.907-.0336*x.albumin+.0095*x.creatinine+.1953*x.glucose+.0954*Math.log(x.crp)-.012*x.lymphocytes+.0268*x.mcv+.3306*x.rdw+.00188*x.alp+.0554*x.wbc+.0804*age;
+const m=1-Math.exp(-Math.exp(xb)*Math.expm1(120*.0076927)/.0076927);
+const reference=141.50225+Math.log(-.0055305*Math.log(1-m))/.090165;
+const value=calculatePhenoAge(age,x);assert.ok(Math.abs(value-reference)<1e-9);
+const alt=structuredClone(raw);alt.albumin={value:'4.2',unit:'g/dL'};alt.creatinine={value:String(90/88.4),unit:'mg/dL'};alt.glucose={value:String(6.2*18.0182),unit:'mg/dL'};alt.crp={value:'.3',unit:'mg/dL'};alt.wbc={value:'7600',unit:'cells/µL'};
+assert.ok(Math.abs(calculatePhenoAge(age,normalizeLab(alt))-value)<1e-9);
+assert.equal(Object.keys(validateLabs({})).length,9);assert.ok(validateLabs({...raw,crp:{value:'0',unit:'mg/L'}}).crp);assert.ok(validateLabs({...raw,lymphocytes:{value:'101',unit:'%'}}).lymphocytes);assert.ok(validateLabs({...raw,rdw:{value:'40',unit:'fL'}}).rdw);
+assert.ok(eligibility({},18));assert.equal(eligibility({illness:'Yes'},45),null);assert.equal(eligibility({illness:'No'},45),null);
+assert.equal(insights({})[0].key,'context');assert.equal(insights({moderate:'0',vigorous:'0',limitations:'Often'})[0].tag,'Adapt activity to your health');assert.equal(insights({smoking:'Smoke now'})[0].key,'tobacco');assert.equal(alcoholGrams([]),null);assert.ok(Math.abs(alcoholGrams([{count:1,ml:150,abv:12}])-14.202)<1e-6);
+assert.equal(sections.reduce((n,s)=>n+s.questions.length,0),26);
+console.log(JSON.stringify({clinicalAge:value,formulaAndConversions:'passed',missingAndInvalidInputs:'passed',eligibilityAndUnknowns:'passed',questionCount:26}));
+
+assert.equal(eligibility({},84),null);assert.ok(eligibility({},85));
+assert.ok(assessClinical({age:45,lab:raw,contextConfirmed:true,fasting:'Not sure'}).reason);
+assert.ok(assessClinical({age:45,lab:raw,contextConfirmed:false,fasting:'Yes'}).reason);
+assert.equal(assessClinical({age:45,lab:raw,contextConfirmed:true,fasting:'Yes'}).value,value);
+assert.equal(sleepReference(68),'7–8 hours a day');assert.equal(sleepReference(45),'at least 7 hours a day');
+assert.ok(insights({diet:'3–4'}).some(i=>i.key==='diet'));assert.ok(insights({strength:'1',limitations:'No'}).some(i=>i.key==='strength'));
+assert.ok(!insights({age:'70',sleep:'8.5',rested:'Usually'}).some(i=>i.key==='sleep'));
+assert.ok(validateQuestionnaire({age:'20',smoking:'Smoke now',smokingYears:'21'}).smokingYears);
+assert.ok(validateQuestionnaire({age:'45',moderate:'9000',vigorous:'9000'}).vigorous);
+assert.ok(validateQuestionnaire({age:'45',context:['None','Pregnant']}).context);
+assert.ok(!insights({}).some(i=>i.key==='movement'));
+console.log('Scientific content checks passed: fasting, age boundaries, context at collection, age-aware sleep guidance, strength/diet coverage, missing data and conflicting answers.');

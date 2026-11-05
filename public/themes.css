@@ -1,0 +1,110 @@
+/* Three active themes. Archived directions live outside the public bundle. */
+.appearance-menu {width:166px;right:0;padding:5px;max-height:calc(100dvh - 82px);overflow:auto;overscroll-behavior:contain}
+.appearance-menu button {min-height:34px;padding:8px 10px;gap:9px;font-size:11px}
+.appearance-menu button[aria-pressed=true] {background:var(--accent-soft);color:var(--ink)}
+.appearance-menu button:hover {background:var(--soft)}
+.theme-choice-symbol {display:flex;flex-shrink:0;width:15px;color:var(--muted)}
+.theme-choice-symbol svg {width:15px;height:15px}
+[aria-pressed=true] .theme-choice-symbol {color:var(--accent)}
+.appearance-menu .theme-check {font-size:11px}
+.appearance-control summary {min-height:34px;font-size:11px;color:var(--ink)}
+.current-theme-icon {width:16px;justify-content:center;color:var(--accent)}
+.current-theme-icon svg {width:15px;height:15px}
+
+:root[data-theme=blood-moon] {
+  
+  --error:#f4a69b;--amber:#dfc397;--amber-soft:#302622;--amber-line:#775c50;
+  color-scheme:dark;--cream:#100d0e;--paper:#1b1416;--soft:#25191c;--ink:#f3e9e5;--muted:#b6a6a6;
+  --line:#3a292e;--line-strong:#8b646b;--navy:#25151b;--teal:#e7a18e;--mint:#352024;
+  --accent:#e7a18e;--accent-hover:#f0bcab;--accent-soft:#352024;--on-accent:#281314;--warm:#c36962;
+  --field-bg:#171114;--header-bg:#131012;--sidebar-bg:#131012;--focus:#efb6a4;--shadow:0 12px 35px #0005;--radius:9px;--radius-sm:5px;
+}
+:root[data-theme=bionic] {
+  color-scheme:light;
+  --cream:#efeeea;--paper:#fbfaf6;--soft:#e5e3df;--ink:#222326;--muted:#68676b;--line:#d1ceca;--line-strong:#9c9994;
+  --navy:#222326;--teal:#376b97;--mint:#e3eaf0;--accent:#2f6494;--accent-hover:#244e77;--accent-soft:#dce7f1;--on-accent:#f7fbff;--warm:#4e7b9f;
+  --field-bg:#fffefa;--header-bg:#f6f5f1;--sidebar-bg:#1b1c20;--focus:#3d7aac;--shadow:0 14px 40px #28271f0b;--radius:9px;--radius-sm:5px;
+  --error:#ad3c2b;--amber:#86631b;--amber-soft:#faf3d7;--amber-line:#d4c596;
+}
+
+/* One layout, one typographic scale. Themes change materials and semantic colour. */
+:root {
+  --result-base:#111113;--result-bg:radial-gradient(ellipse at 100% 0,#2c2f35,#111113 70%);
+  --result-ink:#f2f4f8;--result-muted:#bcc1ca;--result-line:#3d424d;--result-edge:#8f99aa;--result-accent:#d9e1ee;
+}
+:root[data-theme=blood-moon] {
+  --result-base:#28161b;--result-bg:radial-gradient(ellipse at 100% 0,#532e34,#28161b 72%);
+  --result-ink:#fff1e9;--result-muted:#d1b0ad;--result-line:#775258;--result-edge:#a4776e;--result-accent:#f0b4a0;
+}
+:root[data-theme=bionic] {
+  --result-base:#1d1f23;--result-bg:radial-gradient(ellipse at 100% 0,#34373d,#1d1f23 70%);
+  --result-ink:#f2f6fb;--result-muted:#b5c2cf;--result-line:#424f5c;--result-edge:#7592b0;--result-accent:#a5cbea;
+}
+:root[data-theme=bionic] .app-sidebar {
+  --ink:#f0f4f9;--muted:#b6c0cd;--line:#454b54;--accent:#a5cbea;--accent-soft:#293b4d;--soft:#30363d;color:var(--ink);
+}
+:root[data-theme=bionic] .btn:not(.secondary):not(.ghost):not(.light) {background:linear-gradient(135deg,#ffffff22,transparent 40%),linear-gradient(180deg,#527fa7,#2f608b 65%,#294f72);border-color:#638db2;color:#f7fbff;box-shadow:inset 0 1px 0 #ffffff38,inset 0 -1px 0 #173c6266,0 4px 12px #20436713}
+:root[data-theme] .result-surface {
+  --paper:var(--result-base);--ink:var(--result-ink);--muted:var(--result-muted);--line:var(--result-line);
+  --accent:var(--result-accent);--accent-soft:color-mix(in srgb,var(--result-accent) 12%,transparent);--focus:var(--result-accent);
+  color-scheme:dark;color:var(--ink);background:var(--result-bg);border:1px solid var(--result-edge);
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--result-accent) 18%,transparent),0 12px 32px #0002;
+  position:relative;isolation:isolate;overflow:hidden;
+}
+:root[data-theme] .result-surface:before {
+  content:'';position:absolute;top:0;left:18px;right:18px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--result-accent),transparent);pointer-events:none;
+}
+:root[data-theme] .age-card .eyebrow {color:var(--result-accent)}
+.home-grid {grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr)}
+.sample-panel {display:flex;flex-direction:column;align-items:stretch}
+.sample-panel>.panel-heading {margin:0}
+.sample-panel .sample-readout {display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0 4px}
+.sample-panel .readout-label {display:block;font-size:10px;margin-bottom:7px}
+.sample-panel .sample-readout strong {font-size:54px;line-height:1.1}
+.sample-panel .sample-readout strong small {display:block;margin:4px 0 0;font-size:10px;letter-spacing:0}
+.sample-panel .sample-data-note {display:block;margin:0 0 16px;max-width:none;font-size:9px;line-height:1.6;text-align:left}
+.sample-panel .sample-baseline {display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:0 0 16px;padding-top:14px}
+.sample-panel .sample-open {margin-top:auto;padding:12px 0 0;border-top:1px solid var(--line)}
+.sample-panel .sample-label {border-color:var(--result-edge);color:var(--result-accent)}
+.result-art {position:relative;flex:0 0 120px;width:120px;height:120px;overflow:hidden;pointer-events:none}
+.result-art img {display:none;position:absolute;inset:0;width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 7px 12px #0002)}
+.result-art img[data-theme-art=black-metal] {width:180px;height:120px;left:-30px;max-width:none;mix-blend-mode:lighten;filter:saturate(.65)}
+.result-art img[data-theme-art=bionic] {width:144px;height:144px;inset:-12px}
+:root[data-theme=black-metal] [data-theme-art=black-metal],:root[data-theme=blood-moon] [data-theme-art=blood-moon],:root[data-theme=bionic] [data-theme-art=bionic] {display:block}
+
+/* Paint follows each component's contour. No isolated art, alpha filters or fades. */
+html[data-theme-transition=elements]::view-transition {pointer-events:none}
+html[data-theme-transition=elements]::view-transition-group(*) {animation:none;overflow:clip}
+html[data-theme-transition=elements]::view-transition-image-pair(*) {isolation:isolate;overflow:clip}
+html[data-theme-transition=elements]::view-transition-old(*),html[data-theme-transition=elements]::view-transition-new(*) {animation:none;mix-blend-mode:normal;opacity:1;filter:none;transform:none;object-fit:fill;pointer-events:none}
+html[data-theme-transition=elements] *,html[data-theme-transition=elements] *:before,html[data-theme-transition=elements] *:after {transition:none!important}
+
+@media(max-width:700px) {
+  .appearance-menu {position:fixed;top:64px;right:16px;width:166px;max-width:calc(100vw - 32px)}
+  .appearance-control summary {min-width:34px;min-height:36px;padding:7px}
+  .home-grid {grid-template-columns:1fr}
+  .sample-panel {display:flex;flex-direction:column;align-items:stretch;gap:0;padding:18px}
+  .sample-panel>.panel-heading,.sample-panel .sample-readout,.sample-panel .sample-baseline,.sample-panel .sample-open {grid-column:auto;grid-row:auto}
+}
+@media(max-width:500px) {
+  .sample-panel .sample-readout {margin-top:14px}
+  .sample-panel .sample-readout strong {font-size:48px;letter-spacing:-2px}
+  .sample-panel .sample-data-note {margin-bottom:12px}
+  .sample-panel .sample-baseline {gap:16px;margin-bottom:13px;padding-top:12px}
+  .result-art {flex-basis:96px;width:96px;height:96px}
+  .result-art img {width:96px;height:96px}
+  .result-art img[data-theme-art=black-metal] {width:144px;height:96px;left:-24px}
+  .result-art img[data-theme-art=bionic] {width:120px;height:120px;inset:-12px}
+}
+@media(pointer:coarse) {
+  .appearance-control summary,.appearance-menu button {min-height:44px}
+}
+@media print {
+  :root[data-theme] {color-scheme:light;--cream:#fff;--paper:#fff;--soft:#eee;--ink:#202023;--muted:#555;--line:#ccc;--accent:#222;--on-accent:#fff;--teal:#333;--mint:#eee;--field-bg:#fff}
+  :root[data-theme] .result-surface {color-scheme:light;--result-accent:#222;--result-edge:#ccc;--ink:#202023;--muted:#555;--line:#ccc;--accent:#222;background:#fff;color:#202023;border-color:#ccc;box-shadow:none}
+  :root[data-theme] .result-surface:before,:root[data-theme] .sample-panel:after,.result-art {display:none}
+  :root[data-theme] .card,:root[data-theme] .panel,:root[data-theme] .report-paper {background:#fff;box-shadow:none;color:#202023}
+  :root[data-theme] .header,:root[data-theme] .app-sidebar,:root[data-theme] .mobile-nav {display:none!important}
+  ::view-transition {display:none}
+}

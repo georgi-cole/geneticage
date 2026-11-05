@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1793780497079,
+      "tag": "0000_orange_captain_cross",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1793782376314,
+      "tag": "0001_same_captain_universe",
+      "breakpoints": true
+    }
+  ]
+}
