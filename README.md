@@ -22,7 +22,17 @@ Saved historical report snapshots retain their original interpretation, prioriti
 
 Editorial standard: use concrete headings, ordinary English and defined terms; ask one clear question at a time; place the relevant limitation beside the result and leave technical detail in the methods section. Avoid motivational slogans, causal claims, repeated sales copy and interchangeable labels for biological, clinical and epigenetic age. Clinical review, population applicability and uncertainty calibration remain outstanding; an editorial review is not clinical validation.
 
-## Included
+## Phone preview on GitHub Pages
+
+The public [phone preview](https://georgi-cole.github.io/geneticage/) uses the same interface, themes, English/Bulgarian copy, questionnaire and clinical calculator as the hosted app. It starts without a profile or invented personal result. Reports can be explored locally without creating a purchase. Answers remain in page memory and disappear on reload; only theme/language preferences are stored on the device. The Account tab explains the distinction and links to the separately hosted app for cloud features.
+
+GitHub Pages serves static files: sign-in, cloud history, encrypted storage and purchases require the existing hosted app and are not connected to this preview. Its content policy blocks network API requests and form submissions. The server application, ownership rules, immutable saved records, encryption keys, payment entitlements and Sites audience are unchanged.
+
+Run `npm run build:pages`, then `npm run serve:pages` to inspect `http://127.0.0.1:4173/geneticage/`. The build bundles browser code and copies public media/styles into ignored `dist-pages/`; it excludes server code, credentials and databases. It uses the shared app shell, so layout changes apply to both editions. The default project path is `/geneticage/`.
+
+The **App checks** workflow builds both editions. A maintainer can run it manually with **publish_pages** enabled; deployment runs only after all checks succeed, with Pages-only write permissions in the deployment job. Ordinary PRs and pushes validate without publishing. The `github-pages` environment restricts which branches may deploy.
+
+## Included features
 
 - A 26-question, six-section questionnaire with conditional questions, optional answers and validation.
 - A health profile, manual blood-entry route, and demo clinical PhenoAge calculation with unit conversions and explicit withholding states.

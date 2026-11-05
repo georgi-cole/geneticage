@@ -2,6 +2,11 @@ name: App checks
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_pages:
+        description: Publish the static phone preview to GitHub Pages
+        type: boolean
+        default: false
   pull_request:
   push:
     branches: [main]
@@ -33,5 +38,31 @@ jobs:
       - name: Check application behavior
         run: npm test
       - name: Check dependency advisories
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=moderate
       - run: npm run build
+      - name: Build the static phone preview
+        run: npm run build:pages
+      - name: Package the verified Pages preview
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_pages
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: dist-pages
+
+  pages:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_pages
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+      - name: Deploy the verified phone preview
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
