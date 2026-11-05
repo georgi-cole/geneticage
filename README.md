@@ -71,21 +71,23 @@ Before a public health service, review the privacy notice, provider agreements, 
 
 ## Run and maintain
 
-Source assets are in `public/`, the app shell in `app/`, account routes in `app/api/[...path]/route.ts`, the testable backend in `lib/account-api.mjs`, and the schema/migrations in `db/` and `drizzle/`. `dist/` is generated output.
+Use Node.js 24.15+ in the 24.x line (see `.nvmrc`), or Node.js 26+, and install the locked dependencies with `npm ci`. Start the local preview with `npm run dev` on loopback port 5173. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contributor workflow and [GITHUB_DEVELOPMENT.md](GITHUB_DEVELOPMENT.md) for repository provenance.
 
-Install with the Sites dependency helper. Generate a separate local 32-byte base64 key in ignored `.dev.vars` as `ASSESSMENT_ENCRYPTION_KEY`. Configure the production key through Sites runtime secrets; never commit it or put it in a browser bundle. Do not replace a production key after data has been saved without an explicit re-encryption/key-rotation plan: existing records would become unreadable. Do not log or export keys. Keep the same Site project ID to preserve stable identities and bindings.
+Source assets are in `public/`, the app shell in `app/`, account routes in `app/api/[...path]/route.ts`, the backend in `lib/account-api.mjs`, and migrations in `db/` and `drizzle/`. `dist/` is generated output.
 
-Use `npm run dev` on loopback port 5173. The portable starter simulates ChatGPT sign-in for local preview only; production sign-in is platform-owned. Build through the Sites build helper. After the first local build, apply the checked-in migration using the starter's local D1 command and `.wrangler/state`; do not replay it on an existing preview database. Hosted deployment applies migrations automatically. Do not edit applied migrations; append new migrations.
+For local saved-record testing, generate a separate 32-byte base64 key in ignored `.dev.vars` as `ASSESSMENT_ENCRYPTION_KEY`. Hosted keys remain Sites runtime secrets. A key used for existing records requires a re-encryption/rotation plan before replacement. The local preview simulates platform sign-in; hosted identity must be verified separately.
+
+Build with `npm run build`; stop a running local preview before building on Windows. Follow the Sites helper workflow for actual publication, preserving the existing project ID and bindings. GitHub checks and merges do not deploy the hosted app. Append migrations instead of editing applied migrations.
 
 ## Checks
 
-`node test-model.mjs` checks formula equivalence, unit conversions, missing/invalid values and basic content rules.
+Run `npm run check` to verify generated translations without writing them, lint with zero warnings, check TypeScript and run the complete automated suite. `npm test` can be run independently. CI also builds the app and checks high/critical npm advisories.
 
-`node test-accounts.mjs` tests against an isolated in-memory SQLite database: consent, CSRF/origin enforcement, two-user isolation, encrypted storage, validation, server recomputation, idempotency, report export, ciphertext substitution rejection, rate limits and deletion.
+The suite covers formula equivalence, units, eligibility/collection rules, questionnaire traversal, theme defaults and transitions, truthful readout states and animation, and English/Bulgarian copy. DOM integration tests cover in-place language switching, retained answers and canonical units/options, dynamic content, accessible labels, preference events and validation timing.
 
-`node test-payments.mjs` uses isolated SQLite and a mocked Stripe provider to check fail-closed configuration, ownership, server price, duplicate checkout prevention, signed/stale/invalid notifications, unpaid/underpaid/mode validation, purchased report access, refunds/disputes, receipts/export, test/live separation, cancellation and deletion. It does not contact Stripe or charge a card.
+Backend tests use isolated in-memory SQLite: consent, CSRF/origin enforcement, two-user isolation, encrypted storage, validation, server recomputation, idempotency, export, tamper rejection, rate limits and deletion. Payment tests use a mocked provider to exercise price/ownership checks, notifications, access, refunds/disputes and test/live separation. No real account, database, provider or card is used.
 
-`node test-browser.mjs` runs the full-stack browser suite with the existing Chrome installation against the local preview on port 5173. It verifies real route/database integration using the starter's local auth simulator, registration, save/reload, report reopening, independent browser-profile synchronization, export, deletion, sample/personal trend separation, questionnaire regression and mobile/tablet/desktop widths. It removes only its own local test profile. QA images are written outside the source checkout. Hosted OAuth is platform-managed and cannot be proved by the local auth simulator.
+Actual browser layout, printing, hosted identity and View Transitions remain separate checks; see [design/MOBILE_APP_QA.md](design/MOBILE_APP_QA.md). The old Windows-specific browser scripts are archived as inactive text in `design/test-archive/`. [Repository readiness](docs/REPOSITORY_SETUP.md) records applied settings and remaining development-tool advisories.
 
 ## Evidence
 
@@ -96,17 +98,10 @@ Use `npm run dev` on loopback port 5173. The portable starter simulates ChatGPT 
 
 Clinical scores, interpretation rules, attribution and terminology require independent scientific and clinical approval before real-world use.
 
-`node test-science-browser.mjs` checks the scientific user flows, withholding explanations, distinct clock descriptions, consultation preview and responsive report layout. `node test-purchase-ui.mjs` checks an existing purchased-report fixture without making a payment.
-## Design revision: 4 November 2026
+## Current interface
 
-The KoleQuant Perspective design system is documented in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). It carries the original KoleQuant helix, marine palette and precise sans-serif typography through the home page, questionnaire, blood entry, results, reports, dialogs and account. A bespoke generated helix is served as an optimized WebP asset. The header offers Light, Dark and System appearance; only this ordinary preference is persisted in browser storage. Theme changes preserve in-progress inputs. Reports retain a light print palette.
+The shared app canvas has four destinations: Overview, Assessments, Reports and Account. Guided entry uses one question at a time and five blood-entry steps; reports are read by chapter. The first-open screen has no invented personal age. Samples are explicitly labelled, and saved results remain immutable snapshots.
 
-The calculation, scientific content modules, account API, payment backend, production runtime settings and private Site access are unchanged by this presentation revision.
+Black Metal is the default, with silver accents and a polished graphite action. Blood Moon has distinct cropped lunar portraits; Bionic uses porcelain, titanium and metallic blue. The three themes share geometry, controls and typography. Fine custom navigation/arrow symbols use the Paired icon family; the oversized decorative DNA spiral is retired.
 
-## Current design: Graphite workspace
-
-The current interface uses a compact black/graphite/silver design system with jade and copper accents, replacing the earlier large editorial hero. The home page prioritizes two assessment routes and a labelled sample preview. Controls and form spacing are smaller, desktop navigation uses a stable rail, and phones use labelled top navigation. The existing helix appears only as a small subtly coloured tile and is hidden on phones. Full reports use expandable sections, with save and print grouped at the top. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) for research references, tokens and component rules.
-
-Dark is now the default for new visitors. Explicit saved appearance choices are preserved. The dark theme uses a polished black-diamond finish with subtle facets and metallic edges, while retaining jade and copper accents.
-
-The sample panel now uses an original black-diamond material, served as responsive optimized WebP assets. Shared polished-surface and bevel tokens keep the component system consistent.
+EN/БГ switches copy in place, preserving answers and the current screen, and persists only the language preference. The theme preference is also local. No health records are written to browser storage. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md), [design/ICON_SYSTEM.md](design/ICON_SYSTEM.md) and [design/LOCALIZATION.md](design/LOCALIZATION.md).

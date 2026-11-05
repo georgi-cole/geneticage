@@ -1,3 +1,4 @@
+import {inlineScriptJSON} from '../../public/script-data.mjs';
 export const THEME_KEY = 'kq-theme-v2';
 export const DEFAULT_THEME = 'black-metal';
 export const THEMES = [
@@ -16,7 +17,7 @@ export function normalizeTheme(value, legacy = null) {
 }
 
 // The server head and browser share the same list: a saved palette paints first.
-export const themeBootstrap = `(()=>{const ids=${JSON.stringify(THEMES.map(t=>t.id))};let v=null,l=null;try{v=localStorage.getItem('${THEME_KEY}');l=localStorage.getItem('kq-appearance-v1')}catch{}const t=ids.includes(v)?v:v===null&&l==='light'?'moonshine':'${DEFAULT_THEME}';const r=document.documentElement;r.dataset.theme=t;r.dataset.appearance=t;r.style.colorScheme=['futuristic','moonshine'].includes(t)?'light':'dark'})()`;
+export const themeBootstrap = `(()=>{const ids=${inlineScriptJSON(THEMES.map(t=>t.id))};let v=null,l=null;try{v=localStorage.getItem('${THEME_KEY}');l=localStorage.getItem('kq-appearance-v1')}catch{}const t=ids.includes(v)?v:v===null&&l==='light'?'moonshine':'${DEFAULT_THEME}';const r=document.documentElement;r.dataset.theme=t;r.dataset.appearance=t;r.style.colorScheme=['futuristic','moonshine'].includes(t)?'light':'dark'})()`;
 
 export function currentTheme() {
   return THEMES.find(theme => theme.id === document.documentElement.dataset.theme) || THEMES[0];

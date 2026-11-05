@@ -38,7 +38,7 @@ assert.equal((await call('a','assessments','POST',entry)).status,201);
 let report=(await call('a','assessments/'+id)).data;assert.equal(report.assessment.unlocked,false);assert.equal(report.report.full,false);assert.equal(report.report.priorities.length,1);
 assert.equal((await call('b','payments/checkout','POST',{assessmentId:id,confirm:true})).status,404);
 env.PAYMENTS_ENABLED='false';assert.equal((await call('a','payments/checkout','POST',{assessmentId:id,confirm:true})).status,503);env.PAYMENTS_ENABLED='true';
-const purchase=await call('a','payments/checkout','POST',{assessmentId:id,confirm:true});assert.equal(purchase.status,200);assert.match(purchase.data.url,/^https:\/\/checkout.stripe.com/);
+const purchase=await call('a','payments/checkout','POST',{assessmentId:id,confirm:true});assert.equal(purchase.status,200);assert.equal(new URL(purchase.data.url).origin,'https://checkout.stripe.com');
 const orderId=purchase.data.orderId,session=[...sessions.values()][0];
 const second=await call('a','payments/checkout','POST',{assessmentId:id,confirm:true});assert.equal(second.data.orderId,orderId);assert.equal(sessions.size,1);
 assert.equal((await call('a','assessments/'+id,'DELETE',{confirm:true})).status,409);
