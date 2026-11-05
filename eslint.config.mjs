@@ -14,6 +14,13 @@ const eslintConfig = defineConfig([
     "work/**",
   ]),
   {
+    files: ["app/layout.tsx"],
+    rules: {
+      // These public stylesheets are shared with the code-native theme system.
+      "@next/next/no-css-tags": "off",
+    },
+  },
+  {
     files: ["components/ui/**/*.{ts,tsx}", "hooks/use-mobile.ts"],
     rules: {
       // These files are vendored verbatim from shadcn@4.17.0. Keep the

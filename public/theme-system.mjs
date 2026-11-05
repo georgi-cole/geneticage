@@ -1,4 +1,5 @@
 import {captureThemeElements,animateThemeElements,settleThemeElements} from './theme-motion.mjs';
+import {inlineScriptJSON} from './script-data.mjs';
 
 export const THEME_KEY = 'kq-theme-v2';
 export const DEFAULT_THEME = 'black-metal';
@@ -15,7 +16,7 @@ export function normalizeTheme(value) {
 }
 
 // The server head and browser share the same list: a saved palette paints first.
-export const themeBootstrap = `(()=>{const themes=${JSON.stringify(THEMES.map(({id,scheme})=>({id,scheme})))};let v=null;try{v=localStorage.getItem('${THEME_KEY}')}catch{}if(v==='futuristic')v='bionic';const t=themes.find(t=>t.id===v)||themes[0];const r=document.documentElement;r.dataset.theme=t.id;r.dataset.appearance=t.id;r.style.colorScheme=t.scheme})()`;
+export const themeBootstrap = `(()=>{const themes=${inlineScriptJSON(THEMES.map(({id,scheme})=>({id,scheme})))};let v=null;try{v=localStorage.getItem('${THEME_KEY}')}catch{}if(v==='futuristic')v='bionic';const t=themes.find(t=>t.id===v)||themes[0];const r=document.documentElement;r.dataset.theme=t.id;r.dataset.appearance=t.id;r.style.colorScheme=t.scheme})()`;
 
 export function currentTheme() {
   return THEMES.find(theme => theme.id === document.documentElement.dataset.theme) || THEMES[0];

@@ -38,7 +38,7 @@ function historyRows(history,reports=false,page=0){const slice=pageSlice([...his
 export function renderRecordLibrary({history=[],reports=false,page=0}){return `<div class="wrap app-screen account-subscreen"><button class="text-btn task-back" data-action="account-tab" data-tab="${reports?'reports':'history'}">← ${reports?'Reports':'My assessments'}</button>${screenHeading('YOUR PRIVATE LIBRARY',reports?'Saved reports':'Assessment history',`${history.length} dated ${history.length===1?'record':'records'}`)}${historyRows(history,reports,page)}${!reports?'<button class="text-link" data-action="account-tab" data-tab="progress">View progress over time ↗</button>':''}</div>`;}
 const recordSummary=(history,reports=false)=>`<button class="record-summary" data-action="account-tab" data-tab="${reports?'report-history':'saved'}"><span class="record-icon">${uiIcon(reports?'report':'pulse')}</span><span><strong>${history.length} saved ${reports?'reports':'assessments'}</strong><small>Open your private library</small></span>${uiIcon('arrow')}</button>`;
 
-export function renderAssessments({profile,history=[],loading=false,error='',page=0}){
+export function renderAssessments({profile,history=[],loading=false,error=''}){
  return `<div class="wrap app-screen assessments-screen">${screenHeading('YOUR WORKSPACE','My assessments','Choose a starting point. Build a clearer picture.')}
   <section class="assessment-intro" data-theme-part>${libraryMotif()}<span class="eyebrow">TWO WAYS TO BEGIN</span><h2>One personal perspective.</h2><p>Start with your health profile or existing blood results.</p></section>
   <div class="assessment-routes"><button class="assessment-route" data-action="start" data-theme-part><span class="route-icon">${uiIcon('pulse')}</span><span><strong>Health & lifestyle</strong><small>26 questions · One question at a time</small></span>${uiIcon('arrow')}</button><button class="assessment-route" data-action="start-labs" data-theme-part><span class="route-icon">${uiIcon('drop')}</span><span><strong>Blood-based age</strong><small>9 measurements · Guided entry</small></span>${uiIcon('arrow')}</button></div>
@@ -47,7 +47,7 @@ export function renderAssessments({profile,history=[],loading=false,error='',pag
  </div>`;
 }
 
-export function renderReportLibrary({profile,history=[],loading=false,error='',page=0,assessment=false}){
+export function renderReportLibrary({profile,history=[],loading=false,error='',assessment=false}){
  return `<div class="wrap app-screen reports-screen">${screenHeading('YOUR WORKSPACE','Reports','The detail behind your result.')}
   <button class="report-feature" data-action="${assessment?'report':'sample-report'}" data-theme-part>${reportArtwork()}<span class="eyebrow">${assessment?'CURRENT ASSESSMENT':'EXPLORE A SAMPLE'}</span><strong>Your health,<br>explained.</strong><span class="report-feature-caption">Interpretation · Findings · Sources</span><span class="report-feature-action">${assessment?'Open your report':'Preview a sample report'} ${uiIcon('arrow')}</span></button>
   <section class="saved-records"><div class="section-caption"><h2>Saved reports</h2><span>PRIVATE LIBRARY</span></div>${statusMessage({loading,error})}${history.length?recordSummary(history,true):'<div class="quiet-empty"><p>Save an assessment to keep its dated report here.</p></div>'}</section>
