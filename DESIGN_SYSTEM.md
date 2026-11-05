@@ -35,7 +35,7 @@ All themes share their DOM, screen order, typography, controls, spacing and navi
 | Theme | Canvas | Accent | Material identity |
 | --- | --- | --- | --- |
 | Black Metal (default) | `#09090b` | Platinum silver `#cbd1dc` | Black-diamond facets, black polished controls and a cool silver sheen |
-| Blood Moon | `#100d0e` | Copper `#e7a18e` | Garnet atmosphere and a complete, softly lit lunar disc |
+| Blood Moon | `#100d0e` | Copper `#e7a18e` | Garnet atmosphere, a cropped upper-right moon and restrained fine branches |
 | Bionic | `#efeeea` | Metallic blue `#2f6494` | Porcelain canvas, smoky result glass, titanium ribs and steel-blue mechanical details |
 
 Royal Purple, Silverbolt, Moonshine and earlier alternative layouts remain in `design/theme-archive/`. They are not offered in the active selector. Legacy Futuristic preferences migrate to Bionic. Invalid, archived or unavailable preferences resolve to Black Metal.
@@ -50,7 +50,7 @@ The decorative DNA sculpture is removed from the active interface. The brand mar
 
 ## Typography and controls
 
-The original [Paired icon system](design/ICON_SYSTEM.md) uses continuous, recognizable silhouettes and a 2-unit stroke. Bottom navigation icons are 24 px and action arrows 20–22 px. Paired readout lines and the complementary method curves retain a delicate genetic reference; ordinary navigation arrows remain simple. Black Metal controls have a black glossy interior and silver contour; Bionic uses polished steel-blue accents. The overview actions share one aligned row, and support/reset actions share one settings surface.
+The original [Paired icon system](design/ICON_SYSTEM.md), version 3, uses continuous silhouettes and a 1.65-unit stroke. Bottom navigation icons are 22 px, header theme symbols 20 px and action arrows 20–22 px. Paired cells, bonded read tracks, an evidence folio and complementary arrow tails make the family specific to this app without obscuring function. Black Metal controls have a glossy graphite interior and silver contour; its New assessment action adds brighter obsidian facets within the same 44 px height. Bionic uses polished steel-blue accents. The overview actions share one aligned row, and support/reset actions share one settings surface.
 
 One system sans-serif stack across every theme; monospaced micro-labels identify metadata. Archived fonts and their licenses remain stored for future revisions, without changing active type hierarchy.
 
@@ -62,6 +62,7 @@ One system sans-serif stack across every theme; monospaced micro-labels identify
 - App surfaces: 12–22 px radius; inputs and compact options: 8–9 px.
 - Primary mobile actions: 42–44 px high; tabs retain compact labels and generous hit areas.
 - Theme picker: original minimal icon/name/check format, three rows, no swatches or subtitles. The header icon reflects the selection.
+- Header language control: compact EN/БГ text within a 40 px hit area. It replaces the duplicated Account shortcut, while Account stays in the main navigation.
 
 `public/styles.css` retains the base palette and existing controls. `public/themes.css` defines named palettes and the transition boundary. `public/app-screens.css` supplies the shared app canvas and screen components. `public/ui-components.mjs` provides result, library and account templates. `public/flow-ui.mjs` owns guided question and lab presentation without changing the scientific model.
 
@@ -77,6 +78,8 @@ Captures include each surface together with its decorative art; images never get
 
 ## Accessibility, data and release wording
 
+English and Bulgarian share the same layouts and canonical data. Bulgarian is edited as independent product copy, with natural, polite phrasing: “Начало”, “Моите анализи”, “Здравето ви отблизо” and “Какво означава резултатът”. “Анализ” names an app assessment; “оценка на възрастта” keeps its scientific meaning. [Localization guidance](design/LOCALIZATION.md) records the copy sources and checks. Switching language updates text and accessible labels in place, preserves entered values, choices, units and the current screen, and does not recalculate or transmit an assessment. Brand names, scientific identifiers and laboratory units remain canonical.
+
 Labelled navigation is always available. State has text and symbols in addition to colour. Inputs have explicit labels and persistent values. Errors explain the relevant field and remain on the appropriate step. Consultation feedback appears only after Continue/Preview. Typing clears existing inline feedback without opening a native validation bubble; Enter advances the current step. The appearance menu supports keyboard navigation and Escape; dialogs retain focus containment. Long text can remain accessible through internal overflow rather than hard clipping.
 
 The header holds the visible brand. The Overview eyebrow reads “Your health”; Account ends with “You choose what to save.” and a privacy glyph. Redundant lower brand labels and “Private prototype” are removed from the interface. Sample-result labels, educational limitations, private-library status and the beta/production copy review remain meaningful and explicit.
@@ -91,4 +94,4 @@ The original generated black-diamond material is documented in [design/BLACK_DIA
 
 ## Verification
 
-Run `test-app-flows.mjs` for forward/back conditional traversal, choice paging, lab error routing, record pagination and distinct guest/account/report states; `test-themes.mjs` for the default, migration, stable shared markup and full-opacity liquid masks; and `test-result-motion.mjs` for truthful empty/saved/sample/withheld states, immutable values, cancellation, repeated theme selection, reduced motion, reopening and print completion. Existing model, account and payment checks protect scientific calculations, consent, ownership and entitlements. TypeScript and a production build are required before publication. Browser checks cover phone viewport fit, retained field values, all three themes, report reading/printing, navigation and result animation.
+Run `test-language.mjs` for copy-source/runtime parity, questionnaire and conditional finding coverage, numerical sentences, Bulgarian counts, preserved scientific identifiers and language preference startup; `test-app-flows.mjs` for forward/back conditional traversal, choice paging, lab error routing, record pagination and distinct guest/account/report states; `test-themes.mjs` for the default, migration, stable shared markup and full-opacity liquid masks; and `test-result-motion.mjs` for truthful empty/saved/sample/withheld states, immutable values, cancellation, repeated theme selection, reduced motion, reopening and print completion. Existing model, account and payment checks protect scientific calculations, consent, ownership and entitlements. TypeScript and a production build are required before publication. Browser checks cover phone viewport fit, retained field values across language changes, all three themes, report reading/printing, navigation and result animation.

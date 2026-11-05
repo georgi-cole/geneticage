@@ -1,0 +1,92 @@
+A JSON request is required.	Заявката трябва да е във формат JSON.
+Account storage is temporarily unavailable.	Данните в профила са временно недостъпни.
+An adult age is required.	Необходима е възраст на пълнолетно лице.
+An assessment identifier is required.	Липсва идентификаторът на анализа.
+Assessment not found.	Анализът не е намерен.
+Check your questionnaire answers. Activity totals and smoking history must be consistent with the ages and time periods entered.	Проверете отговорите. Общата активност и историята на тютюнопушене трябва да съответстват на въведените възрасти и периоди.
+Choose an account nickname of 1–40 characters.	Изберете име за профила си с дължина от 1 до 40 знака.
+Complete account registration before saving or viewing history.	Завършете създаването на профила, преди да запазвате или разглеждате история.
+Confirm account deletion.	Потвърдете изтриването на профила.
+Confirm adult eligibility and the account storage notice.	Потвърдете пълнолетието си и съгласието за съхранение на данните.
+Confirm deletion.	Потвърдете изтриването.
+Confirm the report purchase.	Потвърдете покупката на доклада.
+Could not access account storage. Please try again.	Не успяхме да заредим данните от профила. Опитайте отново.
+Could not save. Your account may have reached its 500-assessment limit.	Не успяхме да запазим анализа. Възможно е в профила ви вече да има 500 анализа — максималният допустим брой.
+Method not supported.	Този начин на заявка не се поддържа.
+Not found.	Не е намерено.
+Please check a questionnaire number.	Проверете числова стойност във въпросника.
+Please check age and collection date.	Проверете възрастта и датата на пробовземане.
+Please check drink amounts.	Проверете количествата на напитките.
+Please check drink types.	Проверете видовете напитки.
+Please check measurement units.	Проверете мерните единици.
+Please check the request.	Проверете заявката.
+Please check your assessment.	Проверете данните в анализа.
+Please check your blood measurements and units.	Проверете кръвните показатели и мерните единици.
+Please check your blood measurements.	Проверете кръвните показатели.
+Please check your country.	Проверете държавата.
+Please check your drinks.	Проверете напитките.
+Please check your questionnaire choices.	Проверете избраните отговори.
+Please check your questionnaire numbers.	Проверете числовите стойности във въпросника.
+Please use this website to make changes.	Използвайте това приложение, за да правите промени.
+Sample assessments are for free exploration. Create your own assessment before buying a report.	Можете да разгледате примерните анализи безплатно. За личен доклад първо направете анализ със своите данни.
+Sign in to access your account.	Влезте за достъп до профила си.
+Storage key unavailable	Хранилището на данни е недостъпно
+The request could not be read.	Заявката не може да бъде прочетена.
+The request is empty.	Заявката е празна.
+This assessment is too large.	Анализът съдържа твърде много данни.
+Too many changes. Please try again in an hour.	Твърде много промени. Опитайте отново след час.
+Unknown storage version	Версията на съхранените данни не се разпознава
+Your session needs refreshing. Reload this page and try again.	Сесията трябва да се опресни. Презаредете страницата и опитайте отново.
+A payment is processing. Wait for its outcome before deleting the report.	Има плащане в процес на обработка. Изчакайте резултата, преди да изтриете доклада.
+An unfinished checkout is linked to this data. Use Purchases to check or cancel it before deleting.	Към тези данни има незавършено плащане. Проверете или го отменете от „Покупки“, преди да изтривате.
+Checkout is being prepared. Retry opening checkout before cancelling.	Плащането се подготвя. Опитайте да го отворите отново, преди да отменяте.
+Checkout is still being prepared. Retry this event.	Плащането още се подготвя. Повторете заявката.
+Choose a saved report.	Изберете запазен доклад.
+Could not create secure checkout.	Не може да се създаде защитена сесия за плащане.
+Event processing incomplete. Retry later.	Обработката не е завършена. Опитайте по-късно.
+Invalid checkout.	Невалидна сесия за плащане.
+Invalid event.	Невалидно събитие.
+Invalid purchase reference.	Невалиден идентификатор на покупката.
+Invalid signature.	Невалиден подпис.
+Method not allowed.	Този начин на заявка не е разрешен.
+One-time purchase for this saved report. Any applicable taxes are shown at checkout.	Еднократна покупка за този запазен доклад. Приложимите данъци се показват преди плащане.
+Payment verification is temporarily unavailable.	Проверката на плащането е временно недостъпна.
+Payments unavailable.	Плащанията са недостъпни.
+Please refresh the report and try again.	Опреснете доклада и опитайте отново.
+Purchase not found.	Покупката не е намерена.
+Report purchases are not available yet. No payment has been taken.	Покупките на доклади още не са достъпни. Не е взето плащане.
+Report purchases are not available yet. Your free results and saved assessments remain available.	Покупката на доклади все още не е активна. Безплатните резултати и запазените анализи остават достъпни.
+Test checkout. No real payment will be taken.	Тестово плащане. Няма да бъде взета реална сума.
+The payment service could not complete this request. Please try again.	Платежната услуга не може да завърши заявката. Опитайте отново.
+The report price is not available. No payment has been taken.	Цената на доклада е недостъпна. Не е взето плащане.
+This checkout has ended. Refresh and try again.	Сесията за плащане е приключила. Опреснете и опитайте отново.
+This payment is still being verified. Please check again shortly.	Плащането още се проверява. Проверете отново след малко.
+This payment is under review. Please resolve it before starting another checkout.	Плащането е в процес на проверка. Изяснете статуса му, преди да започнете друго плащане.
+This payment needs a support review. Report access has not changed.	Плащането изисква преглед от поддръжката. Достъпът до доклада не е променен.
+Your payment is processing. Check Purchases before trying again.	Плащането се обработва. Проверете „Покупки“, преди да опитате отново.
+A clinical age estimate, expressed in years.	Оценка на клиничната възраст, изразена в години.
+A mortality-associated epigenetic measure expressed on an age scale. It is not a pace-of-aging score.	Епигенетичен показател, който в проучвания е свързан със смъртността и се изразява като възраст. Той не измерва темпа на стареене.
+A separate test from blood-based clinical PhenoAge.	Отделно изследване, различно от клиничния PhenoAge по кръвни показатели.
+American Heart Association · Tobacco and cardiovascular health	Американска сърдечна асоциация · Тютюн и сърдечносъдово здраве
+An epigenetic age estimate developed to track chronological age.	Епигенетична оценка, създадена да отразява календарната възраст.
+An epigenetic estimate trained to reflect a clinical aging measure.	Епигенетична оценка, разработена така, че да отразява клиничен показател за стареенето.
+An estimate of the pace of biological aging, rather than an age in years.	Оценка на темпа на биологично стареене, а не на възраст в години.
+Belsky et al. (2022) · DunedinPACE	Belsky и съавт. (2022) · DunedinPACE
+CDC · Sleep duration and quality	CDC · Продължителност и качество на съня
+Calculated here when the required inputs and collection details are available.	Изчислява се тук при наличие на необходимите данни и информация за пробовземането.
+DNA methylation measurements	Измервания на ДНК метилирането
+DNA methylation measurements and the clock’s required supporting information	Измервания на ДНК метилирането и допълнителната информация, изисквана от часовника
+DNA methylation measurements from a suitable laboratory sample	Измервания на ДНК метилирането от подходяща лабораторна проба
+DNA methylation measurements from blood	Измервания на ДНК метилирането от кръв
+Horvath (2013) · DNA methylation age	Horvath (2013) · Възраст по ДНК метилиране
+Horvath clock	Часовник на Horvath
+Levine et al. (2018) · Clinical PhenoAge and DNAm PhenoAge	Levine и съавт. (2018) · Клиничен PhenoAge и DNAm PhenoAge
+Liu et al. (2018) · Clinical PhenoAge validation in US adults	Liu и съавт. (2018) · Валидиране на клиничния PhenoAge при възрастни в САЩ
+Lu et al. (2019) · GrimAge	Lu и съавт. (2019) · GrimAge
+Requires a laboratory assay; not calculated from this questionnaire.	Изисква лабораторен анализ; не се изчислява от този въпросник.
+Requires a suitable laboratory assay; serial routine blood tests do not reproduce it.	Изисква подходящ лабораторен анализ; поредица от рутинни кръвни изследвания не го възпроизвежда.
+Requires laboratory testing and professional interpretation.	Изисква лабораторно изследване и професионално тълкуване.
+WHO · Alcohol and health	СЗО · Алкохол и здраве
+WHO · Healthy diet	СЗО · Здравословно хранене
+WHO · Physical activity	СЗО · Физическа активност
+Your age and nine routine blood measurements	Възрастта ви и девет рутинни кръвни показателя

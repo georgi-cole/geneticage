@@ -16,12 +16,12 @@ export const shell = `
     <header class="header">
       <div class="mobile-brand">${brand}</div>
       <div class="workspace-breadcrumb"><span>Workspace</span><span aria-hidden="true">/</span><strong id="workspace-current">Overview</strong></div>
-      <nav class="header-actions" id="account-actions" aria-label="Account and appearance">
+      <nav class="header-actions" id="account-actions" aria-label="Appearance and language">
         <details class="appearance-control" id="appearance-control">
           <summary aria-label="Theme: Black Metal. Change theme"><span class="current-theme-icon">${icon('diamond')}</span><span id="appearance-label">Black Metal</span><span class="theme-chevron" aria-hidden="true">${icon('down')}</span></summary>
           <div class="appearance-menu" role="group" aria-label="Choose a theme">${THEMES.map(theme=>`<button type="button" data-theme-preference="${theme.id}" aria-pressed="${theme.id==='black-metal'}"><span class="theme-choice-symbol" aria-hidden="true">${icon(theme.icon)}</span><span>${theme.label}</span><span class="theme-check" aria-hidden="true">${icon('check')}</span></button>`).join('')}</div>
         </details>
-        <button id="account-nav" class="nav-link account-nav" data-action="account" aria-label="Account">${icon('person')}</button>
+        <button id="language-toggle" class="language-toggle" type="button" data-no-translate aria-label="Switch to Bulgarian" title="Български">EN</button>
       </nav>
     </header>
     <nav class="mobile-nav" aria-label="Main navigation">${destinations}${accountDestination}</nav>
