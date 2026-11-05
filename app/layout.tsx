@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import {themeBootstrap} from '../public/theme-system.mjs';
+import {languageBootstrap} from '../public/language-system.mjs';
 
 export const metadata: Metadata = {
   title: 'KoleQuant Age — Your health workspace',
@@ -15,6 +16,7 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
   return <html lang="en" suppressHydrationWarning>
     <head>
       <script dangerouslySetInnerHTML={{__html: themeBootstrap}} />
+      <script dangerouslySetInnerHTML={{__html: languageBootstrap}} />
       <link rel="stylesheet" href="/styles.css" />
       <link rel="stylesheet" href="/fonts.css" />
       <link rel="stylesheet" href="/themes.css" />

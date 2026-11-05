@@ -1,0 +1,125 @@
+Test checkout ·	Тестово плащане ·
+Testing depends on your question, the sample required and local availability. Laboratory clocks are estimates; they do not establish an exact age.	Изборът на изследване зависи от целта ви, необходимата проба и услугите, достъпни там, където живеете. Лабораторните часовници дават приблизителна, а не точна възраст.
+The account connection took too long. Your current assessment is safe on this screen.	Свързването с профила се забави. Данните от текущия анализ остават на този екран.
+The age calculation and consultation enquiry remain prototype features. A clinician has not reviewed results. Report purchases use Stripe when enabled; purchase availability is shown before checkout.	Изчисляването на възраст и формулярът за консултация все още са част от прототипа. Резултатите не са прегледани от медицински специалист. Когато покупките са активни, плащането се извършва чрез Stripe. Преди плащане ще видите дали покупката е достъпна.
+The app converts supported units before calculating. Review an abnormal laboratory result using the laboratory’s reference range and your clinician’s advice, regardless of the age estimate.	Приложението преобразува поддържаните единици преди изчислението. Независимо от оценката на възрастта, обсъдете отклоненията в лабораторните резултати според референтните граници на лабораторията и съвета на лекаря си.
+The complete report includes all findings supported by your answers, up to three suggested next steps and the full input summary.	Пълният доклад включва всички наблюдения от отговорите ви, до три предложения за следващи стъпки и всички въведени данни.
+The displayed difference is clinical PhenoAge minus age at the blood draw. It is not the study’s age-adjusted PhenoAgeAccel measure, a measure of aging speed, or a forecast of years left to live.	Показаната разлика е клиничният PhenoAge минус възрастта при вземане на пробата. Тя не е коригираният спрямо възрастта показател PhenoAgeAccel от проучването, не измерва скоростта на стареене и не прогнозира оставащи години живот.
+The estimate is about	Оценката е с около
+higher	по-висока
+lower	по-ниска
+than your age at the blood draw.	от възрастта ви при вземане на пробата.
+The formula was developed using US population data. Its accuracy for an individual, or for other populations, is uncertain. KoleQuant’s implementation has not been independently clinically validated. This version uses fasting samples and displays estimates for ages 20–84.	Формулата е разработена с данни от населението на САЩ. Не е ясно колко точна е за отделния човек или за други популации. Приложението на формулата в KoleQuant не е преминало независимо клинично валидиране. Тази версия използва проби на гладно и показва оценки за хора на 20–84 години.
+The full report is available while this private version is being reviewed. No purchase is required.	В тази версия за преглед пълният доклад е достъпен без покупка.
+The full report will be available for	Пълният доклад ще бъде достъпен за
+The health profile uses a limited set of guidance-based rules, not a validated questionnaire age model. An unanswered question is not evidence of low risk.	Здравният профил се изгражда по ограничен набор от правила, основани на здравни препоръки. Той не е валидиран модел за изчисляване на възраст чрез въпросник. Пропуснатият въпрос не означава нисък риск.
+The model combines your age with nine blood measurements. Lifestyle answers, height, weight and country do not change that calculation. The estimate does not include a personal margin of error.	Моделът използва възрастта ви и девет кръвни показателя. Отговорите за начина на живот, ръстът, теглото и държавата не влияят на изчислението. За отделния човек не е посочен диапазон на възможното отклонение.
+The published formula combines your age with nine blood measurements. It was developed using US population data and expresses a pattern associated with health outcomes on an age scale.	Публикуваната формула използва възрастта ви и девет кръвни показателя. Тя е разработена с данни от населението на САЩ и представя комбинацията от показатели като възраст, свързана със здравни резултати.
+The total white blood cell count, often labelled WBC.	Общият брой бели кръвни клетки, често означен като WBC.
+These entries need review	Данните се нуждаят от преглед
+These suggestions support a conversation about your health. They are not treatment instructions, and no reduction in biological age is promised.	Предложенията подпомагат разговор за здравето ви. Те не са указания за лечение и не обещават намаляване на биологичната възраст.
+These topics are selected from your answers and general health guidance. Their order is not a ranking of causes of your age estimate.	Темите са подбрани според отговорите ви и общите здравни препоръки. Редът им не показва кои фактори са повлияли най-силно на изчислената възраст.
+These topics come from your answers and health guidance. Their order does not explain the cause of an age estimate.	Темите са подбрани според отговорите ви и здравните препоръки. Редът им не обяснява на какво се дължи изчислената възраст.
+These use DNA methylation: chemical marks on DNA. They require a suitable laboratory assay and a defined calculation. Routine blood chemistry and lifestyle answers cannot substitute for those measurements.	Те използват ДНК метилиране — химични маркировки върху ДНК. Необходими са подходящ лабораторен анализ и определено изчисление. Рутинната кръвна биохимия и отговорите за начина на живот не заместват тези измервания.
+This assessment contains illustrative data. Create an assessment with your own inputs before buying a personal report.	Този анализ съдържа примерни данни. За личен доклад първо направете анализ със своите данни.
+This assessment was saved under an earlier protocol. Its stored result has not been recalculated, and some collection details may not have been recorded.	Този анализ е запазен по по-ранен протокол. Резултатът му не е преизчисляван. Възможно е част от данните за вземането на пробата да липсват.
+This browser has no saved demo accounts to import.	В този браузър няма запазени демо профили за импортиране.
+This creates a dated snapshot. Later assessments are saved separately so your history stays intact. The saved copy keeps the answers and result from this assessment.	Запазва се копие с днешната дата, което съдържа отговорите и резултата от този анализ. Всеки следващ анализ се запазва отделно, за да можете да проследявате предишните си резултати.
+This form does not send a message or book an appointment. Use fictional contact details while reviewing it.	Този формуляр не изпраща запитвания и не запазва часове. За прегледа използвайте измислени данни за контакт.
+This is an educational service under development. It can help you understand the information you enter, but it does not diagnose a condition or replace medical care.	Това е информационна услуга в процес на разработка. Тя може да помогне да разберете въведените данни, но не поставя диагноза и не замества медицинската грижа.
+This removes the assessment and its report, including purchased access, from your live account on all devices. It does not request a refund. Downloaded copies remain on your device.	Анализът и докладът ще бъдат изтрити от профила ви на всички устройства. Ще загубите и закупения достъп до доклада. Изтриването не подава заявка за връщане на сумата. Вече изтеглените копия остават на устройството ви.
+This removes your profile, assessments and report snapshots from the live database across devices. It does not delete your ChatGPT account. This also removes purchased-report access. It does not request a refund. Provider backups, downloads and Stripe payment records have separate lifecycles.	Профилът, анализите и запазените доклади ще бъдат изтрити от активната база данни и няма да са достъпни от никое устройство. Профилът ви в ChatGPT няма да бъде изтрит. Ще загубите и достъпа до закупени доклади, без автоматично да се заявява връщане на сумите. За резервните копия на доставчика, изтеглените файлове и платежните записи в Stripe важат отделни срокове за съхранение.
+This simple difference is not the age-adjusted PhenoAgeAccel measure used in some studies.	Тази разлика не е коригираният спрямо възрастта показател PhenoAgeAccel, използван в някои проучвания.
+This version reports estimates for ages 20–84, using confirmed fasting samples and a collection-history check. These are the app’s interpretation rules. They do not establish accuracy for every person or country.	Тази версия показва оценки за възраст 20–84 години при потвърдени проби на гладно и проверка на обстоятелствата при вземане. Това са правила за тълкуване в приложението. Те не установяват точност за всеки човек или държава.
+This will upload the selected demo history to your signed-in KoleQuant account. Please review which account you select. Original browser copies stay on this device.	Това ще качи избраната демо история в профила, с който сте влезли в KoleQuant. Проверете кой профил избирате. Първоначалните копия в браузъра остават на това устройство.
+Try again	Опитайте отново
+Type DELETE to confirm	Въведете DELETE за потвърждение
+USD / one report	USD / един доклад
+Understand my age estimate	Какво означава изчислената ми възраст
+Understand the assessment	Как работи анализът
+Unit	Единица
+United Kingdom	Обединено кралство
+United States	Съединени щати
+Unlock the complete educational report for this saved assessment: all applicable priorities, your input summary, methods, and questions for a professional.	Получете пълния информационен доклад за този анализ: всички теми, които заслужават внимание според отговорите ви, въведените данни, използваните методи и въпроси към специалист.
+Unsaved answers stay on this page. If you choose to save an assessment, its health information and report are stored in your account.	Незапазените отговори остават само на тази страница. Ако запазите анализа, здравните данни и докладът ще се съхраняват в профила ви.
+Up to three suggested next steps	До три предложения за следващи стъпки
+Use the same account that started checkout, then refresh Purchases. A redirect alone never unlocks a report.	Използвайте профила, с който е започнало плащането, и опреснете „Покупки“. Самото пренасочване никога не отключва доклад.
+Usually labelled MCV on the report.	Обикновено е означено като MCV в лабораторния резултат.
+View health profile	Вижте здравния профил
+View purchases	Вижте покупките
+View questionnaire answers	Вижте отговорите на въпросника
+View the sample instead	Вместо това разгледайте примера
+Were the sampling conditions and measurements suitable for this calculation?	Подходящи ли бяха условията на пробовземане и показателите за това изчисление?
+What this estimate can and cannot tell you	Какво може и какво не може да покаже оценката
+What would you like to discuss? *	Какво искате да обсъдите? *
+When you explicitly save, your questionnaire, blood entries, results and educational report are sent over HTTPS and stored in the hosted account database. Health records are encrypted by the application before database storage. Authorized service operators can administer the service; this is not end-to-end encryption.	Само когато изберете да запазите анализ, отговорите, кръвните показатели, резултатите и информационният доклад се изпращат по защитена HTTPS връзка към базата данни на услугата. Приложението криптира здравните записи, преди да ги съхрани. Упълномощените администратори могат да управляват услугата — защитата не е криптиране от край до край.
+Which findings need attention in light of my medical history?	Кои наблюдения изискват внимание предвид медицинската ми история?
+Would another assessment answer a different question or change a useful next step?	Може ли друг вид анализ да даде допълнителна информация или да помогне за избора на следваща стъпка?
+YOUR ACCOUNT	ВАШИЯТ ПРОФИЛ
+YOUR ASSESSMENT	ВАШИЯТ АНАЛИЗ
+YOUR HISTORY	ВАШАТА ИСТОРИЯ
+You can edit a section before viewing your health profile. Unanswered questions remain missing; they are not treated as healthy answers.	Можете да промените отговорите във всеки раздел, преди да отворите здравния си профил. Пропуснатите въпроси остават без данни — не се приемат за благоприятни отговори.
+You can explore an assessment without saving it. Unsaved questionnaire and blood entries stay in this page’s memory.	Можете да направите анализ, без да го запазвате. Незапазените отговори и кръвни показатели остават само в паметта на тази страница.
+You can export or delete individual assessments, or delete your KoleQuant account and its live records in Data & settings. Provider backups may retain deleted data for a limited period. Downloaded copies remain on your device. Deleting this account does not delete your ChatGPT account.	От „Данни и настройки“ можете да изтеглите или изтриете отделни анализи, както и целия си профил в KoleQuant с данните в активната база. Изтритите данни може да останат за ограничен срок в резервни копия на доставчика. Изтеглените файлове остават на устройството ви. Изтриването на този профил не изтрива профила ви в ChatGPT.
+You can return to Purchases to check or cancel an unfinished checkout.	Можете да се върнете в „Покупки“, за да проверите или отмените незавършено плащане.
+You reported a condition, treatment or recent illness. This profile cannot determine whether your care should change.	Посочили сте заболяване, лечение или скорошно боледуване. Профилът не може да определи дали медицинските грижи за вас трябва да се променят.
+Your KoleQuant account and live records have been deleted.	Профилът ви в KoleQuant и активните записи са изтрити.
+Your account	Вашият профил
+Your account & information	Вашият профил и данни
+Your answers are compared with selected health guidance to identify topics for review. This is an educational profile, not a validated age clock or a clinical risk score. It does not calculate an age in years.	Отговорите ви се съпоставят с подбрани здравни препоръки, за да се откроят теми, които заслужават внимание. Профилът е с информационна цел. Той не е валидиран метод за изчисляване на възраст или клинична оценка на риска и не дава възраст в години.
+Your answers identify topics for review. This assessment does not calculate an age in years.	Отговорите ви очертават теми, които заслужават внимание. Този анализ не изчислява възраст в години.
+Your assessment	Вашият анализ
+Your assessment report	Доклад от вашия анализ
+Your assessment was saved, but history could not refresh. Reopen your account to check.	Анализът е запазен, но не успяхме да заредим историята. Отворете профила си отново, за да го видите.
+Your blood entries	Въведените кръвни показатели
+Your blood-based age	Възрастта ви по кръвни показатели
+Your change was not completed.	Промяната не беше запазена.
+Your current assessment is still on this page. Please retry after refreshing the account connection.	Данните от текущия анализ остават на тази страница. Опреснете връзката с профила и опитайте отново.
+Your estimated clinical PhenoAge is	Изчислената ви клинична възраст по PhenoAge е
+Your free insight, saved assessments and account history remain available.	Безплатните насоки, запазените анализи и историята в профила остават достъпни.
+Your full report lists the entered values and converted units.	Пълният доклад показва въведените стойности и преобразуваните единици.
+Your full report. One simple purchase.	Пълният доклад с еднократна покупка.
+Your health workspace	Вашият здравен анализ
+Your information, your choice.	Вие решавате какво да запазите.
+Your input summary	Въведените от вас данни
+Your payment status	Статус на плащането ви
+Your personal health profile	Вашият личен здравен профил
+Your purchases	Вашите покупки
+Your report	Вашият доклад
+Your report is ready.	Докладът ви е готов.
+Your request could not be completed.	Не успяхме да изпълним заявката. Опитайте отново.
+Your result	Вашият резултат
+Your saved report previews are available in Reports.	Предварителните версии на запазените ви доклади са в „Доклади“.
+Your saved results	Вашите запазени резултати
+Your secure checkout is ready.	Защитената страница за плащане е готова.
+Your sign-in is verified. Choose a nickname to begin saving assessments and reports across devices.	Входът е успешен. Изберете име за профила си, за да запазвате анализи и доклади и да ги отваряте от различни устройства.
+account storage notice	информацията за съхранение на данните
+and explicitly consent to storing health information when I choose to save an assessment. This does not enrol me in research or marketing.	и давам изрично съгласие здравните ми данни да се съхраняват, когато избера да запазя анализ. Това не означава участие в научни изследвания или маркетинг.
+assessments imported. Original copies remain on this browser.	анализа са прехвърлени. Оригиналните копия остават в този браузър.
+assessments imported. The next entry could not be imported:	анализа са прехвърлени. Следващият запис не беше прехвърлен:
+assessments)	анализа)
+information about my data	информацията за личните ми данни
+mL at	mL при
+mL per serving	mL на порция
+per saved assessment. Purchasing is not enabled yet, and no payment will be taken.	за един запазен анализ. Покупките все още не са активирани и няма да бъдете таксувани.
+· Any applicable taxes and the final total are shown on Stripe before you pay. This is an automated educational report, not a clinical consultation or diagnosis.	· Приложимите данъци и крайната сума се показват в Stripe преди плащане. Това е автоматичен информационен доклад, а не клинична консултация или диагноза.
+· clinical PhenoAge · years	· клиничен PhenoAge · години
+Back to result	Към резултата
+Saved records pages	Страници на запазените записи
+Result details	Подробности за резултата
+Health insights	Здравни насоки
+Support and assessment controls	Помощ и настройки на анализа
+Saved assessments	Запазени анализи
+Saved reports pages	Страници на запазените доклади
+Understand the assessment	Как работи анализът
+Country	Държава
+Name	Име
+Amount	Количество
+Size	Обем
+Selected	Избрано
+selected	избрани
+of	от
+Year	Година
+Delete	Изтрийте
+Edit	Редактирайте
+View	Вижте

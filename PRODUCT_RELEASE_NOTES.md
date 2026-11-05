@@ -12,7 +12,7 @@ Review every user-facing string in navigation, onboarding, questions, results, r
 - Review account/sign-in wording for the chosen native-app identity flow. The prototype currently uses ChatGPT identity and a separate KoleQuant profile; do not imply these are the same account.
 - Review privacy, health-storage consent, export/deletion, payment and consultation copy against the actual beta data flows. Do not remove an acknowledgement simply to shorten a screen.
 - Keep illustrative/sample labels where sample data remains. Separate a current unsaved assessment from a saved personal record. Do not silently turn samples into apparent personal results.
-- Review the English product language, then provide and review Bulgarian/localized strings as a separate task. Check long text and larger accessibility text in the mobile screen layout.
+- Review the English and Bulgarian product language against enabled release behavior. The prototype now includes an editorial Bulgarian localization, documented in `design/LOCALIZATION.md`; this does not replace scientific/clinical and privacy/legal sign-off for both languages. Check longer copy, numerical sentences and larger accessibility text in the mobile screen layout.
 
 ## Before production
 

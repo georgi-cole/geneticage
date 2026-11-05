@@ -1,0 +1,36 @@
+name: App checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Verify Bulgarian copy is up to date
+        run: |
+          node scripts/build-locale.mjs
+          git diff --exit-code -- public/locales/bg.mjs
+      - name: Check application behavior
+        run: |
+          node test-language.mjs
+          node test-model.mjs
+          node test-app-flows.mjs
+          node test-themes.mjs
+          node test-result-motion.mjs
+          node test-accounts.mjs
+          node test-payments.mjs
+      - run: npx tsc --noEmit
+      - run: npm run build
