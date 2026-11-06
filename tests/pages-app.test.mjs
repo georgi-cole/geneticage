@@ -42,8 +42,24 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.equal($('[data-answer="nicotine"][value="Vape or e-cigarette"]').checked,false);assert.equal($('[data-answer="nicotine"][value="None"]').checked,true);
  await click('.mobile-nav [data-route="history"]');await click('[data-action="start-labs"]');
  assert.ok($('#lab-age'),'Switching routes does not start a new consent flow.');assert.equal($('#lab-age').value,'52');
- await enter('#lab-date','2026-11-01');await click('[name="lab-fasting"][value="Yes"]');
+ await enter('#lab-date','2026-11-01');await click('[name="lab-fasting"][value="Yes"]');await click('#lab-context');
  await enter('#lab-reference-group','female','change');await submit('#labs-form');
+ const measurement=$('[data-lab="albumin"]'),measurementForm=$('#labs-form');
+ assert.equal(measurement.getAttribute('aria-describedby'),'albumin-lab-feedback');
+ assert.equal($('#albumin-lab-feedback').textContent,'','An untouched field has no verdict.');
+ await enter('[data-lab-reference="albumin"][data-reference-key="referenceLow"]','35');await enter('[data-lab-reference="albumin"][data-reference-key="referenceHigh"]','50');
+ for(const [value,status]of [['34','below'],['42','within'],['56','above']]){
+  measurement.focus();await enter('[data-lab="albumin"]',value);
+  assert.equal(measurement.closest('fieldset').dataset.referenceStatus,'editing');assert.equal($('#albumin-lab-feedback').textContent,'','No stale verdict while editing.');
+  $('[data-lab-unit="albumin"]').focus();await flush();
+  assert.equal(measurement.closest('fieldset').dataset.referenceStatus,status);assert.equal(measurement.getAttribute('aria-invalid'),'false');
+  assert.equal($('#labs-form'),measurementForm);assert.equal($('[data-lab="albumin"]'),measurement);
+ }
+ measurement.focus();await enter('[data-lab="albumin"]','-4');$('[data-lab-unit="albumin"]').focus();await flush();
+ assert.equal(measurement.closest('fieldset').dataset.entryCheck,'invalid');assert.equal(measurement.closest('fieldset').dataset.referenceStatus,'unknown');assert.ok($('#albumin-lab-feedback .lab-check-symbol'));assert.equal(measurement.getAttribute('aria-invalid'),'true');
+ const glucose=$('[data-lab="glucose"]');glucose.focus();await enter('[data-lab="glucose"]','2');$('[data-lab-unit="glucose"]').focus();await flush();
+ assert.equal(glucose.closest('fieldset').dataset.referenceStatus,'below');assert.ok($('#glucose-lab-feedback .lab-critical-note'));
+ await click('#language-toggle');assert.match($('#glucose-lab-feedback').textContent,/критична/);assert.equal(glucose.value,'2');assert.equal($('[data-lab="glucose"]'),glucose);await click('#language-toggle');
  const fictional=sampleLabs();
  for(let step=1;step<=3;step++){
   for(const input of document.querySelectorAll('input[data-lab]'))await enter(`[data-lab="${input.dataset.lab}"]`,fictional[input.dataset.lab].value);

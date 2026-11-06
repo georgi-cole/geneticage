@@ -18,3 +18,7 @@ Every row distinguishes “your lab interval”, “published guide” and “no
 The encrypted assessment snapshot stores the mode, catalogue version, optional reference group, CRP assay and custom bounds/operators. A future catalogue update must add a version and keep existing versions available. Old clinical values and stored priorities are never regenerated on read. No additional database schema or browser health-data persistence is introduced.
 
 Before beta/production, the responsible clinical laboratory reviewer must approve applicability to the intended population and testing methods. This implementation and its regression tests do not provide that approval.
+
+## Independent entry and critical checks
+
+Reference direction now appears after leaving a field: yellow below, green within, red above, each with a symbol/text label. Input errors use a separate question mark and violet/dashed treatment. Independent critical and prototype-coverage checks can withhold a new age even when a custom interval says “within”; this does not modify the reference interval or formula. Collection context is asked before the measurements so the published guide can work during entry without assumed eligibility. See [entry safety policy](LAB_SAFETY_POLICY.md).

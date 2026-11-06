@@ -62,6 +62,14 @@ referenced.lab.crp.referenceHigh='10';referenced.labReferenceGroup='male';
 assert.equal((await call(a,'assessments','POST',referenced)).response.status,201);
 assert.deepEqual((await call(a,'assessments/'+referenced.id)).data.assessment,roundTrip,'Retrying an ID cannot rewrite the saved reference context.');
 assert.equal((await call(a,'assessments/'+referenced.id,'DELETE',{confirm:true})).response.status,200);
+// Critical entries are saved truthfully as withheld snapshots, never as a supplied age.
+const criticalId=randomUUID(),criticalLab=sampleLabs();criticalLab.glucose={value:'2',unit:'mmol/L',referenceLow:'0',referenceHigh:'100'};
+assert.equal((await call(a,'assessments','POST',{...entry,id:criticalId,lab:criticalLab,value:25,clinical:{value:25}})).response.status,201);
+const criticalStored=(await call(a,'assessments/'+criticalId)).data;
+assert.equal(criticalStored.assessment.value,null);assert.equal(criticalStored.report.clinical.withheld,'critical-values');assert.equal(criticalStored.report.clinical.value,undefined);assert.ok(criticalStored.report.clinical.checks.some(check=>check.warning?.code==='critical-glucose'));
+assert.equal((await call(a,'assessments','POST',{...entry,id:criticalId})).response.status,201);
+assert.deepEqual((await call(a,'assessments/'+criticalId)).data.report.clinical,criticalStored.report.clinical,'An existing snapshot cannot be silently replaced.');
+assert.equal((await call(a,'assessments/'+criticalId,'DELETE',{confirm:true})).response.status,200);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
 sqlite.prepare('UPDATE assessments SET payload=? WHERE id=?').run(stored.payload,withheldId);
 assert.equal((await call(a,'assessments/'+withheldId)).response.status,503);

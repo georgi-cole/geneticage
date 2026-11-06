@@ -1,4 +1,4 @@
-import {labs} from './model.mjs';
+import {labs} from './lab-definitions.mjs';
 import {referenceCatalog,REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 
 const entered=value=>value!==undefined&&value!==null&&(typeof value!=='string'||value.trim()!=='');
@@ -35,6 +35,7 @@ export function compareLabReference(entry){
 
 export function reviewLabReference(id,entry={},context={}){
  const lab=labs.find(item=>item.id===id),unit=entry.unit||lab?.units[0];
+ if(!lab||!lab.units.includes(unit))return {status:'invalid',label:'Check the unit'};
  const own=entered(entry.referenceLow)||entered(entry.referenceHigh);
  const basic=compareLabReference(entry);
  if(own||['missing','invalid'].includes(basic.status))return {...basic,sourceKind:own?'lab':null,unit,comparisonValue:Number(entry.value),lowExclusive:entry.referenceLowExclusive===true,highExclusive:entry.referenceHighExclusive===true};

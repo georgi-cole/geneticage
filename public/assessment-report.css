@@ -130,7 +130,9 @@
 .blood-marker-name {font-size:12px;line-height:1.4}.blood-marker-value {font-size:19px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .blood-marker-value small {display:block;font-size:9px;color:var(--muted);margin-top:3px}
 .reference-status {font-size:9px;line-height:1.5;color:var(--muted);text-align:right}
-[data-reference-status=above] .reference-status,[data-reference-status=below] .reference-status {color:var(--warm,var(--accent))}
+[data-reference-status=above] .reference-status {color:var(--lab-high)}
+[data-reference-status=below] .reference-status {color:var(--lab-low)}
+[data-reference-status=within] .reference-status {color:var(--lab-within)}
 .blood-marker-detail {border-top:1px solid var(--line);padding:15px;display:flex;flex-direction:column;gap:12px;background:color-mix(in srgb,var(--accent) 3%,transparent)}
 .reference-interval {display:flex;align-items:flex-start;justify-content:space-between;gap:12px;font-size:10px}
 .reference-interval>span {color:var(--muted)}.reference-interval strong {font-weight:500;text-align:right;max-width:62%;line-height:1.5}

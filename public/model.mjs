@@ -1,3 +1,6 @@
+import {labs,normalizeLab} from './lab-definitions.mjs';
+import {reviewLabSafety,clinicalForDisplay,LAB_SAFETY_VERSION} from './lab-safety.mjs';
+export {labs,normalizeLab} from './lab-definitions.mjs';
 export const sections=[
  {name:'About you',title:'About you',intro:'Enter your age to begin. The other questions are optional.',questions:[
   {id:'age',label:'How old are you?',type:'number',unit:'years',required:true,min:18,max:120,step:1},
@@ -32,18 +35,6 @@ export const sections=[
   {id:'context',label:'Does any of the following apply to you now?',type:'multi',options:['Pregnant','Recently gave birth','Receiving dialysis','Recovering from major surgery','None','Prefer not to say'],optionLabels:{'Recently gave birth':'Recovering after childbirth'}},
   {id:'illness',label:'Have you had a fever, infection or other short-term illness during the past two weeks?',options:['No','Yes','Not sure','Prefer not to say']} ]}
 ];
-export const labs=[
- {id:'albumin',name:'Albumin',unit:'g/L',units:['g/L','g/dL'],factor:u=>u==='g/dL'?10:1,example:42},
- {id:'creatinine',name:'Creatinine',unit:'µmol/L',units:['µmol/L','mg/dL'],factor:u=>u==='mg/dL'?88.4:1,example:90},
- {id:'glucose',name:'Glucose',unit:'mmol/L',units:['mmol/L','mg/dL'],factor:u=>u==='mg/dL'?1/18.0182:1,example:6.2},
- {id:'crp',name:'C-reactive protein',unit:'mg/dL',units:['mg/L','mg/dL'],factor:u=>u==='mg/L'?0.1:1,example:3},
- {id:'lymphocytes',name:'Lymphocytes',unit:'%',units:['%'],factor:()=>1,example:25},
- {id:'mcv',name:'Mean corpuscular volume',unit:'fL',units:['fL'],factor:()=>1,example:94},
- {id:'rdw',name:'Red cell distribution width',unit:'% (RDW-CV)',units:['% (RDW-CV)'],factor:()=>1,example:14},
- {id:'alp',name:'Alkaline phosphatase',unit:'U/L',units:['U/L'],factor:()=>1,example:85},
- {id:'wbc',name:'White blood cell count',unit:'10⁹/L',units:['10⁹/L','10³/µL','cells/µL'],factor:u=>u==='cells/µL'?0.001:1,example:7.6}
-];
-export function normalizeLab(data){return Object.fromEntries(labs.map(l=>[l.id,Number(data[l.id]?.value)*l.factor(data[l.id]?.unit||l.units[0])]));}
 export function calculatePhenoAge(age,x){
  const xb=-19.907-0.0336*x.albumin+0.0095*x.creatinine+0.1953*x.glucose+0.0954*Math.log(x.crp)-0.012*x.lymphocytes+0.0268*x.mcv+0.3306*x.rdw+0.00188*x.alp+0.0554*x.wbc+0.0804*age;
  // Algebraically equivalent to the published Gompertz mortality transformation;
@@ -60,15 +51,18 @@ export function eligibility(a,age){
  if(!Number.isInteger(Number(age))||age<20||age>84)return 'This version provides a blood-based age estimate for ages 20–84. You can still use the health and lifestyle assessment.';
  return null;
 }
-export const ASSESSMENT_PROTOCOL='clinical-inputs-2026-11-04-v2';
+export const ASSESSMENT_PROTOCOL='clinical-inputs-2026-11-06-v3';
 export function assessClinical({age,lab,contextConfirmed,fasting}){
- const reason=eligibility({},Number(age));if(reason)return {reason};
- if(!contextConfirmed)return {reason:'Your health or treatment at the time of the blood draw needs individual review. We have not calculated an age estimate.'};
- if(fasting!=='Yes')return {reason:'Fasting for at least eight hours has not been confirmed. This version uses fasting samples to match the conditions of the validation study. Your blood values can still be saved for review.'};
- if(Object.keys(validateLabs(lab)).length)return {reason:'The calculation needs all nine blood values in the correct units. Check your entries against the laboratory report.'};
+ const checks=labs.map(({id})=>({id,...reviewLabSafety(id,lab?.[id])})).filter(check=>!['ok','missing'].includes(check.status)||check.warning);
+ const metadata={checks,safetyVersion:LAB_SAFETY_VERSION};
+ if(checks.some(check=>check.warning))return {...metadata,withheld:'critical-values',reason:'A blood entry meets a published critical-result alert threshold. Check the value and unit. For a recent or unreviewed result, seek urgent medical advice. If seriously unwell, seek emergency care. No age is calculated.'};
+ const reason=eligibility({},Number(age));if(reason)return {...metadata,reason};
+ if(!contextConfirmed)return {...metadata,reason:'Your health or treatment at the time of the blood draw needs individual review. We have not calculated an age estimate.'};
+ if(fasting!=='Yes')return {...metadata,reason:'Fasting for at least eight hours has not been confirmed. This version uses fasting samples to match the conditions of the validation study. Your blood values can still be saved for review.'};
+ if(Object.keys(validateLabs(lab)).length)return {...metadata,reason:'The calculation needs all nine blood values in the correct units. Check your entries against the laboratory report.'};
+ if(checks.some(check=>['invalid','review'].includes(check.status)))return {...metadata,withheld:'input-coverage',reason:'Some entries need checking or fall outside the data coverage used by this prototype. Correct laboratory results can still be outside that coverage. No age is calculated. Review the values, units and test types with your laboratory or clinician.'};
  const x=normalizeLab(lab),value=calculatePhenoAge(Number(age),x);
- if(!Number.isFinite(value)||value<0||value>120)return {reason:'These entries produce a result outside the display range used by this version. Check the values and units with your laboratory or clinician.'};
- return {x,value,gap:value-Number(age)};
+ return clinicalForDisplay({...metadata,x,value,gap:value-Number(age)});
 }
 export function validateQuestionnaire(a,{requireAge=true}={}){
  const errors={};
