@@ -499,3 +499,9 @@ footer {display:none}
  background:linear-gradient(118deg,#f1f6ff35 0,transparent 31%,transparent 49%,#ced9ed18 49.6%,transparent 76%),linear-gradient(174deg,#626d7c,#343e4b 28%,#1b2028 57%,#3d4858);
  border-color:#e0e9f8;box-shadow:inset 0 1px 0 #ffffffa0,inset 0 -1px 0 #000b,0 5px 17px #0006,0 0 16px #c5d5f014;
 }
+
+/* Three engraved complementary base pairs form the unmeasured signature. */
+.unmeasured-mark .base-facets {fill:currentColor;fill-opacity:.12;stroke:currentColor;stroke-width:.65;stroke-opacity:.55;stroke-linejoin:round}
+.unmeasured-mark .base-edge {stroke:var(--result-ink);stroke-width:1;stroke-linecap:round;opacity:.85}
+.unmeasured-mark .base-seam {stroke:currentColor;stroke-width:1;opacity:.45}
+.unmeasured-mark .base-letters {fill:var(--result-ink);font:8px var(--font-mono);letter-spacing:1px;opacity:.8}

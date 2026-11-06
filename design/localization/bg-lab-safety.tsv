@@ -23,3 +23,7 @@ This earlier stored estimate is outside the current reporting range. Its origina
 Approximate converted interval. Status uses the unrounded source interval.	Преизчислените граници са приблизителни. Сравнението използва точните стойности от източника.
 If any applied or you are unsure, leave unchecked. No age will be shown.	Ако нещо от това е било налице или не сте сигурни, оставете празно. Възраст няма да се изчисли.
 Your report identifies the flagged measurements and explains the checks.	В доклада ще видите кои показатели са отбелязани и защо.
+Age estimate unavailable	Не може да се изчисли възраст
+Check the value and unit against your lab report.	Сверете стойността и мерната единица с лабораторния резултат.
+Why?	Защо?
+Correct results can fall outside this prototype’s estimation coverage. Ask your laboratory or clinician if unsure.	Дори точен резултат може да е извън обхвата, с който работи прототипът. При съмнение попитайте лабораторията или лекаря си.

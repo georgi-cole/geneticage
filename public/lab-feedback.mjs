@@ -5,11 +5,11 @@ import {labs} from './lab-definitions.mjs';
 
 export function clinicalCheckSummary(clinical){
  const checks=clinical?.checks||[];
- return checks.length?`<div class="clinical-check-summary">${checks.map(check=>`<div class="clinical-check-row ${check.warning?'critical':''}"><span aria-hidden="true">${check.warning?'△':'?'}</span><strong>${esc(labs.find(lab=>lab.id===check.id)?.name||check.id)}</strong><span>${check.warning?'Potentially critical result':check.status==='invalid'?'Check the entry':'Outside prototype coverage'}</span>${check.warning?`<a href="${check.warning.url}" target="_blank" rel="noopener noreferrer">${esc(check.warning.source)} ↗</a>`:''}</div>`).join('')}</div>`:'';
+ return checks.length?`<div class="clinical-check-summary">${checks.map(check=>`<div class="clinical-check-row ${check.warning?'critical':''}"><span aria-hidden="true">${check.warning?'△':'?'}</span><strong>${esc(labs.find(lab=>lab.id===check.id)?.name||check.id)}</strong><span>${check.warning?'Potentially critical result':check.status==='invalid'?'Check the entry':'Age estimate unavailable'}</span>${check.warning?`<a href="${check.warning.url}" target="_blank" rel="noopener noreferrer">${esc(check.warning.source)} ↗</a>`:''}</div>`).join('')}</div>`:'';
 }
 
 export function safetyMarkup(check){
- const input=['invalid','review'].includes(check.status)?`<div class="lab-entry-note"><span class="lab-check-symbol" aria-hidden="true">?</span><p><strong>${check.status==='invalid'?'Check the entry':'Outside prototype coverage'}</strong><span>${esc(check.message)}</span>${check.coverage?`<a href="${check.coverage.url}" target="_blank" rel="noopener noreferrer">Estimation coverage source ↗</a>`:''}</p></div>`:'';
+ const input=['invalid','review'].includes(check.status)?`<div class="lab-entry-note"><span class="lab-check-symbol" aria-hidden="true">?</span><div><strong>${check.status==='invalid'?'Check the entry':'Age estimate unavailable'}</strong><p>${check.status==='invalid'?esc(check.message):'Check the value and unit against your lab report.'}</p>${check.coverage?`<details class="coverage-explanation"><summary>Why?</summary><p>Correct results can fall outside this prototype’s estimation coverage. Ask your laboratory or clinician if unsure.</p><a href="${check.coverage.url}" target="_blank" rel="noopener noreferrer">Estimation coverage source ↗</a></details>`:''}</div></div>`:'';
  const warning=check.warning?`<div class="lab-critical-note"><span class="lab-alert-symbol" aria-hidden="true">!</span><p><strong>Potentially critical result</strong><span>${check.warning.message}</span><a href="${check.warning.url}" target="_blank" rel="noopener noreferrer">${esc(check.warning.source)} ↗</a></p></div>`:'';
  return input+warning;
 }

@@ -46,3 +46,6 @@ html[data-theme=bionic] {--lab-low:#875d12;--lab-within:#286646;--lab-high:#ad35
 .blood-safety-label.critical {color:var(--lab-alert)}
 @media(prefers-reduced-motion:reduce) {.lab-measurement .input-row>input {transition:none}}
 @media print {.lab-entry-note,.lab-critical-note {break-inside:avoid;color:#222;background:#fff;border-color:#555}.lab-entry-note p>span,.lab-critical-note p>span,.lab-entry-note a,.lab-critical-note a {color:#222}.blood-safety-label,.clinical-check-row,.clinical-check-row.critical,.clinical-check-row>a {color:#222}}
+
+.lab-entry-note>div {min-width:0}.lab-entry-note>div>p {color:var(--ink)}
+.lab-fields .coverage-explanation {margin-top:6px}.coverage-explanation>summary {cursor:pointer;text-decoration:underline;text-underline-offset:3px;color:var(--muted);font-size:11px}.coverage-explanation p {margin:8px 0 0;color:var(--ink)}
