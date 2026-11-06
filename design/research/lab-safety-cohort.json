@@ -1,0 +1,105 @@
+{
+  "source_commit": "b1f9fc02f086cd4aa74185f2335ab1366082e7fe",
+  "source_sha256": "c1b940fc9614add6effaa3ea6d189677c5cd8532f46be79284dce695ae3e0b92",
+  "age_filter": [
+    20,
+    84
+  ],
+  "source_rows": 18825,
+  "selected_rows": 18127,
+  "complete_case_filter": false,
+  "statistics": {
+    "albumin": {
+      "column": "albumin_gL",
+      "n": 15342,
+      "minimum": 22.000000476837158,
+      "maximum": 60.999999046325684
+    },
+    "creatinine": {
+      "column": "creat_umol",
+      "n": 15309,
+      "minimum": 9.193777811677167,
+      "maximum": 246.81753830658266
+    },
+    "glucose": {
+      "column": "glucose_mmol",
+      "n": 15178,
+      "minimum": 2.0535,
+      "maximum": 16.7055
+    },
+    "crp": {
+      "column": "crp",
+      "n": 15316,
+      "minimum": 0.20999999344348907,
+      "maximum": 4.900000095367432
+    },
+    "lymphocytes": {
+      "column": "lymph",
+      "n": 15605,
+      "minimum": 3.200000047683716,
+      "maximum": 76.5
+    },
+    "mcv": {
+      "column": "mcv",
+      "n": 15597,
+      "minimum": 59.75,
+      "maximum": 117.5999984741211
+    },
+    "rdw": {
+      "column": "rdw",
+      "n": 15546,
+      "minimum": 10.899999618530273,
+      "maximum": 19.600000381469727
+    },
+    "alp": {
+      "column": "alp",
+      "n": 15295,
+      "minimum": 17.0,
+      "maximum": 264.0
+    },
+    "wbc": {
+      "column": "wbc",
+      "n": 15588,
+      "minimum": 2.0999999046325684,
+      "maximum": 18.600000381469727
+    }
+  },
+  "derived_coverage": {
+    "albumin": [
+      22.0,
+      61.0
+    ],
+    "creatinine": [
+      9.0,
+      247.0
+    ],
+    "glucose": [
+      2.0,
+      16.8
+    ],
+    "crp": [
+      0,
+      4.9
+    ],
+    "lymphocytes": [
+      3.2,
+      76.5
+    ],
+    "mcv": [
+      59.7,
+      117.6
+    ],
+    "rdw": [
+      10.9,
+      19.6
+    ],
+    "alp": [
+      17.0,
+      264.0
+    ],
+    "wbc": [
+      2.1,
+      18.6
+    ]
+  }
+}

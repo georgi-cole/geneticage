@@ -300,7 +300,7 @@ footer {display:none}
  .header .brand {gap:9px}
  .brand img {height:24px;width:16px}
  .brand>span {font-size:16px}
- .brand em {font-size:6px;margin-left:8px}
+ .header .brand em {display:block;font-size:7px;margin:2px 0 0;letter-spacing:.6px}
  .wrap {padding:18px 18px 14px}
  .app-screen {gap:16px}
  .screen-head .eyebrow {font-size:8px;margin-bottom:8px}
@@ -458,6 +458,14 @@ footer {display:none}
 :root[data-theme=black-metal] .result-instrument {border-color:#8d98aa;box-shadow:inset 0 1px 0 #e2eafa38,inset 0 -1px 0 #0008,0 6px 24px #0004,0 0 18px #b4c4de08}
 .welcome-instrument-note {position:relative;z-index:2;font-size:11px;line-height:1.6;color:var(--result-muted);max-width:280px;text-align:center;margin:0 auto 16px}
 .welcome-instrument .age-value {color:var(--result-accent);opacity:.7}
+.instrument-number .age-unmeasured {width:1.12em;height:1em;display:grid;place-items:center;opacity:1;letter-spacing:0}
+.unmeasured-mark {display:block;width:100%;height:100%;overflow:visible;color:var(--result-accent)}
+.unmeasured-mark .mark-ribbon {stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.unmeasured-mark .mark-back {opacity:.38}
+.unmeasured-mark .mark-front {opacity:.8}
+.unmeasured-mark .mark-glint {stroke:var(--result-ink);stroke-width:.8;stroke-linecap:round;opacity:.9}
+.unmeasured-mark .mark-bond {stroke:currentColor;stroke-width:1;stroke-linecap:round;opacity:.3}
+.unmeasured-mark circle {fill:var(--result-ink);opacity:.8}
 .welcome-instrument .dial-highlight {opacity:.2}
 .welcome-instrument .dial-pointer {display:none}
 .field-feedback {margin:5px 0 3px;color:var(--error);font-size:10px;line-height:1.5}
@@ -491,3 +499,18 @@ footer {display:none}
  background:linear-gradient(118deg,#f1f6ff35 0,transparent 31%,transparent 49%,#ced9ed18 49.6%,transparent 76%),linear-gradient(174deg,#626d7c,#343e4b 28%,#1b2028 57%,#3d4858);
  border-color:#e0e9f8;box-shadow:inset 0 1px 0 #ffffffa0,inset 0 -1px 0 #000b,0 5px 17px #0006,0 0 16px #c5d5f014;
 }
+
+/* A quiet sculptural double ribbon; no labels or diagram marks. */
+.unmeasured-mark .signature-rear {fill:url(#signature-satin);opacity:.45}
+.unmeasured-mark .signature-front {fill:url(#signature-satin)}
+.unmeasured-mark .signature-light {stroke:var(--result-ink);stroke-width:.65;stroke-linecap:round;opacity:.65}
+
+.instrument-heading-empty {justify-content:flex-start}.instrument-heading-empty .instrument-tag {margin-left:0}
+
+.unmeasured-mark .signature-surface {transform-origin:50px 42px;animation:signature-twist 18s ease-in-out infinite}
+.unmeasured-mark .signature-light {stroke-dasharray:20 170;animation:signature-glint 14s ease-in-out infinite}
+@keyframes signature-twist {0%,100% {transform:perspective(500px) rotateY(0) rotate(0)}50% {transform:perspective(500px) rotateY(9deg) rotate(1deg)}}
+@keyframes signature-glint {0%,22% {stroke-dashoffset:30;opacity:0}35% {opacity:.55}62% {stroke-dashoffset:-160;opacity:0}100% {stroke-dashoffset:-160;opacity:0}}
+html[data-launch] .unmeasured-mark .signature-surface,html[data-launch] .unmeasured-mark .signature-light {animation:none}
+@media(prefers-reduced-motion:reduce) {.unmeasured-mark .signature-surface,.unmeasured-mark .signature-light {animation:none}}
+@media print {.unmeasured-mark .signature-surface,.unmeasured-mark .signature-light {animation:none}}

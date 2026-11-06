@@ -1,5 +1,10 @@
-export const CONTENT_VERSION='2026-11-04-science-v2';
+export const CONTENT_VERSION='2026-11-06-lab-safety-v4';
 export const references=[
+ {id:'critical-mayo',label:'Mayo Clinic Laboratories · Critical results · October 2026',url:'https://www.mayocliniclabs.com/-/media/it-mmfiles/Special-Instructions/4/2/A/critical-values-semi-urgent-results-list.pdf'},
+ {id:'critical-crouse',label:'Crouse Health · Critical value chart',url:'https://laboratory.crouse.org/healthcare-providers/laboratory-services/reporting-documents/critical-value-chart/'},
+ {id:'lab-coverage',label:'BioAge · Pinned NHANES III data used for prototype coverage',url:'https://github.com/dayoonkwon/BioAge/tree/b1f9fc02f086cd4aa74185f2335ab1366082e7fe'},
+ {id:'adult-intervals',label:'ABIM · Laboratory Test Reference Ranges · January 2026',url:'https://www.abim.org/media/e2wdwdqu/laboratory-reference-ranges.pdf'},
+ {id:'lab-intervals',label:'MedlinePlus · Understanding laboratory reference intervals',url:'https://medlineplus.gov/lab-tests/how-to-understand-your-lab-results/'},
  {id:'phenoage',label:'Levine et al. (2018) · Clinical PhenoAge and DNAm PhenoAge',url:'https://www.aging-us.com/article/101414/text'},
  {id:'validation',label:'Liu et al. (2018) · Clinical PhenoAge validation in US adults',url:'https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.1002718'},
  {id:'horvath',label:'Horvath (2013) · DNA methylation age',url:'https://doi.org/10.1186/gb-2013-14-10-r115'},

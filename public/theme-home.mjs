@@ -1,9 +1,10 @@
 import {resultInstrument,screenHeading,uiIcon} from './ui-components.mjs';
+import {clinicalForDisplay} from './lab-safety.mjs';
 
 // Display only a current assessment or an immutable saved result, never an inferred age.
 export function overviewPresentation(record,{hasProfile=false}={}){
  if(!record)return {empty:true,hasProfile,value:null,age:null,gap:null,sample:false,action:'sample'};
- const c=record.clinical,valid=c&&!c.reason&&typeof c.value==='number'&&Number.isFinite(c.value);
+ const c=clinicalForDisplay(record.clinical,{stored:!!record.overviewSaved}),valid=c&&!c.reason&&typeof c.value==='number'&&Number.isFinite(c.value);
  const gap=valid&&Number.isFinite(c.gap)?Math.round(c.gap):null;
  return {empty:false,hasProfile,profileOnly:!valid,withheld:!!c&&!valid,value:valid?Math.round(c.value):null,age:record.labAge??null,gap:gap===null?'—':gap>0?'+'+gap:String(gap===0?0:gap),sample:record.sample===true,action:record.overviewSaved?'open-saved':'results',recordId:record.overviewSaved?record.id:'',date:record.labDate||'',actionLabel:record.overviewSaved?'Open saved result':'Open your result'};
 }

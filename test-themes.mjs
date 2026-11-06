@@ -48,7 +48,8 @@ for(const theme of THEMES)assert.equal(renderThemeHome({theme:theme.id,value:50,
 assert.match(sharedHome,/A look at the result/);assert.match(sharedHome,/Not your result/);assert.match(sharedHome,/data-action="assessments"/);
 assert.ok(!sharedHome.includes('helix-sculpture'),'The decorative DNA spiral is retired.');
 assert.match(sharedHome,/50/);assert.match(sharedHome,/Age at blood draw/);
-assert.ok(renderThemeHome({value:null,gap:'—'}).includes('—'));
+assert.match(renderThemeHome({value:null,gap:'—'}),/unmeasured-mark/);
+assert.ok(!renderThemeHome({value:null,gap:'—'}).includes('data-count-to'));
 const css=await readFile('./public/themes.css','utf8');
 const original=await readFile('./public/styles.css','utf8');
 for(const theme of THEMES)assert.ok((css+original).includes(`[data-theme=${theme.id}]`));

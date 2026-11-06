@@ -1,0 +1,51 @@
+/* Medical direction is stable across themes; theme accents never imply severity. */
+:root {--lab-low:#e3bd70;--lab-within:#9acead;--lab-high:#ec989f;--lab-check:#c4b9e4;--lab-alert:#efba8d}
+html[data-theme=bionic] {--lab-low:#875d12;--lab-within:#286646;--lab-high:#ad3548;--lab-check:#665083;--lab-alert:#93481d}
+.lab-measurement {--lab-direction:var(--line)}
+.lab-measurement[data-reference-status=below] {--lab-direction:var(--lab-low)}
+.lab-measurement[data-reference-status=within] {--lab-direction:var(--lab-within)}
+.lab-measurement[data-reference-status=above] {--lab-direction:var(--lab-high)}
+.lab-measurement .input-row>input {border-color:var(--lab-direction);transition:border-color 240ms ease,background-color 240ms ease}
+.lab-measurement:is([data-reference-status=below],[data-reference-status=within],[data-reference-status=above]) .input-row>input {background:linear-gradient(115deg,color-mix(in srgb,var(--lab-direction) 5%,transparent),transparent 70%),var(--paper)}
+.lab-measurement[data-entry-check=invalid] .input-row>input {border-color:var(--lab-check);border-style:dashed}
+.lab-feedback {display:grid;gap:8px;font-size:11px;line-height:1.5}
+.lab-feedback:empty {display:none}
+.lab-comparison {display:flex;align-items:flex-start;gap:7px;margin:8px 0 0;color:var(--muted);font-size:11px;line-height:1.4}
+.lab-comparison>span:first-child {font-size:14px;line-height:1.2;min-width:14px;text-align:center}
+.lab-comparison small {display:inline;margin-left:7px;font-size:10px;color:var(--muted)}
+.lab-comparison[data-comparison=unknown] small {display:block;margin:2px 0 0}
+.lab-comparison[data-comparison=below] {color:var(--lab-low)}
+.lab-comparison[data-comparison=within] {color:var(--lab-within)}
+.lab-comparison[data-comparison=above] {color:var(--lab-high)}
+.lab-entry-note,.lab-critical-note {display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:10px 11px;border:1px solid color-mix(in srgb,var(--lab-check) 35%,var(--line));border-radius:9px;background:color-mix(in srgb,var(--lab-check) 4%,var(--paper));color:var(--lab-check)}
+.lab-entry-note p,.lab-critical-note p {margin:0;font-size:11px;line-height:1.5;min-width:0}
+.lab-entry-note strong,.lab-critical-note strong {display:block;font-size:11px;font-weight:600;margin-bottom:4px}
+.lab-entry-note p>span,.lab-critical-note p>span {display:block;color:var(--ink)}
+.lab-entry-note a,.lab-critical-note a {display:block;margin-top:6px;color:var(--muted);font-size:10px;text-decoration:underline;text-underline-offset:3px}
+.lab-check-symbol {display:grid;place-items:center;width:16px;height:16px;flex:0 0 16px;border:1px solid currentColor;border-radius:50%;font:500 11px var(--font-mono);margin-top:1px}
+.lab-critical-note {border-color:color-mix(in srgb,var(--lab-alert) 50%,var(--line));background:color-mix(in srgb,var(--lab-alert) 6%,var(--paper));color:var(--lab-alert)}
+.lab-alert-symbol {display:grid;place-items:center;flex:0 0 18px;width:18px;height:18px;font:600 11px var(--font-mono);clip-path:polygon(50% 0,100% 100%,0 100%);background:var(--lab-alert);color:var(--paper);padding-top:4px;box-sizing:border-box}
+.lab-measurement .error {color:var(--lab-check);font-size:11px}
+.lab-measurement .error:before {content:'?';display:inline-grid;place-items:center;width:14px;height:14px;border:1px solid currentColor;border-radius:50%;margin-right:7px;font-size:10px}
+.collection-context .hint:last-child {margin-top:7px}
+.lab-fields:has(.collection-context) {gap:8px}
+.lab-fields:has(.lab-measurement) {gap:12px}
+.lab-screen {height:100%;min-height:0}
+.lab-screen .lab-fields {min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:2px}
+.lab-screen .form-nav {margin-top:12px}
+.lab-measurement .hint {margin-bottom:6px}
+.lab-screen .lab-measurement .reference-editor {margin-top:6px;padding-top:5px}
+.withheld-emblem {width:68px;height:58px;color:var(--result-accent);margin:14px 0}
+.clinical-check-summary {display:grid;gap:9px;margin:14px 0}
+.clinical-check-row {display:grid;grid-template-columns:14px 1fr;gap:3px 7px;font-size:11px;line-height:1.4;color:var(--lab-check);padding-left:10px;border-left:1px solid currentColor}
+.clinical-check-row.critical {color:var(--lab-alert)}
+.clinical-check-row>span:last-of-type,.clinical-check-row>a {grid-column:2}
+.clinical-check-row strong {font-weight:550}
+.clinical-check-row>a {font-size:10px;color:var(--muted);text-underline-offset:3px}
+.blood-safety-label {grid-column:1/-1;display:flex;gap:6px;align-items:center;color:var(--lab-check);font-size:10px}
+.blood-safety-label.critical {color:var(--lab-alert)}
+@media(prefers-reduced-motion:reduce) {.lab-measurement .input-row>input {transition:none}}
+@media print {.lab-entry-note,.lab-critical-note {break-inside:avoid;color:#222;background:#fff;border-color:#555}.lab-entry-note p>span,.lab-critical-note p>span,.lab-entry-note a,.lab-critical-note a {color:#222}.blood-safety-label,.clinical-check-row,.clinical-check-row.critical,.clinical-check-row>a {color:#222}}
+
+.lab-entry-note>div {min-width:0}.lab-entry-note>div>p {color:var(--ink)}
+.lab-fields .coverage-explanation {margin-top:6px}.coverage-explanation>summary {cursor:pointer;text-decoration:underline;text-underline-offset:3px;color:var(--muted);font-size:11px}.coverage-explanation p {margin:8px 0 0;color:var(--ink)}

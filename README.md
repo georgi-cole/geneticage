@@ -1,4 +1,6 @@
-# KoleQuant Age prototype
+# GeneticAge by KoleQuant
+
+The product owner selected **GeneticAge** on 6 November 2026. KoleQuant remains the publisher and the opening brand signature.
 
 Mobile-friendly full-stack Site with ChatGPT sign-in, per-user managed D1 storage and application-encrypted health records. The existing Site identity and owner-private audience are preserved.
 
@@ -12,7 +14,7 @@ The published clinical PhenoAge formula and unit conversions are unchanged. A sh
 
 The current numerical-display policy requires age 20–84, all nine exact numerical blood results from one draw, confirmation of fasting for at least eight hours, and confirmation that the listed collection circumstances requiring individual review did not apply. The age/fasting choices are informed by Liu et al. (2018), which analysed fasting US NHANES samples. Pregnancy/postpartum recovery, dialysis, acute illness, surgery recovery and cancer/immune-suppressing treatment are conservative **application review rules**, not a published set of PhenoAge contraindications or universally validated thresholds. A qualified clinician still needs to approve the collection policy and user-facing interpretations before a public clinical service.
 
-The age difference is explicitly a simple subtraction, not an age-adjusted PhenoAgeAccel residual, a mortality probability, or an aging-rate estimate. Numerical results are rounded to whole years without an invented confidence interval. Values outside the current 0–120 display range are withheld for entry/professional review rather than clamped; that display range is an application choice. Missing biomarkers are not imputed; below-detection-limit CRP is not replaced with zero or the limit. Health habits do not add arbitrary years to the clinical formula.
+The age difference is explicitly a simple subtraction, not an age-adjusted PhenoAgeAccel residual, a mortality probability, or an aging-rate estimate. Numerical results are rounded to whole years without an invented confidence interval. Estimates rounding outside the current 1–99 reporting window are withheld for entry/professional review rather than clamped; that window is an application choice, not a published biological validity limit. Missing biomarkers are not imputed; below-detection-limit CRP is not replaced with zero or the limit. Health habits do not add arbitrary years to the clinical formula.
 
 Profile refinements include separate strength-training feedback, fruit/vegetable feedback covering the 3–4-portion response, age-specific sleep guidance, no adverse interpretation of long sleep alone, and adapted activity advice for reported limitations/recovery. Optional unanswered information stays unknown. Activity totals, smoking duration and mutually exclusive choices receive consistency checks. Advice is educational, with source links, not prescribed treatment or a promise of age reversal.
 
@@ -22,11 +24,23 @@ Saved historical report snapshots retain their original interpretation, prioriti
 
 Editorial standard: use concrete headings, ordinary English and defined terms; ask one clear question at a time; place the relevant limitation beside the result and leave technical detail in the methods section. Avoid motivational slogans, causal claims, repeated sales copy and interchangeable labels for biological, clinical and epigenetic age. Clinical review, population applicability and uncertainty calibration remain outstanding; an editorial review is not clinical validation.
 
+## Assessment and report revision: 6 November 2026
+
+Content version `2026-11-06-report-v3` retains questionnaire answers and blood entries when switching routes. Reports opens the current draft, with Summary, Findings, Blood results and Details instead of a long chapter dropdown. Sample exploration keeps a temporary copy of the current draft so the user can return to it. Only explicit reset/new-assessment actions clear entries; reloading still clears unsaved data.
+
+Users can enter their own reference limits in the measurement’s selected unit, including one-sided and exclusive limits. These take precedence. New assessments can use a source-pinned ABIM adult guide for missing intervals, or leave comparisons unassigned. The fallback requires known adult collection context; creatinine needs the report’s reference group, fasting glucose needs confirmed fasting, and CRP needs an identified standard assay. hs-CRP risk bands are not used as laboratory intervals. Earlier saved records without guide metadata remain lab-only. Reference settings never alter PhenoAge or overwrite saved results. [Reference policy and sources](docs/LAB_REFERENCE_POLICY.md).
+
+## Laboratory entry safeguards: 6 November 2026
+
+Content version `2026-11-06-lab-safety-v4` adds feedback after leaving a measurement field. Yellow/green/red indicate below/within/above the actual reference used; a separate question mark denotes an input or coverage check, and a triangular warning denotes selected published critical thresholds. New estimates are withheld for critical values, unsupported input coverage or a rounded output outside 1–99. The pure formula and conversions are unchanged. Valid extreme entries remain saveable with no numeric age. Old snapshots stay immutable, and out-of-window historical numbers are hidden only in current presentation. [Scientific policy, exact rules, sources and limitations](docs/LAB_SAFETY_POLICY.md).
+
+The hosted Sites app and static Pages preview are separate publications. Both now include the 3-second KoleQuant launch signature on every full opening, with one additional second of brand hold and the original code-to-clock handoff speed. Empty instruments use the paired-form emblem with a clear unmeasured status.
+
 ## Phone preview on GitHub Pages
 
 The public [phone preview](https://georgi-cole.github.io/geneticage/) uses the same interface, themes, English/Bulgarian copy, questionnaire and clinical calculator as the hosted app. It starts without a profile or invented personal result. Reports can be explored locally without creating a purchase. Answers remain in page memory and disappear on reload; only theme/language preferences are stored on the device. The Account tab explains the distinction and links to the separately hosted app for cloud features.
 
-GitHub Pages serves static files: sign-in, cloud history, encrypted storage and purchases require the existing hosted app and are not connected to this preview. Its content policy blocks network API requests and form submissions. The server application, ownership rules, immutable saved records, encryption keys, payment entitlements and Sites audience are unchanged.
+GitHub Pages serves static files: sign-in, cloud history, encrypted storage and purchases require the existing hosted app and are not connected to this preview. Its content policy blocks network API requests and form submissions. Hosted identity, ownership rules, immutable saved records, encryption keys, payment entitlements and the Sites audience retain their existing behavior.
 
 Run `npm run build:pages`, then `npm run serve:pages` to inspect `http://127.0.0.1:4173/geneticage/`. The build bundles browser code and copies public media/styles into ignored `dist-pages/`; it excludes server code, credentials and databases. It uses the shared app shell, so layout changes apply to both editions. The default project path is `/geneticage/`.
 

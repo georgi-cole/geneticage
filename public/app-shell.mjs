@@ -1,9 +1,12 @@
 import {THEMES} from './theme-system.mjs';
 import {icon} from './icons.mjs';
-const brand = `<button class="brand" data-action="home" aria-label="KoleQuant Age home"><img src="/assets/kolequant-mark.webp" width="19" height="28" alt=""/><span>KoleQuant <em>AGE</em></span></button>`;
+import {launchMarkup} from './launch-screen.mjs';
+import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
+const brand = `<button class="brand" data-action="home" aria-label="${APP_NAME} home"><img src="/assets/kolequant-mark.webp" width="19" height="28" alt=""/><span>${APP_NAME}<em>${PUBLISHER_NAME}</em></span></button>`;
 const accountDestination = `<button class="workspace-link" data-action="account" data-route="settings">${icon('person')}<span>Account</span></button>`;
 const destinations = `<button class="workspace-link" data-action="home" data-route="home">${icon('home')}<span>Overview</span></button><button class="workspace-link" data-action="account-area" data-tab="history" data-route="history">${icon('history')}<span>Assessments</span></button><button class="workspace-link" data-action="account-area" data-tab="reports" data-route="reports">${icon('report')}<span>Reports</span></button>`;
 export const shell = `
+${launchMarkup}
 <a class="skip" href="#main">Skip to content</a>
 <div class="app-frame">
   <aside class="app-sidebar" aria-label="Workspace sidebar">
