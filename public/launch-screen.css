@@ -3,7 +3,7 @@
  --launch-canvas:#09090b;--launch-ink:#e8ebef;--launch-shade:#4c535f;--launch-accent:#b7c9df;--launch-muted:#828a97;--launch-exit:0;--launch-branding:1;
  position:fixed;inset:0;z-index:12000;isolation:isolate;overflow:hidden;
  display:grid;place-items:center;color:var(--launch-ink);background:transparent;
- animation:launch-guard 0s 4s forwards;
+ animation:launch-guard 0s 5s forwards;
 }
 .launch-screen[hidden] {display:none}
 html[data-launch="pending"] .launch-screen[hidden] {display:grid}

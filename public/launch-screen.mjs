@@ -1,7 +1,8 @@
 // A brand animation, not a DNA analysis or a calculated personal result.
 import {translateText} from './language-system.mjs';
 import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
-export const LAUNCH_DURATION=2200;
+export const LAUNCH_DURATION=3200;
+export const LAUNCH_BRAND_HOLD=1000;
 export const CODONS=['ATG','CAG','GGC','TCC','AAC','GCT'];
 export const complement=sequence=>sequence.replace(/[ATGC]/g,base=>({A:'T',T:'A',G:'C',C:'G'}[base]));
 export const launchBootstrap="document.documentElement.dataset.launch='pending'";
@@ -11,7 +12,7 @@ const ease=value=>{const t=clamp(value);return t*t*(3-2*t);};
 const interpolate=(from,to,t)=>from+(to-from)*t;
 
 export function launchFrame(milliseconds){
- const time=Math.max(0,milliseconds),unfold=ease((time-580)/880);
+ const time=Math.max(0,milliseconds-LAUNCH_BRAND_HOLD),unfold=ease((time-580)/880);
  const codons=Array.from({length:12},(_,index)=>{
   const strand=Math.floor(index/6),row=index%6,y=-53+row*21;
   const x=Math.sin((y+53)/105*Math.PI*2)*24*(strand?-1:1);

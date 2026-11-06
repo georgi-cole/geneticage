@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import vm from 'node:vm';
 import {JSDOM} from 'jsdom';
 import {resultInstrument} from '../public/ui-components.mjs';
-import {CODONS,complement,initializeLaunch,launchBootstrap,launchFrame,launchMarkup,LAUNCH_DURATION} from '../public/launch-screen.mjs';
+import {CODONS,complement,initializeLaunch,launchBootstrap,launchFrame,launchMarkup,LAUNCH_DURATION,LAUNCH_BRAND_HOLD} from '../public/launch-screen.mjs';
 
 function fixture({pending=true,reduced=false,hidden=false,language='en'}={}){
  const dom=new JSDOM(`<html lang="${language}" ${pending?'data-launch="pending"':''}><body>${launchMarkup}<a class="skip" href="#main">Skip to content</a><div class="app-frame"><main id="main" tabindex="-1"><input id="answer" value="52">${resultInstrument({value:50,age:45,gap:5,sample:true})}</main></div></body></html>`,{pretendToBeVisual:true});
@@ -26,6 +26,8 @@ test('every opening requests the brand intro and triplets have complementary DNA
  assert.equal(document.documentElement.dataset.launch,'pending');
  assert.equal(complement('ATG CAG GGC'),'TAC GTC CCG');assert.ok(CODONS.every(codon=>/^[ATGC]{3}$/.test(codon)));
  const first=launchFrame(0),last=launchFrame(LAUNCH_DURATION);
+ assert.equal(LAUNCH_DURATION,3200);assert.equal(LAUNCH_BRAND_HOLD,1000);
+ assert.deepEqual(launchFrame(1000),first,'the extra second holds the brand without slowing the clock handoff');
  assert.equal(first.markOpacity,1);assert.equal(first.clockOpacity,0);assert.equal(last.markOpacity,0);assert.equal(last.exit,1);assert.equal(last.travel,1);
  assert.equal(last.codons.length,12);assert.ok(last.codons.every(codon=>Math.abs(Math.hypot(codon.x,codon.y)-104)<.01));
 });
@@ -37,7 +39,7 @@ test('launch has no skip/replay, then releases the existing workspace and answer
   assert.equal(workspace.inert,true);assert.equal(f.starts,1);assert.equal(intro.hidden,false);
   assert.equal(document.querySelector('a.skip').inert,true);assert.equal(intro.querySelector('button,a'),null);
   intro.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(intro.hidden,false);
-  advance(0);advance(1000);assert.equal(intro.dataset.launchPhase,'code');
+  advance(0);advance(2000);assert.equal(intro.dataset.launchPhase,'code');
   assert.equal(document.querySelector('.launch-clock-layer>.instrument-dial'),dial,'the original clock is used, not a duplicate');
   assert.equal(document.querySelectorAll('.dial-rings').length,1);assert.ok(document.querySelector('.launch-dial-placeholder'));
   advance(LAUNCH_DURATION);assert.equal(intro.hidden,true);assert.equal(workspace.inert,false);assert.equal(f.settled,1);assert.equal(f.frames.size,0);assert.equal(f.timers.size,0);

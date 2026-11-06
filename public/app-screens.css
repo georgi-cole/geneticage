@@ -458,6 +458,14 @@ footer {display:none}
 :root[data-theme=black-metal] .result-instrument {border-color:#8d98aa;box-shadow:inset 0 1px 0 #e2eafa38,inset 0 -1px 0 #0008,0 6px 24px #0004,0 0 18px #b4c4de08}
 .welcome-instrument-note {position:relative;z-index:2;font-size:11px;line-height:1.6;color:var(--result-muted);max-width:280px;text-align:center;margin:0 auto 16px}
 .welcome-instrument .age-value {color:var(--result-accent);opacity:.7}
+.instrument-number .age-unmeasured {width:1.12em;height:1em;display:grid;place-items:center;opacity:1;letter-spacing:0}
+.unmeasured-mark {display:block;width:100%;height:100%;overflow:visible;color:var(--result-accent)}
+.unmeasured-mark .mark-ribbon {stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.unmeasured-mark .mark-back {opacity:.38}
+.unmeasured-mark .mark-front {opacity:.8}
+.unmeasured-mark .mark-glint {stroke:var(--result-ink);stroke-width:.8;stroke-linecap:round;opacity:.9}
+.unmeasured-mark .mark-bond {stroke:currentColor;stroke-width:1;stroke-linecap:round;opacity:.3}
+.unmeasured-mark circle {fill:var(--result-ink);opacity:.8}
 .welcome-instrument .dial-highlight {opacity:.2}
 .welcome-instrument .dial-pointer {display:none}
 .field-feedback {margin:5px 0 3px;color:var(--error);font-size:10px;line-height:1.5}

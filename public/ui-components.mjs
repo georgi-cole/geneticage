@@ -9,10 +9,15 @@ function instrumentValue(value,{signed=false,digits=0}={}){
  return numeric?`<span class="sr-only">${escapeHTML(text)}</span><span aria-hidden="true" data-count-to="${Number(value)}" data-count-final="${escapeHTML(text)}" data-count-signed="${signed}" data-count-digits="${digits}">${escapeHTML(text)}</span>`:escapeHTML(text);
 }
 
+// An open, paired form marks an unmeasured state; it is never a score or a loader.
+export function unmeasuredMark(){
+ return '<svg class="unmeasured-mark" viewBox="0 0 100 84" fill="none" aria-hidden="true" focusable="false"><path class="mark-ribbon mark-back" d="M67 16C55 7 35 15 24 31S13 64 25 69C37 74 57 61 69 44S81 19 72 15"/><path class="mark-ribbon mark-front" d="M33 16C45 7 65 15 76 31S87 64 75 69C63 74 43 61 31 44S19 19 28 15"/><path class="mark-glint" d="M37 15C48 13 63 22 72 34M23 52C22 60 26 65 33 65M67 65C74 65 78 60 77 52"/><path class="mark-bond" d="m44 35 12 0m-14 9h16m-12 9h8"/><circle cx="32" cy="16" r="2"/><circle cx="68" cy="16" r="2"/></svg>';
+}
+
 // Calibration is decorative, not a health score, confidence interval or aging speed.
 export function resultInstrument({value,age=null,gap=null,sample=false,illustrative=false,empty=false,profileOnly=false,withheld=false,action='sample',actionLabel='',recordId='',title='A look at the result',date=''}){
   const ticks=Array.from({length:61},(_,i)=>{const a=(150+i*4)*Math.PI/180,r=i%5===0?112:116;return `<line x1="${(140+Math.cos(a)*r).toFixed(2)}" y1="${(140+Math.sin(a)*r).toFixed(2)}" x2="${(140+Math.cos(a)*121).toFixed(2)}" y2="${(140+Math.sin(a)*121).toFixed(2)}" class="${i%5===0?'major':''}"/>`;}).join('');
-  const noAge=empty||profileOnly;
+  const noAge=empty||profileOnly||withheld;
   return `<section class="result-instrument result-surface ${sample?'sample-panel':'personal-result'} ${noAge?'welcome-instrument':''}" aria-labelledby="result-instrument-title" data-theme-part ${!noAge&&Number.isFinite(value)?'data-result-motion':''}>
     <img class="theme-orb" data-theme-asset="blood-moon" src="/assets/blood-moon-overview-v2.webp" srcset="/assets/blood-moon-overview-v2-small.webp 256w, /assets/blood-moon-overview-v2.webp 512w" sizes="260px" width="512" height="512" alt="" decoding="async">
     <div class="instrument-heading"><h2 id="result-instrument-title">${title}</h2><span class="instrument-tag">${empty?'START HERE':withheld?'REVIEW NEEDED':profileOnly?'HEALTH PROFILE':sample||illustrative?'SAMPLE':'YOUR RESULT'}</span></div>
@@ -20,7 +25,7 @@ export function resultInstrument({value,age=null,gap=null,sample=false,illustrat
       <div class="instrument-atmosphere" aria-hidden="true"><span class="bionic-rib rib-one"></span><span class="bionic-rib rib-two"></span><span class="bionic-rib rib-three"></span></div>
       <div class="instrument-dial">
         <svg class="dial-rings" viewBox="0 0 280 280" fill="none" aria-hidden="true"><circle cx="140" cy="140" r="130" class="outer-orbit"/><path d="M36.08 200a120 120 0 1 1 207.84 0" class="dial-track"/>${ticks}<path d="M48.2 193a106 106 0 0 1 183.6-106" pathLength="1" class="dial-highlight"/><g class="dial-pointer" transform="translate(231.799 87) rotate(60)"><path d="M0-5 3.8 3-3.8 3Z"/></g><path d="M132 239h16M140 231v16" class="dial-cross"/></svg>
-        <div class="instrument-number"><span class="readout-label">${withheld?'ESTIMATE UNAVAILABLE':profileOnly?'HEALTH & LIFESTYLE':'CLINICAL PHENOAGE'}</span><strong class="age-value">${noAge?'—':instrumentValue(value,{digits:2})}</strong><span class="instrument-unit">${empty?'No assessment yet':withheld?'Needs review':profileOnly?'No age calculated':'years'}</span></div>
+        <div class="instrument-number"><span class="readout-label">${withheld?'ESTIMATE UNAVAILABLE':profileOnly?'HEALTH & LIFESTYLE':'CLINICAL PHENOAGE'}</span><strong class="age-value ${noAge?'age-unmeasured':''}">${noAge?unmeasuredMark():instrumentValue(value,{digits:2})}</strong><span class="instrument-unit">${empty?'No assessment yet':withheld?'Needs review':profileOnly?'No age calculated':'years'}</span></div>
         <span class="dial-caption">${noAge?'A PERSONAL PERSPECTIVE':'BLOOD-BASED ESTIMATE'}</span>
       </div>
     </div>
