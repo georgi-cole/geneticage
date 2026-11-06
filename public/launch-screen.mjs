@@ -3,7 +3,7 @@ import {paintSignature,settleSignature,signatureOutline} from './signature-motio
 import {translateText} from './language-system.mjs';
 import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
 export const LAUNCH_DURATION=3000;
-export const LAUNCH_TRANSFORM_SPEED=1.3*1.15*1.25;
+export const LAUNCH_TRANSFORM_SPEED=1.3*1.15*1.25*1.25;
 export const LAUNCH_BRAND_HOLD=LAUNCH_DURATION-2200/LAUNCH_TRANSFORM_SPEED;
 export const launchTime=milliseconds=>Math.max(0,milliseconds-LAUNCH_BRAND_HOLD)*LAUNCH_TRANSFORM_SPEED;
 export const CODONS=['ATG','CAG','GGC','TCC','AAC','GCT'];

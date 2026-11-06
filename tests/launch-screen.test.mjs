@@ -28,7 +28,7 @@ test('every opening requests the brand intro and triplets have complementary DNA
  assert.equal(document.documentElement.dataset.launch,'pending');
  assert.equal(complement('ATG CAG GGC'),'TAC GTC CCG');assert.ok(CODONS.every(codon=>/^[ATGC]{3}$/.test(codon)));
  const first=launchFrame(0),last=launchFrame(LAUNCH_DURATION);
- assert.equal(LAUNCH_DURATION,3000);assert.equal(LAUNCH_TRANSFORM_SPEED,1.3*1.15*1.25);
+ assert.equal(LAUNCH_DURATION,3000);assert.equal(LAUNCH_TRANSFORM_SPEED,1.3*1.15*1.25*1.25);
  assert.ok(Math.abs(launchTime(3000)-2200)<1e-9);
  assert.ok(Math.abs(launchTime(LAUNCH_BRAND_HOLD+1000/LAUNCH_TRANSFORM_SPEED)-1000)<1e-9);
  assert.deepEqual(launchFrame(LAUNCH_BRAND_HOLD),first,'the extra second holds the brand without slowing the clock handoff');
