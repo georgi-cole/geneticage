@@ -4,6 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { handleAccountApi, CONSENT_VERSION } from './lib/account-api.mjs';
 import { sampleAnswers, sampleLabs, calculatePhenoAge, normalizeLab } from './public/model.mjs';
+import {REFERENCE_CATALOG_VERSION} from './public/lab-reference-catalog.mjs';
 
 const sqlite = new DatabaseSync(':memory:');
 sqlite.exec('PRAGMA foreign_keys=ON');
@@ -36,6 +37,7 @@ const review=await call(a,'assessments/'+id);assert.equal(review.data.report.ful
 assert.equal(sqlite.prepare('SELECT count(*) n FROM report_orders').get().n,0);
 env.PAYMENTS_ENABLED='true';assert.equal((await call(a,'assessments/'+id)).data.report.full,false);env.PAYMENTS_ENABLED='false';delete env.REPORT_REVIEW_MODE;
 const result = await call(a, 'assessments/' + id);
+assert.equal(result.data.assessment.labReferenceMode,'lab-only','Earlier requests without a guide choice must not gain new reference flags.');
 assert.equal(result.data.assessment.value, calculatePhenoAge(45, normalizeLab(sampleLabs())));
 assert.equal(result.data.report.clinical.value, result.data.assessment.value);
 assert.equal((await call(b, 'assessments')).data.assessments.length, 0);
@@ -50,6 +52,16 @@ const withheldId=randomUUID();
 assert.equal((await call(a, 'assessments', 'POST', { ...entry, id:withheldId, labContext:false })).response.status,201);
 assert.equal((await call(a, 'assessments/'+withheldId)).data.assessment.value,null);
 const exported=await call(a,'account/export');assert.equal(exported.data.assessments.length,2);assert.ok(exported.data.assessments.every(x=>x.report.version));
+const referenced=structuredClone(entry);referenced.id=randomUUID();referenced.labReferenceMode='published';referenced.labReferenceGroup='female';referenced.labReferenceVersion=REFERENCE_CATALOG_VERSION;
+Object.assign(referenced.lab.crp,{referenceLow:'0',referenceHigh:'5',referenceHighExclusive:true,assay:'standard-crp'});
+assert.equal((await call(a,'assessments','POST',referenced)).response.status,201);
+const roundTrip=(await call(a,'assessments/'+referenced.id)).data.assessment;
+assert.deepEqual(roundTrip.lab.crp,referenced.lab.crp);assert.equal(roundTrip.labReferenceVersion,REFERENCE_CATALOG_VERSION);assert.equal(roundTrip.labReferenceGroup,'female');
+assert.equal(roundTrip.value,result.data.assessment.value,'Reference context does not change the clinical calculation.');
+referenced.lab.crp.referenceHigh='10';referenced.labReferenceGroup='male';
+assert.equal((await call(a,'assessments','POST',referenced)).response.status,201);
+assert.deepEqual((await call(a,'assessments/'+referenced.id)).data.assessment,roundTrip,'Retrying an ID cannot rewrite the saved reference context.');
+assert.equal((await call(a,'assessments/'+referenced.id,'DELETE',{confirm:true})).response.status,200);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
 sqlite.prepare('UPDATE assessments SET payload=? WHERE id=?').run(stored.payload,withheldId);
 assert.equal((await call(a,'assessments/'+withheldId)).response.status,503);

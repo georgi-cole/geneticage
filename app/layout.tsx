@@ -23,6 +23,7 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
       <link rel="stylesheet" href="/fonts.css" />
       <link rel="stylesheet" href="/themes.css" />
       <link rel="stylesheet" href="/app-screens.css" />
+      <link rel="stylesheet" href="/assessment-report.css" />
       <link rel="stylesheet" href="/launch-screen.css" />
     </head>
     <body>{children}</body>

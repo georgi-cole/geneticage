@@ -22,11 +22,17 @@ Saved historical report snapshots retain their original interpretation, prioriti
 
 Editorial standard: use concrete headings, ordinary English and defined terms; ask one clear question at a time; place the relevant limitation beside the result and leave technical detail in the methods section. Avoid motivational slogans, causal claims, repeated sales copy and interchangeable labels for biological, clinical and epigenetic age. Clinical review, population applicability and uncertainty calibration remain outstanding; an editorial review is not clinical validation.
 
+## Assessment and report revision: 6 November 2026
+
+Content version `2026-11-06-report-v3` retains questionnaire answers and blood entries when switching routes. Reports opens the current draft, with Summary, Findings, Blood results and Details instead of a long chapter dropdown. Sample exploration keeps a temporary copy of the current draft so the user can return to it. Only explicit reset/new-assessment actions clear entries; reloading still clears unsaved data.
+
+Users can enter their own reference limits in the measurement’s selected unit, including one-sided and exclusive limits. These take precedence. New assessments can use a source-pinned ABIM adult guide for missing intervals, or leave comparisons unassigned. The fallback requires known adult collection context; creatinine needs the report’s reference group, fasting glucose needs confirmed fasting, and CRP needs an identified standard assay. hs-CRP risk bands are not used as laboratory intervals. Earlier saved records without guide metadata remain lab-only. Reference settings never alter PhenoAge or overwrite saved results. [Reference policy and sources](docs/LAB_REFERENCE_POLICY.md).
+
 ## Phone preview on GitHub Pages
 
 The public [phone preview](https://georgi-cole.github.io/geneticage/) uses the same interface, themes, English/Bulgarian copy, questionnaire and clinical calculator as the hosted app. It starts without a profile or invented personal result. Reports can be explored locally without creating a purchase. Answers remain in page memory and disappear on reload; only theme/language preferences are stored on the device. The Account tab explains the distinction and links to the separately hosted app for cloud features.
 
-GitHub Pages serves static files: sign-in, cloud history, encrypted storage and purchases require the existing hosted app and are not connected to this preview. Its content policy blocks network API requests and form submissions. The server application, ownership rules, immutable saved records, encryption keys, payment entitlements and Sites audience are unchanged.
+GitHub Pages serves static files: sign-in, cloud history, encrypted storage and purchases require the existing hosted app and are not connected to this preview. Its content policy blocks network API requests and form submissions. Hosted identity, ownership rules, immutable saved records, encryption keys, payment entitlements and the Sites audience retain their existing behavior.
 
 Run `npm run build:pages`, then `npm run serve:pages` to inspect `http://127.0.0.1:4173/geneticage/`. The build bundles browser code and copies public media/styles into ignored `dist-pages/`; it excludes server code, credentials and databases. It uses the shared app shell, so layout changes apply to both editions. The default project path is `/geneticage/`.
 

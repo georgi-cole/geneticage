@@ -1,5 +1,7 @@
-export const CONTENT_VERSION='2026-11-04-science-v2';
+export const CONTENT_VERSION='2026-11-06-report-v3';
 export const references=[
+ {id:'adult-intervals',label:'ABIM · Laboratory Test Reference Ranges · January 2026',url:'https://www.abim.org/media/e2wdwdqu/laboratory-reference-ranges.pdf'},
+ {id:'lab-intervals',label:'MedlinePlus · Understanding laboratory reference intervals',url:'https://medlineplus.gov/lab-tests/how-to-understand-your-lab-results/'},
  {id:'phenoage',label:'Levine et al. (2018) · Clinical PhenoAge and DNAm PhenoAge',url:'https://www.aging-us.com/article/101414/text'},
  {id:'validation',label:'Liu et al. (2018) · Clinical PhenoAge validation in US adults',url:'https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.1002718'},
  {id:'horvath',label:'Horvath (2013) · DNA methylation age',url:'https://doi.org/10.1186/gb-2013-14-10-r115'},

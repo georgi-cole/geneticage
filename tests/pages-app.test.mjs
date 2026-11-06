@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {test,after} from 'node:test';
 import {JSDOM} from 'jsdom';
 import {shell} from '../public/app-shell.mjs';
+import {sampleLabs} from '../public/model.mjs';
 
 const dom=new JSDOM('<!doctype html><html lang="en" data-hosting="pages" data-theme="black-metal"><body>'+shell+'</body></html>',{url:'https://example.test/geneticage/?payment_order=not-a-real-order',pretendToBeVisual:true});
 const {window}=dom;
@@ -12,6 +13,9 @@ let requests=0;globalThis.fetch=async()=>{requests++;throw Error('A static previ
 const $=selector=>document.querySelector(selector);
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 async function click(selector){assert.ok($(selector),selector);$(selector).click();await flush();}
+async function enter(selector,value,event='input'){const input=$(selector);assert.ok(input,selector);input.value=value;input.dispatchEvent(new window.Event(event,{bubbles:true}));await flush();}
+async function submit(selector){$(selector).dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));await flush();}
+
 after(()=>window.close());
 
 test('Pages runs the actual app without a backend, fake account or stored health answers',async()=>{
@@ -26,12 +30,48 @@ test('Pages runs the actual app without a backend, fake account or stored health
  const age=$('[data-answer="age"]');assert.ok(age);age.value='52';age.dispatchEvent(new window.Event('input',{bubbles:true}));
  await click('#language-toggle');assert.equal(document.documentElement.lang,'bg');assert.equal(age.value,'52');assert.equal($('[data-answer="age"]'),age);
  await click('#language-toggle');
+ await submit('#questions');
+ await enter('[data-answer="country"]','Fictional test country');await submit('#questions');
+ await enter('[data-answer="height"]','176');await submit('#questions');
+ await enter('[data-answer="weight"]','77');await submit('#questions');
+ const health=$('[data-answer="health"][value="Good"]'),form=$('#questions');health.focus();health.click();await flush();
+ assert.equal($('#questions'),form);assert.equal(document.activeElement,health);assert.equal(health.checked,true);
+ await submit('#questions');await click('[data-answer="smoking"][value="Never smoked regularly"]');await submit('#questions');
+ assert.match($('#main').textContent,/This is separate from cigarettes/);assert.equal(document.querySelectorAll('[data-answer="nicotine"]').length,8);
+ await click('[data-answer="nicotine"][value="Vape or e-cigarette"]');await click('[data-answer="nicotine"][value="None"]');
+ assert.equal($('[data-answer="nicotine"][value="Vape or e-cigarette"]').checked,false);assert.equal($('[data-answer="nicotine"][value="None"]').checked,true);
+ await click('.mobile-nav [data-route="history"]');await click('[data-action="start-labs"]');
+ assert.ok($('#lab-age'),'Switching routes does not start a new consent flow.');assert.equal($('#lab-age').value,'52');
+ await enter('#lab-date','2026-11-01');await click('[name="lab-fasting"][value="Yes"]');
+ await enter('#lab-reference-group','female','change');await submit('#labs-form');
+ const fictional=sampleLabs();
+ for(let step=1;step<=3;step++){
+  for(const input of document.querySelectorAll('input[data-lab]'))await enter(`[data-lab="${input.dataset.lab}"]`,fictional[input.dataset.lab].value);
+  if(step===1){await enter('[data-lab-reference="albumin"][data-reference-key="referenceLow"]','35');await enter('[data-lab-reference="albumin"][data-reference-key="referenceHigh"]','50');}
+  if(step===2)await enter('#crp-assay','standard-crp','change');
+  await submit('#labs-form');
+ }
+ $('#lab-valid').checked=true;$('#lab-context').checked=true;await submit('#labs-form');
+ assert.ok($('.result-instrument'));await click('[data-action="report"]');
+ assert.equal(document.querySelectorAll('.report-tabs button').length,4);assert.equal(document.querySelector('#report-chapter'),null);
+ await click('[data-action="report-tab"][data-tab="details"]');
+ assert.match($('[data-report-panel="details"]').textContent,/Fictional test country/);assert.match($('[data-report-panel="details"]').textContent,/52 years/);
+ await click('[data-action="report-tab"][data-tab="blood"]');
+ assert.equal(document.querySelectorAll('[data-reference-source="lab"]').length,1);assert.equal(document.querySelectorAll('[data-reference-source="published"]').length,8);
+ let printed=0;const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(el=>el.open);
+ window.print=()=>{printed++;assert.ok(details.every(el=>el.open),'Print includes every disclosure in all four report sections.');};
+ await click('[data-action="print"]');assert.equal(printed,1);window.dispatchEvent(new window.Event('afterprint'));assert.deepEqual(details.map(el=>el.open),previous);
+ await click('#language-toggle');assert.match($('[data-report-panel="blood"]').textContent,/Публикуван/);await click('#language-toggle');
+ // The existing sample entry is an isolated detour and can restore the real draft.
+ await click('[data-action="labs"]');await click('[data-action="sample-labs"]');
+ await click('.mobile-nav [data-route="reports"]');await click('[data-action="report"]');assert.match($('#main').textContent,/Illustrative sample data/);
+ await click('[data-action="restore-draft"]');assert.equal($('#lab-age').value,'52');
  await click('.mobile-nav [data-route="settings"]');
  assert.match($('#main').textContent,/On this device/);assert.equal($('#main [data-action="signup"]'),null);
  await click('#main [data-action="privacy"]');
  assert.match($('.modal').textContent,/Reloading or closing the page clears them/);await click('.modal [data-action="close"]');
- await click('.mobile-nav [data-route="reports"]');assert.equal($('#main [data-action="signup"]'),null);await click('#main [data-action="sample-report"]');
- assert.match($('#main').textContent,/Preview report/);assert.match($('#main').textContent,/No purchase is created/);
+ await click('.mobile-nav [data-route="reports"]');assert.equal($('#main [data-action="signup"]'),null);await click('#main [data-action="report"]');
+ assert.match($('#main').textContent,/Unsaved assessment/);assert.match($('#main').textContent,/Fictional test country/);assert.equal($('#main [data-action="save"]'),null);
  const cloud=document.createElement('button');cloud.dataset.action='checkout';document.body.append(cloud);cloud.click();await flush();
  assert.match($('.modal').textContent,/Cloud features in the hosted app/);
  assert.equal($('.modal a').origin,'https://kolequant-age-prototype.quartzpaddock.chatgpt.site');
