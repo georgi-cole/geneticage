@@ -1,4 +1,4 @@
-import {paintSignature} from './signature-motion.mjs';
+import {paintSignature,settleSignature,signatureOutline} from './signature-motion.mjs';
 // A brand animation, not a DNA analysis or a calculated personal result.
 import {translateText} from './language-system.mjs';
 import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
@@ -37,12 +37,12 @@ export const launchMarkup=`<section id="launch-screen" class="launch-screen" hid
  <div class="launch-clock-layer" aria-hidden="true"></div>
  <div class="launch-composition">
   <svg class="launch-scene" viewBox="-170 -170 340 340" aria-hidden="true" focusable="false">
-   <defs><clipPath id="launch-logo-cut"><rect data-launch-logo-cut x="-32" y="-58" width="64" height="116"/></clipPath><linearGradient id="launch-metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="var(--launch-shade)"/><stop offset=".35" stop-color="var(--launch-ink)"/><stop offset=".52" stop-color="var(--launch-accent)"/><stop offset=".7" stop-color="var(--launch-ink)"/><stop offset="1" stop-color="var(--launch-shade)"/></linearGradient></defs>
+   <defs><linearGradient id="launch-brand" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#258bca"/><stop offset=".5" stop-color="#39a676"/><stop offset="1" stop-color="#8335a3"/></linearGradient><linearGradient id="launch-metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="var(--launch-shade)"/><stop offset=".35" stop-color="var(--launch-ink)"/><stop offset=".52" stop-color="var(--launch-accent)"/><stop offset=".7" stop-color="var(--launch-ink)"/><stop offset="1" stop-color="var(--launch-shade)"/></linearGradient></defs>
    <g class="launch-ribbons" stroke="url(#launch-metal)" opacity="0"><path data-launch-ribbon/><path data-launch-ribbon/></g>
-   <image data-launch-mark clip-path="url(#launch-logo-cut)" href="/assets/kolequant-mark.webp" x="-32" y="-58" width="64" height="116"/>
+   <path data-launch-mark d="${signatureOutline(0)}" fill="url(#launch-brand)" fill-rule="evenodd" transform="translate(-32 -58) scale(.64 1.38095238)"/>
    <g class="launch-codons">${Array.from({length:12},(_,index)=>`<text data-launch-codon="${index}" text-anchor="middle" dominant-baseline="middle" opacity="0">${index<6?CODONS[index]:complement(CODONS[index-6])}</text>`).join('')}</g>
   </svg>
-  <div class="launch-wordmark"><h1 id="launch-title">${PUBLISHER_NAME}<span>${APP_NAME}</span></h1><p data-launch-caption>Biology, in time.</p></div>
+  <div class="launch-wordmark"><h1 id="launch-title">${PUBLISHER_NAME}</h1><p class="launch-product">${APP_NAME}</p></div>
  </div>
  <div class="launch-footer" aria-hidden="true"><span>ATG</span><i></i><span data-launch-phase-label>CODE INTO CONTEXT</span></div>
 </section>`;
@@ -83,20 +83,19 @@ export function initializeLaunch({root=document,host=window,duration=LAUNCH_DURA
  function returnClock(){
   if(!clock)return;
   const {dial,placeholder,signature}=clock;
-  if(signature){paintSignature(signature.node,1);signature.node.style.removeProperty('clip-path');signature.node.removeAttribute('preserveAspectRatio');if(signature.slot.isConnected)signature.slot.replaceWith(signature.node);signature.layer.remove();}
+  if(signature){settleSignature(signature.node);signature.node.removeAttribute('preserveAspectRatio');if(signature.slot.isConnected)signature.slot.replaceWith(signature.node);signature.layer.remove();}
   if(placeholder.isConnected)placeholder.replaceWith(dial);else dial.remove();
   clock=null;
  }
  function copy(){
   const language=documentRoot.lang;
-  element.querySelector('[data-launch-caption]').textContent=translateText('Biology, in time.',language);
   element.querySelector('[data-launch-phase-label]').textContent=translateText('CODE INTO CONTEXT',language);
  }
  function paint(milliseconds){
   const state=launchFrame(milliseconds);
   element.dataset.launchPhase=state.phase;
-  mark.setAttribute('opacity',String(state.markOpacity));
-  element.querySelector('[data-launch-logo-cut]').setAttribute('height','116');
+  mark.setAttribute('opacity',String(1-ease((launchTime(milliseconds)-1530)/220)));
+  mark.setAttribute('d',signatureOutline(ease((launchTime(milliseconds)-580)/950)));
   element.querySelector('.launch-ribbons').setAttribute('opacity',String(state.ribbonOpacity));
   ribbons.forEach((path,index)=>path.setAttribute('d',state.ribbons[index]));
   codons.forEach((codon,index)=>{const item=state.codons[index];codon.setAttribute('transform',`translate(${item.x.toFixed(2)} ${item.y.toFixed(2)}) rotate(${item.rotation.toFixed(2)})`);codon.setAttribute('opacity',String(item.opacity));});
@@ -114,12 +113,9 @@ export function initializeLaunch({root=document,host=window,duration=LAUNCH_DURA
     const x=interpolate(source.left+source.width/2-sourceWidth/2,target.left,state.travel),y=interpolate(source.top+source.height/2-sourceHeight/2,target.top,state.travel);
     signature.layer.style.width=interpolate(sourceWidth,target.width,state.travel)+'px';signature.layer.style.height=interpolate(sourceHeight,target.height,state.travel)+'px';
     signature.layer.style.transform=`translate(${x}px,${y}px)`;
-    const reveal=ease((launchTime(milliseconds)-580)/480);
-    // Complementary spatial masks replace the silhouette without ghosting.
-    mark.setAttribute('opacity','1');element.querySelector('[data-launch-logo-cut]').setAttribute('height',String(116*(1-reveal)));
-    signature.layer.style.opacity='1';signature.node.style.clipPath=`inset(${(1-reveal)*100}% 0 0 0)`;
+    mark.setAttribute('opacity','0');signature.layer.style.opacity='1';
     element.querySelector('.launch-ribbons').setAttribute('opacity','0');
-    paintSignature(signature.node,t);
+    paintSignature(signature.node,t,ease((launchTime(milliseconds)-1530)/250));
    }
    clockLayer.style.setProperty('--launch-readout',String(state.readoutOpacity));
    for(const [token,intro]of [['accent','accent'],['ink','ink'],['muted','muted']])clockLayer.style.setProperty('--result-'+token,`color-mix(in srgb,var(--launch-${intro}) ${(100-state.travel*100).toFixed(2)}%,${colors[token]})`);

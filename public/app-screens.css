@@ -514,3 +514,7 @@ footer {display:none}
 html[data-launch] .unmeasured-mark .signature-surface,html[data-launch] .unmeasured-mark .signature-light {animation:none}
 @media(prefers-reduced-motion:reduce) {.unmeasured-mark .signature-surface,.unmeasured-mark .signature-light {animation:none}}
 @media print {.unmeasured-mark .signature-surface,.unmeasured-mark .signature-light {animation:none}}
+
+.unmeasured-mark[data-launch-morph] .signature-rear {opacity:calc(.45 * var(--signature-material,0))}
+.unmeasured-mark[data-launch-morph] .signature-front {opacity:var(--signature-material,0)}
+.unmeasured-mark[data-launch-morph] .signature-light {opacity:0}
