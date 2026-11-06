@@ -5,12 +5,12 @@ Reviewed 5 November 2026 for `georgi-cole/geneticage`. PR #1 was already merged 
 ## Applied GitHub settings
 
 - `main` requires a PR, a successful up-to-date `validate` check and resolved conversations. Administrative bypass, force pushes and branch deletion are disabled. Approvals remain at zero for a single-maintainer project.
-- Squash merging is enabled; merge/rebase alternatives are disabled. Merged branches are deleted automatically, and branch updating is available.
+- Squash merging, automatic deletion of merged branches, branch updating and GitHub auto-merge are enabled; merge/rebase alternatives are disabled. The Dependabot workflow queues eligible same-repository PRs to `main` for squash auto-merge after CI succeeds.
 - Actions default to read-only repository permissions and cannot approve PRs. CI also declares read-only access and does not persist checkout credentials. Checkout/setup-node actions are pinned to verified commit SHAs.
 - Dependabot alerts and security updates are enabled. Secret scanning and push protection were already enabled and remain so. CodeQL default setup is enabled for JavaScript/TypeScript and Actions, with its weekly schedule.
 - The repository has a project description, Issues enabled, and unused Wiki/Projects features disabled.
 
-The settings above live in GitHub, not in a workflow that can silently alter repository administration. The Dependabot schedule, CI, contributor instructions and PR/bug templates are version-controlled. Changes to those files take effect when this PR is merged.
+GitHub auto-merge is enabled explicitly in repository settings. The version-controlled `Dependabot auto-merge` workflow only reacts after the `App checks` workflow succeeds: it updates a Dependabot branch that is behind and queues squash auto-merge. It does not check out or run pull request code and does not change repository settings. Failed checks and merge conflicts stay open for maintainer action.
 
 ## Maintained verification
 

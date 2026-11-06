@@ -1,0 +1,76 @@
+name: Dependabot auto-merge
+
+on:
+  workflow_run:
+    workflows: ["App checks"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  queue-dependabot-merge:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update stale branches and queue squash auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t PR_NUMBERS < <(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls" \
+            -f state=open \
+            -f "head=${GITHUB_REPOSITORY_OWNER}:${RUN_HEAD_BRANCH}" \
+            -F per_page=100 \
+            --jq '.[].number')
+
+          for PR_NUMBER in "${PR_NUMBERS[@]}"; do
+            PR_JSON="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")"
+            AUTHOR="$(jq -r '.user.login' <<< "$PR_JSON")"
+            BASE="$(jq -r '.base.ref' <<< "$PR_JSON")"
+            HEAD_BRANCH="$(jq -r '.head.ref' <<< "$PR_JSON")"
+            HEAD_REPO="$(jq -r '.head.repo.full_name // ""' <<< "$PR_JSON")"
+            HEAD_SHA="$(jq -r '.head.sha' <<< "$PR_JSON")"
+
+            if [[ "$AUTHOR" != "dependabot[bot]" || "$BASE" != "main" || "$HEAD_BRANCH" != "$RUN_HEAD_BRANCH" || "$HEAD_REPO" != "$GITHUB_REPOSITORY" || "$HEAD_SHA" != "$RUN_HEAD_SHA" ]]; then
+              continue
+            fi
+
+            for attempt in {1..10}; do
+              MERGE_STATE="$(jq -r '.mergeable_state // "unknown"' <<< "$PR_JSON")"
+              if [[ "$MERGE_STATE" != "unknown" ]]; then
+                break
+              fi
+              sleep 2
+              PR_JSON="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")"
+              HEAD_SHA="$(jq -r '.head.sha' <<< "$PR_JSON")"
+              if [[ "$HEAD_SHA" != "$RUN_HEAD_SHA" ]]; then
+                break
+              fi
+            done
+
+            if [[ "$HEAD_SHA" != "$RUN_HEAD_SHA" ]]; then
+              continue
+            fi
+
+            if [[ "$MERGE_STATE" == "behind" ]]; then
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/update-branch" \
+                --field expected_head_sha="$HEAD_SHA"
+              continue
+            fi
+
+            if [[ "$MERGE_STATE" == "dirty" ]]; then
+              echo "PR #${PR_NUMBER} has merge conflicts; leaving it open for a maintainer."
+              continue
+            fi
+
+            PR_URL="https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}"
+            gh pr merge "$PR_URL" --auto --squash
+          done
