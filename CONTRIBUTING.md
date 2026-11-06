@@ -17,7 +17,7 @@ Edit translations in `design/localization/*.tsv`, run `npm run locale:build`, an
 
 Use a feature branch and a PR into `main`. The required `validate` check must pass on an up-to-date branch, and review conversations must be resolved. No external approval is required while this is a single-maintainer repository. Squash merging and automatic deletion of merged branches keep the history compact. Direct/force pushes and branch deletion are blocked on `main`, including for administrators.
 
-Keep dependency updates and their lockfile together. Dependabot proposes updates; no bot PR is automatically merged. See `docs/REPOSITORY_SETUP.md` for repository settings and remaining dependency findings.
+Keep dependency updates and their lockfile together. Dependabot PRs are queued for squash auto-merge after the required App checks pass on the current `main` base; stale branches are updated automatically. Failed checks and merge conflicts remain open for a maintainer fix. See `docs/REPOSITORY_SETUP.md` for repository settings and remaining dependency findings.
 
 ## Runtime and release configuration
 
