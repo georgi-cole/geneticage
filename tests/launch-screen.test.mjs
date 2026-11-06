@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import vm from 'node:vm';
 import {JSDOM} from 'jsdom';
 import {resultInstrument} from '../public/ui-components.mjs';
-import {CODONS,complement,initializeLaunch,launchBootstrap,launchFrame,launchMarkup,LAUNCH_DURATION,LAUNCH_BRAND_HOLD} from '../public/launch-screen.mjs';
+import {CODONS,complement,initializeLaunch,launchBootstrap,launchFrame,launchMarkup,LAUNCH_DURATION,LAUNCH_BRAND_HOLD,LAUNCH_TRANSFORM_SPEED,launchTime} from '../public/launch-screen.mjs';
 
 function fixture({pending=true,reduced=false,hidden=false,language='en',empty=false}={}){
  const dom=new JSDOM(`<html lang="${language}" ${pending?'data-launch="pending"':''}><body>${launchMarkup}<a class="skip" href="#main">Skip to content</a><div class="app-frame"><main id="main" tabindex="-1"><input id="answer" value="52">${resultInstrument({value:50,age:45,gap:5,sample:true,empty})}</main></div></body></html>`,{pretendToBeVisual:true});
@@ -27,7 +27,9 @@ test('every opening requests the brand intro and triplets have complementary DNA
  assert.equal(document.documentElement.dataset.launch,'pending');
  assert.equal(complement('ATG CAG GGC'),'TAC GTC CCG');assert.ok(CODONS.every(codon=>/^[ATGC]{3}$/.test(codon)));
  const first=launchFrame(0),last=launchFrame(LAUNCH_DURATION);
- assert.equal(LAUNCH_DURATION,3000);assert.equal(LAUNCH_BRAND_HOLD,800);
+ assert.equal(LAUNCH_DURATION,3000);assert.equal(LAUNCH_TRANSFORM_SPEED,1.3);
+ assert.ok(Math.abs(launchTime(3000)-2200)<1e-9);
+ assert.ok(Math.abs(launchTime(LAUNCH_BRAND_HOLD+1000/1.3)-1000)<1e-9);
  assert.deepEqual(launchFrame(LAUNCH_BRAND_HOLD),first,'the extra second holds the brand without slowing the clock handoff');
  assert.equal(first.markOpacity,1);assert.equal(first.clockOpacity,0);assert.equal(last.markOpacity,0);assert.equal(last.exit,1);assert.equal(last.travel,1);
  assert.equal(last.codons.length,12);assert.ok(last.codons.every(codon=>Math.abs(Math.hypot(codon.x,codon.y)-104)<.01));

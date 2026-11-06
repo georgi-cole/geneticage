@@ -3,7 +3,9 @@ import {paintSignature} from './signature-motion.mjs';
 import {translateText} from './language-system.mjs';
 import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
 export const LAUNCH_DURATION=3000;
-export const LAUNCH_BRAND_HOLD=800;
+export const LAUNCH_TRANSFORM_SPEED=1.3;
+export const LAUNCH_BRAND_HOLD=LAUNCH_DURATION-2200/LAUNCH_TRANSFORM_SPEED;
+export const launchTime=milliseconds=>Math.max(0,milliseconds-LAUNCH_BRAND_HOLD)*LAUNCH_TRANSFORM_SPEED;
 export const CODONS=['ATG','CAG','GGC','TCC','AAC','GCT'];
 export const complement=sequence=>sequence.replace(/[ATGC]/g,base=>({A:'T',T:'A',G:'C',C:'G'}[base]));
 export const launchBootstrap="document.documentElement.dataset.launch='pending'";
@@ -13,7 +15,7 @@ const ease=value=>{const t=clamp(value);return t*t*(3-2*t);};
 const interpolate=(from,to,t)=>from+(to-from)*t;
 
 export function launchFrame(milliseconds){
- const time=Math.max(0,milliseconds-LAUNCH_BRAND_HOLD),unfold=ease((time-580)/880);
+ const time=launchTime(milliseconds),unfold=ease((time-580)/880);
  const codons=Array.from({length:12},(_,index)=>{
   const strand=Math.floor(index/6),row=index%6,y=-53+row*21;
   const x=Math.sin((y+53)/105*Math.PI*2)*24*(strand?-1:1);
@@ -106,11 +108,11 @@ export function initializeLaunch({root=document,host=window,duration=LAUNCH_DURA
    clockLayer.style.transform=`translate(${left.toFixed(3)}px,${top.toFixed(3)}px) scale(${size/destination.width})`;
    clockLayer.style.opacity=String(state.clockOpacity);
    if(signature){
-    const t=ease((Math.max(0,milliseconds-LAUNCH_BRAND_HOLD)-580)/950),target=signature.destination;
+    const t=ease((launchTime(milliseconds)-580)/950),target=signature.destination;
     const sourceWidth=source.width*64/340,sourceHeight=source.height*116/340;
     const x=interpolate(source.left+source.width/2-sourceWidth/2,target.left,state.travel),y=interpolate(source.top+source.height/2-sourceHeight/2,target.top,state.travel);
     signature.layer.style.width=interpolate(sourceWidth,target.width,state.travel)+'px';signature.layer.style.height=interpolate(sourceHeight,target.height,state.travel)+'px';
-    signature.layer.style.transform=`translate(${x}px,${y}px)`;signature.layer.style.opacity=String(ease((Math.max(0,milliseconds-LAUNCH_BRAND_HOLD)-580)/300));
+    signature.layer.style.transform=`translate(${x}px,${y}px)`;signature.layer.style.opacity=String(ease((launchTime(milliseconds)-580)/300));
     paintSignature(signature.node,t);
    }
    clockLayer.style.setProperty('--launch-readout',String(state.readoutOpacity));
