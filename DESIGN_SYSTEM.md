@@ -121,3 +121,5 @@ The unmeasured signature is now a single sculptural composition of two tapered, 
 The satin signature turns subtly over 18 seconds, with an occasional 14-second edge glint. Both rest under reduced motion and print. During launch, the actual Overview signature is temporarily borrowed beside the actual dial. Its strands interpolate from a logo-like helix into the final ribbons, then travel to their measured destination and return to their original node slot. Cleanup restores their exact final geometry.
 
 Launch choreography runs at 1.3× its original speed. The full introduction remains 3,000 ms; the opening hold fills the remaining time (about 1,308 ms). Signature morph, codons and clock travel share the same time mapping; idle signature motion is unchanged.
+
+The logo handoff uses complementary spatial masks instead of opacity overlap. A single silhouette is replaced from bottom to top, then completes its geometric morph. The extra decorative ribbon trails are suppressed during this handoff. Transformation speed is 1.3 × 1.15 = 1.495× the original, while total duration stays 3,000 ms.

@@ -27,9 +27,9 @@ test('every opening requests the brand intro and triplets have complementary DNA
  assert.equal(document.documentElement.dataset.launch,'pending');
  assert.equal(complement('ATG CAG GGC'),'TAC GTC CCG');assert.ok(CODONS.every(codon=>/^[ATGC]{3}$/.test(codon)));
  const first=launchFrame(0),last=launchFrame(LAUNCH_DURATION);
- assert.equal(LAUNCH_DURATION,3000);assert.equal(LAUNCH_TRANSFORM_SPEED,1.3);
+ assert.equal(LAUNCH_DURATION,3000);assert.equal(LAUNCH_TRANSFORM_SPEED,1.3*1.15);
  assert.ok(Math.abs(launchTime(3000)-2200)<1e-9);
- assert.ok(Math.abs(launchTime(LAUNCH_BRAND_HOLD+1000/1.3)-1000)<1e-9);
+ assert.ok(Math.abs(launchTime(LAUNCH_BRAND_HOLD+1000/LAUNCH_TRANSFORM_SPEED)-1000)<1e-9);
  assert.deepEqual(launchFrame(LAUNCH_BRAND_HOLD),first,'the extra second holds the brand without slowing the clock handoff');
  assert.equal(first.markOpacity,1);assert.equal(first.clockOpacity,0);assert.equal(last.markOpacity,0);assert.equal(last.exit,1);assert.equal(last.travel,1);
  assert.equal(last.codons.length,12);assert.ok(last.codons.every(codon=>Math.abs(Math.hypot(codon.x,codon.y)-104)<.01));
@@ -94,8 +94,11 @@ test('a refreshed home result replaces a borrowed clock without restoring stale 
  test('launch morphs and returns the original signature, including interrupted cleanup',()=>{
  for(const interrupt of [false,true]){const f=fixture({empty:true});try{
  const node=f.document.querySelector('.unmeasured-mark'),parent=node.parentNode,final=node.querySelector('.signature-front').getAttribute('d');
- f.advance(0);f.advance(1900);assert.equal(f.document.querySelector('.launch-signature-layer>.unmeasured-mark'),node);assert.notEqual(node.querySelector('.signature-front').getAttribute('d'),final);
+ f.advance(0);f.advance(2000);assert.equal(f.document.querySelector('.launch-signature-layer>.unmeasured-mark'),node);assert.notEqual(node.querySelector('.signature-front').getAttribute('d'),final);
+ assert.equal(f.document.querySelector('.launch-ribbons').getAttribute('opacity'),'0');
+ assert.equal(f.document.querySelector('[data-launch-mark]').getAttribute('opacity'),'1');
+ const cut=Number(f.document.querySelector('[data-launch-logo-cut]').getAttribute('height'));assert.ok(cut>0&&cut<116);assert.match(node.style.clipPath,/inset/);
  if(interrupt)f.controller.finish();else f.advance(LAUNCH_DURATION);
- assert.equal(node.parentNode,parent);assert.equal(node.querySelector('.signature-front').getAttribute('d'),final);assert.equal(f.document.querySelector('.launch-signature-layer'),null);assert.equal(node.hasAttribute('preserveAspectRatio'),false);
+ assert.equal(node.parentNode,parent);assert.equal(node.querySelector('.signature-front').getAttribute('d'),final);assert.equal(f.document.querySelector('.launch-signature-layer'),null);assert.equal(node.hasAttribute('preserveAspectRatio'),false);assert.equal(node.style.clipPath,'');
  }finally{f.dom.window.close();}}
  });
