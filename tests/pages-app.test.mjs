@@ -20,7 +20,7 @@ after(()=>window.close());
 
 test('Pages runs the actual app without a backend, fake account or stored health answers',async()=>{
  await import('../public/app.mjs');await flush();
- assert.match($('#main').textContent,/Your first assessment/);
+ assert.match($('#main').textContent,/Start here/);
  assert.equal($('#main [data-count-to]'),null);
  await click('.mobile-nav [data-route="history"]');
  assert.match($('#main').textContent,/Cloud history is available/);

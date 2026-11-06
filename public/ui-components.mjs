@@ -12,7 +12,7 @@ function instrumentValue(value,{signed=false,digits=0}={}){
 
 // An open, paired form marks an unmeasured state; it is never a score or a loader.
 export function unmeasuredMark(){
- return '<svg class="unmeasured-mark" viewBox="0 0 100 84" fill="none" aria-hidden="true" focusable="false"><g class="base-facets"><path d="m24 11 22-5 7 9-9 11-23 5-7-10Z"/><path d="m58 8 23 7 5 12-9 7-24-8-3-10Z"/><path d="m20 36 25-6 8 9-8 10-25 5-7-9Z"/><path d="m57 32 25 7 5 11-9 8-25-8-3-10Z"/><path d="m24 60 22-6 7 9-9 11-22 5-7-10Z"/><path d="m57 56 22 7 5 12-9 7-22-8-3-10Z"/></g><path class="base-seam" d="m47 17 7 2m-7 22 7 2m-7 22 7 2"/><path class="base-edge" d="m24 11 22-5m12 2 23 7M20 36l25-6m12 2 25 7M24 60l22-6m11 2 22 7"/><g class="base-letters"><text x="30" y="23">A</text><text x="65" y="25">T</text><text x="29" y="46">G</text><text x="65" y="49">C</text><text x="30" y="70">C</text><text x="64" y="73">G</text></g></svg>';
+ return '<svg class="unmeasured-mark" viewBox="0 0 100 84" fill="none" aria-hidden="true" focusable="false"><defs><linearGradient id="signature-satin" x1="24" y1="10" x2="72" y2="73" gradientUnits="userSpaceOnUse"><stop stop-color="var(--result-accent)" stop-opacity=".3"/><stop offset=".32" stop-color="var(--result-ink)"/><stop offset=".48" stop-color="var(--result-accent)" stop-opacity=".5"/><stop offset=".7" stop-color="var(--result-ink)" stop-opacity=".9"/><stop offset="1" stop-color="var(--result-accent)" stop-opacity=".35"/></linearGradient></defs><path class="signature-rear" d="M33 6C70 17 73 28 52 42C30 56 33 68 67 80C42 61 41 57 60 45C87 28 70 13 33 6Z"/><path class="signature-front" d="M67 6C30 17 27 28 48 42C70 56 67 68 33 80C58 61 59 57 40 45C13 28 30 13 67 6Z"/><path class="signature-light" d="M67 6C35 18 30 28 48 42M60 51C65 61 54 71 33 80"/></svg>';
 }
 
 // Calibration is decorative, not a health score, confidence interval or aging speed.
@@ -22,7 +22,7 @@ export function resultInstrument({value,age=null,gap=null,sample=false,illustrat
   const noAge=empty||profileOnly||withheld;
   return `<section class="result-instrument result-surface ${sample?'sample-panel':'personal-result'} ${noAge?'welcome-instrument':''}" aria-labelledby="result-instrument-title" data-theme-part ${!noAge&&Number.isFinite(value)?'data-result-motion':''}>
     <img class="theme-orb" data-theme-asset="blood-moon" src="/assets/blood-moon-overview-v2.webp" srcset="/assets/blood-moon-overview-v2-small.webp 256w, /assets/blood-moon-overview-v2.webp 512w" sizes="260px" width="512" height="512" alt="" decoding="async">
-    <div class="instrument-heading"><h2 id="result-instrument-title">${title}</h2><span class="instrument-tag">${empty?'START HERE':withheld?'REVIEW NEEDED':profileOnly?'HEALTH PROFILE':sample||illustrative?'SAMPLE':'YOUR RESULT'}</span></div>
+    <div class="instrument-heading ${empty?'instrument-heading-empty':''}"><h2 id="result-instrument-title" ${empty?'class="sr-only"':''}>${empty?'Start here':title}</h2><span class="instrument-tag">${empty?'START HERE':withheld?'REVIEW NEEDED':profileOnly?'HEALTH PROFILE':sample||illustrative?'SAMPLE':'YOUR RESULT'}</span></div>
     <div class="instrument-stage">
       <div class="instrument-atmosphere" aria-hidden="true"><span class="bionic-rib rib-one"></span><span class="bionic-rib rib-two"></span><span class="bionic-rib rib-three"></span></div>
       <div class="instrument-dial">

@@ -500,8 +500,9 @@ footer {display:none}
  border-color:#e0e9f8;box-shadow:inset 0 1px 0 #ffffffa0,inset 0 -1px 0 #000b,0 5px 17px #0006,0 0 16px #c5d5f014;
 }
 
-/* Three engraved complementary base pairs form the unmeasured signature. */
-.unmeasured-mark .base-facets {fill:currentColor;fill-opacity:.12;stroke:currentColor;stroke-width:.65;stroke-opacity:.55;stroke-linejoin:round}
-.unmeasured-mark .base-edge {stroke:var(--result-ink);stroke-width:1;stroke-linecap:round;opacity:.85}
-.unmeasured-mark .base-seam {stroke:currentColor;stroke-width:1;opacity:.45}
-.unmeasured-mark .base-letters {fill:var(--result-ink);font:8px var(--font-mono);letter-spacing:1px;opacity:.8}
+/* A quiet sculptural double ribbon; no labels or diagram marks. */
+.unmeasured-mark .signature-rear {fill:url(#signature-satin);opacity:.45}
+.unmeasured-mark .signature-front {fill:url(#signature-satin)}
+.unmeasured-mark .signature-light {stroke:var(--result-ink);stroke-width:.65;stroke-linecap:round;opacity:.65}
+
+.instrument-heading-empty {justify-content:flex-start}.instrument-heading-empty .instrument-tag {margin-left:0}
