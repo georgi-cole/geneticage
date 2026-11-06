@@ -30,6 +30,14 @@ Primary screens are composed to fit normal phone viewports, including a compact 
 
 ## Shared hierarchy and themes
 
+### Launch signature
+
+On a full app opening, a 2.2-second introduction shows the real KoleQuant mark, releases twelve illustrative DNA triplets, and unfolds the strands into an engraved timepiece. The dial carries no personal age or implied genetic measurement. It connects the brand's genetic identity with the app's age-in-context result instrument. The mark's original colours remain intact; surrounding titanium, copper or platinum details follow the selected theme while preserving the same composition.
+
+The introduction is native SVG/JavaScript, without a video download, generated substitute logo or new dependency. It appears on every full app opening/reload, with no skip or replay controls. Theme changes and navigation do not restart it. Reduced-motion users see the static brand for the same 2.2 seconds. Backgrounding, printing and a bounded timeout release the workspace safely. No completion flag or health data is saved. Result counters begin after the introduction releases the app; printing settles them without restarting the animation.
+
+In a future native package, use the first still for the operating system launch screen and start this brand animation inside the app. The prototype does not create an iOS/Android binary. Naming candidates and dated store checks are recorded in `design/naming-research.json`; the app retains its current name pending the owner's selection.
+
 All themes share their DOM, screen order, typography, controls, spacing and navigation. Theme changes do not rerender the interface or recalculate an assessment. User inputs remain in their original elements. Theme-specific nuances stay decorative and within fixed component bounds.
 
 | Theme | Canvas | Accent | Material identity |

@@ -1,0 +1,115 @@
+{
+  "checkedDate": "2026-11-06",
+  "brief": "A consumer-facing name with familiar gene/genetic/DNA and age words, easy spelling, and a direct link to the phrase someone might search. No claim of measured keyword search volume.",
+  "scope": {
+    "apple": "Official iTunes software search API, up to 100 fuzzy software results per term. US/GB/BG where listed; normalized exact-name/developer matches checked.",
+    "googlePlay": "Direct Google Play Apps & Games search in the United States/English, inspected in a real browser.",
+    "limits": "A dated app-name collision check, not a reservation, trademark clearance, available domain or exhaustive global catalogue."
+  },
+  "shortlist": [
+    {
+      "name": "GeneticAge",
+      "presentation": "GeneticAge — by KoleQuant",
+      "meaning": "The familiar phrase genetic age, with a single-word brand spelling. The clearest match to the requested search wording.",
+      "appleReturnedCounts": {
+        "us": 73,
+        "gb": 82,
+        "bg": 0
+      },
+      "appleExactMatches": [],
+      "googlePlayExactMatches": [],
+      "googlePlayNearest": [
+        "Face2Gene",
+        "Learn Genetics | GeneticsPad",
+        "Genetics Sale"
+      ],
+      "position": "Preferred direct/search-oriented direction, with KoleQuant as the distinguishing publisher brand."
+    },
+    {
+      "name": "GeneAge",
+      "presentation": "GeneAge by KoleQuant",
+      "meaning": "Short, familiar gene + age combination.",
+      "appleReturnedCounts": {
+        "us": 75
+      },
+      "appleExactMatches": [],
+      "googlePlayExactMatches": [],
+      "googlePlayNearest": [
+        "Haggen Deals & Shopping",
+        "Gegee - Skincare AI",
+        "GeneStyle"
+      ],
+      "caution": "GeneAge Predictor already appears in Genome X clinical diagnostics. Do not present the bare name as globally unique.",
+      "source": "https://thegenomex.com/news-events/"
+    },
+    {
+      "name": "AgeNetics",
+      "presentation": "AgeNetics: Biological Age",
+      "meaning": "A compact age + genetics wordplay; more brand-like, with the age meaning reinforced by the subtitle.",
+      "appleReturnedCounts": {
+        "us": 69,
+        "gb": 67,
+        "bg": 0
+      },
+      "appleExactMatches": [],
+      "googlePlayExactMatches": [],
+      "googlePlayNearest": [
+        "Ancestry: Family History & DNA",
+        "MyHeritage: Family Tree & DNA",
+        "Genetics"
+      ],
+      "caution": "AGenetics Labs is already an agentic-software business using this spelling. No exact app listing was found, but the name is not globally unused.",
+      "source": "https://ageneticslabs.io/about/"
+    },
+    {
+      "name": "GeneYears",
+      "presentation": "GeneYears: Biological Age",
+      "meaning": "Two everyday words: genes and years. More approachable than codon-based terminology.",
+      "appleReturnedCounts": {
+        "us": 55,
+        "gb": 59,
+        "bg": 0
+      },
+      "appleExactMatches": [],
+      "googlePlayExactMatches": [],
+      "googlePlayMessage": "No results for GeneYears",
+      "position": "The more distinctive consumer-friendly alternative, though less directly aligned with the exact phrase genetic age."
+    }
+  ],
+  "excluded": [
+    {
+      "name": "AgeGene",
+      "reason": "Existing anti-aging consumer-review brand.",
+      "source": "https://agegene.com/about/"
+    },
+    {
+      "name": "AgeGenetics",
+      "reason": "Existing longevity/laboratory-test and supplement brand in a closely related field.",
+      "source": "https://www.agegenetics.cz/o-nas/"
+    },
+    {
+      "name": "HelixEra",
+      "reason": "Existing anti-aging/skin-regeneration brand.",
+      "source": "https://helixera.eu/"
+    }
+  ],
+  "existingCategoryExamples": [
+    {
+      "name": "SuperAge: Biological Age",
+      "url": "https://apps.apple.com/us/app/superage-biological-age/id6751951815"
+    },
+    {
+      "name": "LifePrisma",
+      "url": "https://apps.apple.com/us/app/lifeprisma/id6760843298"
+    },
+    {
+      "name": "LongevLab - Biological Age",
+      "url": "https://apps.apple.com/us/app/longevlab-biological-age/id6748057197"
+    },
+    {
+      "name": "The AgeMeter",
+      "url": "https://play.google.com/store/apps/details?id=com.centersforagecontrol.agemeter.personal.android"
+    }
+  ],
+  "editorialNote": "The current app estimates clinical PhenoAge from blood results and offers a health/lifestyle profile. Store descriptions must explain those inputs rather than imply an actual DNA assay or an exact genetic age. Candidates have not been applied to the app."
+}

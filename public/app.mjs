@@ -5,6 +5,7 @@ import {clearContactFeedback,validateContactPage,showContactPage,advanceContactP
 import {renderThemeHome,overviewPresentation} from './theme-home.mjs';
 import {initializeResultMotion} from './result-motion.mjs';
 import {initializeLanguage} from './language-system.mjs';
+import {initializeLaunch} from './launch-screen.mjs';
 import {resultInstrument,screenHeading,uiIcon,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,statusMessage} from './ui-components.mjs';
 import {questionContext,questionChoices,questionDestination,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
 import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,insights,sampleAnswers,sampleLabs} from './model.mjs';
@@ -15,6 +16,7 @@ let auth={loading:true,authenticated:false,csrf:null,profile:null,history:[],pur
 const account=()=>auth.profile?{...auth.profile,history:auth.history}:null;
 const language=initializeLanguage();
 const resultMotion=initializeResultMotion();
+initializeLaunch();
 const today=()=>new Date().toLocaleDateString('en-CA');
 const consentVersion='account-storage-2026-11-04-v1';
 async function api(path,method='GET',data){if(PAGES_PREVIEW)throw new Error('Cloud services are unavailable in the GitHub Pages preview.');const response=await fetch('/api/'+path,{method,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000),headers:method==='GET'?{}:{'Content-Type':'application/json','X-KQ-CSRF':auth.csrf||''},...(data===undefined?{}:{body:JSON.stringify(data)})});let result;try{result=await response.json();}catch{throw new Error('Account storage could not be reached. Please try again.');}if(!response.ok){if(response.status===401){auth.authenticated=false;auth.profile=null;auth.history=[];}throw new Error(result.error||'Your request could not be completed.');}return result;}

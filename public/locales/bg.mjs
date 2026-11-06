@@ -441,6 +441,8 @@ export const BG=Object.freeze({
   "Account storage notice": "Как се съхраняват данните",
   "Data & settings": "Данни и настройки",
   "unit": "единица",
+  "Biology, in time.": "Биология във времето.",
+  "CODE INTO CONTEXT": "ОТ КОД КЪМ КОНТЕКСТ",
   "Themes, language and app information.": "Теми, език и информация за приложението.",
   "On this device": "На това устройство",
   "GitHub Pages preview": "Преглед в GitHub Pages",

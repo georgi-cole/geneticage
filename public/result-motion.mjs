@@ -38,7 +38,7 @@ export function initializeResultMotion(){
  }
  function refresh(){
   prepare();
-  if(document.documentElement.dataset.themeTransition)return;
+  if(document.documentElement.dataset.themeTransition||document.documentElement.dataset.launch)return;
   active.forEach((animation,element)=>{
    element.dataset.resultAnimating='true';
    const tick=time=>{
@@ -53,6 +53,8 @@ export function initializeResultMotion(){
  }
  window.addEventListener('kq:theme-change',prepare);
  window.addEventListener('kq:theme-settled',refresh);
+ window.addEventListener('kq:launch-start',prepare);
+ window.addEventListener('kq:launch-settled',refresh);
  window.addEventListener('beforeprint',finish);
  document.addEventListener('visibilitychange',()=>{
   if(document.hidden)finish();

@@ -6,6 +6,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {shell} from '../public/app-shell.mjs';
 import {themeBootstrap} from '../public/theme-system.mjs';
 import {languageBootstrap} from '../public/language-system.mjs';
+import {launchBootstrap} from '../public/launch-screen.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const project='kolequant-age-pages';
@@ -37,8 +38,8 @@ export async function buildPages({directory=path.join(root,'dist-pages'),basePat
    await writeFile(path.join(output,entry.name),relativeAssets(await readFile(path.join(publicRoot,entry.name),'utf8')));
   }
  }
- const csp=["default-src 'self'",`script-src 'self' ${hash(themeBootstrap)} ${hash(languageBootstrap)}`,"style-src 'self' 'unsafe-inline'","img-src 'self' data:","font-src 'self'","connect-src 'none'","form-action 'none'","base-uri 'self'","object-src 'none'"].join('; ');
- const html=`<!doctype html><html lang="en" data-hosting="pages"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}"><base href="${basePath}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"><title>KoleQuant Age</title><meta name="description" content="Explore the KoleQuant Age mobile preview. Answers stay in this page's memory."><meta name="theme-color" content="#090909"><link rel="icon" href="./favicon.svg"><link rel="manifest" href="./manifest.webmanifest"><script>${themeBootstrap}</script><script>${languageBootstrap}</script>${['styles','fonts','themes','app-screens'].map(name=>`<link rel="stylesheet" href="./${name}.css">`).join('')}</head><body>${relativeAssets(shell)}<script type="module" src="./app.js"></script></body></html>`;
+ const csp=["default-src 'self'",`script-src 'self' ${hash(themeBootstrap)} ${hash(languageBootstrap)} ${hash(launchBootstrap)}`,"style-src 'self' 'unsafe-inline'","img-src 'self' data:","font-src 'self'","connect-src 'none'","form-action 'none'","base-uri 'self'","object-src 'none'"].join('; ');
+ const html=`<!doctype html><html lang="en" data-hosting="pages"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}"><base href="${basePath}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"><title>KoleQuant Age</title><meta name="description" content="Explore the KoleQuant Age mobile preview. Answers stay in this page's memory."><meta name="theme-color" content="#090909"><link rel="icon" href="./favicon.svg"><link rel="manifest" href="./manifest.webmanifest"><script>${themeBootstrap}</script><script>${languageBootstrap}</script><script>${launchBootstrap}</script>${['styles','fonts','themes','app-screens','launch-screen'].map(name=>`<link rel="stylesheet" href="./${name}.css">`).join('')}</head><body>${relativeAssets(shell)}<script type="module" src="./app.js"></script></body></html>`;
  await Promise.all([
   writeFile(path.join(output,'index.html'),html),
   writeFile(path.join(output,'404.html'),html),
