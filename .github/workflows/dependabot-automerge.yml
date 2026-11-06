@@ -25,7 +25,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          mapfile -t PR_NUMBERS < <(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls" \
+          mapfile -t PR_NUMBERS < <(gh api --method GET --paginate "repos/${GITHUB_REPOSITORY}/pulls" \
             -f state=open \
             -f "head=${GITHUB_REPOSITORY_OWNER}:${RUN_HEAD_BRANCH}" \
             -F per_page=100 \
