@@ -55,6 +55,7 @@ export function initializeResultMotion(){
  window.addEventListener('kq:theme-settled',refresh);
  window.addEventListener('kq:launch-start',prepare);
  window.addEventListener('kq:launch-settled',refresh);
+ window.addEventListener('kq:launch-print',finish);
  window.addEventListener('beforeprint',finish);
  document.addEventListener('visibilitychange',()=>{
   if(document.hidden)finish();
