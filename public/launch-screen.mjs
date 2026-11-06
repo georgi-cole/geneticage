@@ -2,8 +2,8 @@ import {paintSignature} from './signature-motion.mjs';
 // A brand animation, not a DNA analysis or a calculated personal result.
 import {translateText} from './language-system.mjs';
 import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
-export const LAUNCH_DURATION=3200;
-export const LAUNCH_BRAND_HOLD=1000;
+export const LAUNCH_DURATION=3000;
+export const LAUNCH_BRAND_HOLD=800;
 export const CODONS=['ATG','CAG','GGC','TCC','AAC','GCT'];
 export const complement=sequence=>sequence.replace(/[ATGC]/g,base=>({A:'T',T:'A',G:'C',C:'G'}[base]));
 export const launchBootstrap="document.documentElement.dataset.launch='pending'";

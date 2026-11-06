@@ -34,7 +34,7 @@ Users can enter their own reference limits in the measurement’s selected unit,
 
 Content version `2026-11-06-lab-safety-v4` adds feedback after leaving a measurement field. Yellow/green/red indicate below/within/above the actual reference used; a separate question mark denotes an input or coverage check, and a triangular warning denotes selected published critical thresholds. New estimates are withheld for critical values, unsupported input coverage or a rounded output outside 1–99. The pure formula and conversions are unchanged. Valid extreme entries remain saveable with no numeric age. Old snapshots stay immutable, and out-of-window historical numbers are hidden only in current presentation. [Scientific policy, exact rules, sources and limitations](docs/LAB_SAFETY_POLICY.md).
 
-The hosted Sites app and static Pages preview are separate publications. Both now include the 3.2-second KoleQuant launch signature on every full opening, with one additional second of brand hold and the original code-to-clock handoff speed. Empty instruments use the paired-form emblem with a clear unmeasured status.
+The hosted Sites app and static Pages preview are separate publications. Both now include the 3-second KoleQuant launch signature on every full opening, with one additional second of brand hold and the original code-to-clock handoff speed. Empty instruments use the paired-form emblem with a clear unmeasured status.
 
 ## Phone preview on GitHub Pages
 
