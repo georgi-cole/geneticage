@@ -1,5 +1,6 @@
 // A brand animation, not a DNA analysis or a calculated personal result.
 import {translateText} from './language-system.mjs';
+import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
 export const LAUNCH_DURATION=2200;
 export const CODONS=['ATG','CAG','GGC','TCC','AAC','GCT'];
 export const complement=sequence=>sequence.replace(/[ATGC]/g,base=>({A:'T',T:'A',G:'C',C:'G'}[base]));
@@ -37,7 +38,7 @@ export const launchMarkup=`<section id="launch-screen" class="launch-screen" hid
    <image data-launch-mark href="/assets/kolequant-mark.webp" x="-32" y="-58" width="64" height="116"/>
    <g class="launch-codons">${Array.from({length:12},(_,index)=>`<text data-launch-codon="${index}" text-anchor="middle" dominant-baseline="middle" opacity="0">${index<6?CODONS[index]:complement(CODONS[index-6])}</text>`).join('')}</g>
   </svg>
-  <div class="launch-wordmark"><h1 id="launch-title">KoleQuant<span>AGE</span></h1><p data-launch-caption>Biology, in time.</p></div>
+  <div class="launch-wordmark"><h1 id="launch-title">${PUBLISHER_NAME}<span>${APP_NAME}</span></h1><p data-launch-caption>Biology, in time.</p></div>
  </div>
  <div class="launch-footer" aria-hidden="true"><span>ATG</span><i></i><span data-launch-phase-label>CODE INTO CONTEXT</span></div>
 </section>`;

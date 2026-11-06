@@ -7,7 +7,7 @@ import {initializeLanguage,LANGUAGE_KEY} from '../public/language-system.mjs';
 // network access, authentication, saved records or a running application server.
 const dom=new JSDOM(`<!doctype html><html lang="en"><head><title>Your report</title></head><body>
  <button id="language-toggle" data-no-translate>EN</button>
- <div class="brand">KoleQuant Age</div><h1>Your health, in context.</h1>
+ <div class="brand">GeneticAge <em>KoleQuant</em></div><h1>Your health, in context.</h1>
  <form id="answers"><label for="age">How old are you?</label><input id="age" type="number" value="52" placeholder="Years" aria-label="How old are you?">
  <input id="country" value="България"><textarea id="notes">Fair</textarea>
  <select id="health"><option>Fair</option><option selected>Good</option></select>

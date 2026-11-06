@@ -1,4 +1,6 @@
-# KoleQuant Age prototype
+# GeneticAge by KoleQuant
+
+The product owner selected **GeneticAge** on 6 November 2026. KoleQuant remains the publisher and the opening brand signature.
 
 Mobile-friendly full-stack Site with ChatGPT sign-in, per-user managed D1 storage and application-encrypted health records. The existing Site identity and owner-private audience are preserved.
 

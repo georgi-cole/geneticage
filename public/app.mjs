@@ -6,6 +6,7 @@ import {renderThemeHome,overviewPresentation} from './theme-home.mjs';
 import {initializeResultMotion} from './result-motion.mjs';
 import {initializeLanguage} from './language-system.mjs';
 import {initializeLaunch} from './launch-screen.mjs';
+import {APP_NAME} from './brand.mjs';
 import {freshAssessment,continueAssessment,assessmentProgress} from './assessment-flow.mjs';
 import {validateLabReferences,setLabEntryUnit} from './lab-review.mjs';
 import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
@@ -188,7 +189,7 @@ function captureLabs(){
  if($('#crp-assay')){state.lab.crp??={};state.lab.crp.assay=$('#crp-assay').value;}
  const fasting=form.querySelector('[name=lab-fasting]:checked');if(fasting)state.labFasting=fasting.value;
 }
-function render(){state.choiceCapacity=undefined;nav();document.body.dataset.view=state.view;const views={home,consent,questionnaire,review,labs:labForm,results:result,report,consult:consultation,account:dashboard,enquiry:()=>enquiryDone(state.enquiry)};$('#main').innerHTML=(views[state.view]||home)();if(state.view==='questionnaire'){language.refresh();fitQuestionChoices();}if(state.view==='consult')organizeConsultation();if(state.view==='review')$('#main>.wrap')?.classList.add('app-screen','task-screen','review-screen');if(state.view==='consent')$('#main>.wrap')?.classList.add('app-screen','task-screen','consent-screen');decorateDirectionalSymbols($('#main'));document.title=({home:'Your health workspace',account:state.accountTab==='reports'?'Reports':state.accountTab==='history'?'My assessments':'Your account',results:'Your assessment',report:'Your report',consult:'Consultation'}[state.view]||'Your assessment')+' — KoleQuant Age';language.refresh();resultMotion.refresh();}
+function render(){state.choiceCapacity=undefined;nav();document.body.dataset.view=state.view;const views={home,consent,questionnaire,review,labs:labForm,results:result,report,consult:consultation,account:dashboard,enquiry:()=>enquiryDone(state.enquiry)};$('#main').innerHTML=(views[state.view]||home)();if(state.view==='questionnaire'){language.refresh();fitQuestionChoices();}if(state.view==='consult')organizeConsultation();if(state.view==='review')$('#main>.wrap')?.classList.add('app-screen','task-screen','review-screen');if(state.view==='consent')$('#main>.wrap')?.classList.add('app-screen','task-screen','consent-screen');decorateDirectionalSymbols($('#main'));document.title=({home:'Your health workspace',account:state.accountTab==='reports'?'Reports':state.accountTab==='history'?'My assessments':'Your account',results:'Your assessment',report:'Your report',consult:'Consultation'}[state.view]||'Your assessment')+' — '+APP_NAME;language.refresh();resultMotion.refresh();}
 function reset(goal='profile'){draftBackup=null;state=freshAssessment(goal);goto('consent');}
 function beginAssessment(goal){
  if(state.view==='review')state.profileCompleted=true;

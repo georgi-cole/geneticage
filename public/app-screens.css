@@ -300,7 +300,7 @@ footer {display:none}
  .header .brand {gap:9px}
  .brand img {height:24px;width:16px}
  .brand>span {font-size:16px}
- .brand em {font-size:6px;margin-left:8px}
+ .header .brand em {display:block;font-size:7px;margin:2px 0 0;letter-spacing:.6px}
  .wrap {padding:18px 18px 14px}
  .app-screen {gap:16px}
  .screen-head .eyebrow {font-size:8px;margin-bottom:8px}

@@ -22,7 +22,7 @@ html[data-theme="bionic"] .launch-screen {--launch-canvas:#efeeea;--launch-ink:#
 .launch-clock-layer .instrument-number,.launch-clock-layer .dial-caption {opacity:var(--launch-readout,0)}
 .launch-wordmark {margin-top:5px;min-height:70px;opacity:var(--launch-branding)}
 .launch-wordmark h1 {font:400 29px var(--font-sans,sans-serif);letter-spacing:-1.4px;margin:0;color:var(--launch-ink)}
-.launch-wordmark h1 span {display:inline-block;margin-left:9px;font:8px var(--font-mono,monospace);letter-spacing:2.6px;vertical-align:middle;color:var(--launch-muted)}
+.launch-wordmark h1 span {display:inline-block;margin-left:11px;font:9px var(--font-mono,monospace);letter-spacing:1.1px;vertical-align:middle;color:var(--launch-muted)}
 .launch-wordmark p {font:11px var(--font-sans,sans-serif);letter-spacing:.1px;color:var(--launch-muted);margin:12px 0 0}
 .launch-footer {position:absolute;bottom:calc(28px + env(safe-area-inset-bottom));left:32px;right:32px;display:flex;align-items:center;gap:16px;font:8px var(--font-mono,monospace);letter-spacing:2px;color:var(--launch-muted);opacity:var(--launch-branding)}
 .launch-footer i {flex:1;height:1px;background:var(--launch-muted);opacity:.2}

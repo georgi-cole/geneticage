@@ -111,5 +111,12 @@
       "url": "https://play.google.com/store/apps/details?id=com.centersforagecontrol.agemeter.personal.android"
     }
   ],
-  "editorialNote": "The current app estimates clinical PhenoAge from blood results and offers a health/lifestyle profile. Store descriptions must explain those inputs rather than imply an actual DNA assay or an exact genetic age. Candidates have not been applied to the app."
+  "editorialNote": "The current app estimates clinical PhenoAge from blood results and offers a health/lifestyle profile. Store descriptions must explain those inputs rather than imply an actual DNA assay or an exact genetic age. Candidates have not been applied to the app.",
+  "selection": {
+    "name": "GeneticAge",
+    "presentation": "GeneticAge by KoleQuant",
+    "publisher": "KoleQuant",
+    "selectedDate": "2026-11-06",
+    "status": "Selected by the product owner"
+  }
 }

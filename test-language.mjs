@@ -45,7 +45,7 @@ assert.equal(translateText('. Your age at the blood draw was 45 years.','bg'),'.
 assert.equal(translateText('  New assessment  ','bg'),'  Нов анализ  ');
 assert.equal(translateText('Fair (2 assessments)','bg',{protectedPrefix:'Fair'}),'Fair (2 анализа)','A profile nickname is never translated, including in an import option.');
 assert.equal(translateText('Unit for What is your height?','bg'),'Мерна единица за ръста');
-for(const identifier of ['KoleQuant Age','PhenoAgeAccel','DNAm PhenoAge','DunedinPACE','GrimAge','mg/dL','mmol/L','% (RDW-CV)','DELETE','demo@example.com'])assert.equal(translateText(identifier,'bg'),identifier);
+for(const identifier of ['GeneticAge','KoleQuant','PhenoAgeAccel','DNAm PhenoAge','DunedinPACE','GrimAge','mg/dL','mmol/L','% (RDW-CV)','DELETE','demo@example.com'])assert.equal(translateText(identifier,'bg'),identifier);
 assert.match(translateText('When you explicitly save, your questionnaire, blood entries, results and educational report are sent over HTTPS and stored in the hosted account database. Health records are encrypted by the application before database storage. Authorized service operators can administer the service; this is not end-to-end encryption.','bg'),/не е криптиране от край до край/);
 
 function boot(value,blocked=false){

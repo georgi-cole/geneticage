@@ -714,7 +714,7 @@ export const BG=Object.freeze({
   "Account": "Профил",
   "Profile": "Профил",
   "My account": "Моят профил",
-  "KoleQuant Age home": "Начало на KoleQuant Age",
+  "GeneticAge home": "Начало на GeneticAge",
   "Skip to content": "Към съдържанието",
   "Workspace": "Работно пространство",
   "WORKSPACE": "РАБОТНО ПРОСТРАНСТВО",

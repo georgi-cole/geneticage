@@ -1,4 +1,4 @@
-# KoleQuant Age
+# GeneticAge by KoleQuant
 
 Read `README.md` and `CONTRIBUTING.md` before making changes. For visual work also read `DESIGN_SYSTEM.md`; the three active themes share one layout and Black Metal is the default. Edit Bulgarian copy in `design/localization/*.tsv` and regenerate with `npm run locale:build`.
 
