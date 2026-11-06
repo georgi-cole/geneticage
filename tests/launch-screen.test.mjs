@@ -28,7 +28,7 @@ test('every opening requests the brand intro and triplets have complementary DNA
  assert.equal(document.documentElement.dataset.launch,'pending');
  assert.equal(complement('ATG CAG GGC'),'TAC GTC CCG');assert.ok(CODONS.every(codon=>/^[ATGC]{3}$/.test(codon)));
  const first=launchFrame(0),last=launchFrame(LAUNCH_DURATION);
- assert.equal(LAUNCH_DURATION,3000);assert.equal(LAUNCH_TRANSFORM_SPEED,1.3*1.15);
+ assert.equal(LAUNCH_DURATION,3000);assert.equal(LAUNCH_TRANSFORM_SPEED,1.3*1.15*1.25);
  assert.ok(Math.abs(launchTime(3000)-2200)<1e-9);
  assert.ok(Math.abs(launchTime(LAUNCH_BRAND_HOLD+1000/LAUNCH_TRANSFORM_SPEED)-1000)<1e-9);
  assert.deepEqual(launchFrame(LAUNCH_BRAND_HOLD),first,'the extra second holds the brand without slowing the clock handoff');
@@ -43,7 +43,7 @@ test('launch has no skip/replay, then releases the existing workspace and answer
   assert.equal(workspace.inert,true);assert.equal(f.starts,1);assert.equal(intro.hidden,false);
   assert.equal(document.querySelector('a.skip').inert,true);assert.equal(intro.querySelector('button,a'),null);
   intro.dispatchEvent(new f.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(intro.hidden,false);
-  advance(0);advance(2000);assert.equal(intro.dataset.launchPhase,'code');
+  advance(0);advance(2500);assert.equal(intro.dataset.launchPhase,'code');
   assert.equal(document.querySelector('.launch-clock-layer>.instrument-dial'),dial,'the original clock is used, not a duplicate');
   assert.equal(document.querySelectorAll('.dial-rings').length,1);assert.ok(document.querySelector('.launch-dial-placeholder'));
   advance(LAUNCH_DURATION);assert.equal(intro.hidden,true);assert.equal(workspace.inert,false);assert.equal(f.settled,1);assert.equal(f.frames.size,0);assert.equal(f.timers.size,0);
@@ -57,7 +57,7 @@ test('static reduced-motion branding, backgrounding, printing and stalled frames
  for(const method of ['hidden','timer','motion','print']){
   const f=fixture({language:'bg'});
   try{
-   assert.equal(f.document.querySelector('.launch-product').textContent,'GeneticAge');assert.equal(f.document.querySelector('[data-launch-caption]'),null);assert.equal(f.document.querySelector('#launch-title span'),null);
+   assert.equal(f.document.querySelector('.launch-wordmark p').textContent,'GeneticAge');assert.equal(f.document.querySelector('[data-launch-caption]'),null);assert.equal(f.document.querySelector('#launch-title').textContent,'KoleQuant');
    f.advance(0);f.advance(1000);
    if(method==='hidden'){Object.defineProperty(f.document,'hidden',{value:true,configurable:true});f.document.dispatchEvent(new f.window.Event('visibilitychange'));}
    if(method==='timer')[...f.timers.values()][0]();
@@ -73,7 +73,7 @@ test('static reduced-motion branding, backgrounding, printing and stalled frames
  const f=fixture({reduced:true});
  try{
   assert.equal(f.document.querySelector('#launch-screen').hidden,false);assert.equal(f.starts,1);assert.equal(f.frames.size,0);
-  assert.equal(f.document.querySelector('[data-launch-mark]').getAttribute('opacity'),'1');[...f.timers.values()][0]();assert.equal(f.document.querySelector('#launch-screen').hidden,true);
+  assert.equal(f.document.querySelector('[data-launch-mark]').getAttribute('opacity'),'0');[...f.timers.values()][0]();assert.equal(f.document.querySelector('#launch-screen').hidden,true);
  }finally{f.dom.window.close();}
  const background=fixture({hidden:true});
  try{
@@ -95,12 +95,12 @@ test('a refreshed home result replaces a borrowed clock without restoring stale 
  test('launch morphs and returns the original signature, including interrupted cleanup',()=>{
  for(const interrupt of [false,true]){const f=fixture({empty:true});try{
  const node=f.document.querySelector('.unmeasured-mark'),parent=node.parentNode,final=node.querySelector('.signature-front').getAttribute('d');
- f.advance(0);f.advance(2000);assert.equal(f.document.querySelector('.launch-signature-layer>.unmeasured-mark'),node);assert.equal(node.querySelector('.signature-front').getAttribute('d'),final);const morph=node.querySelector('.signature-morph');assert.ok(morph);assert.notEqual(morph.getAttribute('d'),signatureOutline(0));assert.notEqual(morph.getAttribute('d'),signatureOutline(1));
+ f.advance(0);f.advance(2450);assert.equal(f.document.querySelector('.launch-signature-layer>.unmeasured-mark'),node);assert.equal(node.querySelector('.signature-front').getAttribute('d'),final);const morph=node.querySelector('.signature-morph');assert.ok(morph);assert.notEqual(morph.getAttribute('d'),signatureOutline(0));assert.notEqual(morph.getAttribute('d'),signatureOutline(1));
  assert.equal(f.document.querySelector('.launch-ribbons').getAttribute('opacity'),'0');
- assert.equal(f.document.querySelector('[data-launch-mark]').getAttribute('opacity'),'0');
- assert.equal(f.document.querySelector('#launch-screen clipPath,#launch-screen image'),null);assert.equal(node.style.clipPath,'');assert.equal(node.style.getPropertyValue('--signature-material'),'0');
+ assert.equal(f.document.querySelector('[data-launch-mark]').getAttribute('opacity'),'0');assert.ok(f.document.querySelector('[data-launch-original]'));
+ assert.equal(f.document.querySelector('#launch-screen clipPath'),null);assert.equal(node.style.clipPath,'');assert.equal(node.style.getPropertyValue('--signature-material'),'0');
  if(interrupt)f.controller.finish();else f.advance(LAUNCH_DURATION);
- assert.equal(node.parentNode,parent);assert.equal(node.querySelector('.signature-front').getAttribute('d'),final);assert.equal(f.document.querySelector('.launch-signature-layer'),null);assert.equal(node.hasAttribute('preserveAspectRatio'),false);assert.equal(node.style.clipPath,'');assert.equal(node.querySelector('.signature-morph,#signature-brand-morph'),null);assert.equal(node.dataset.launchMorph,undefined);
+ assert.equal(node.parentNode,parent);assert.equal(node.querySelector('.signature-front').getAttribute('d'),final);assert.equal(f.document.querySelector('.launch-signature-layer'),null);assert.equal(node.hasAttribute('preserveAspectRatio'),false);assert.equal(node.style.clipPath,'');assert.equal(node.querySelector('.signature-morph,#signature-brand-morph'),null);assert.equal(node.dataset.launchMorph,undefined);assert.ok(f.document.querySelector('[data-launch-original]'));
  }finally{f.dom.window.close();}}
  });
 

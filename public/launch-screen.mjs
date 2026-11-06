@@ -3,7 +3,7 @@ import {paintSignature,settleSignature,signatureOutline} from './signature-motio
 import {translateText} from './language-system.mjs';
 import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
 export const LAUNCH_DURATION=3000;
-export const LAUNCH_TRANSFORM_SPEED=1.3*1.15;
+export const LAUNCH_TRANSFORM_SPEED=1.3*1.15*1.25;
 export const LAUNCH_BRAND_HOLD=LAUNCH_DURATION-2200/LAUNCH_TRANSFORM_SPEED;
 export const launchTime=milliseconds=>Math.max(0,milliseconds-LAUNCH_BRAND_HOLD)*LAUNCH_TRANSFORM_SPEED;
 export const CODONS=['ATG','CAG','GGC','TCC','AAC','GCT'];
@@ -39,10 +39,10 @@ export const launchMarkup=`<section id="launch-screen" class="launch-screen" hid
   <svg class="launch-scene" viewBox="-170 -170 340 340" aria-hidden="true" focusable="false">
    <defs><linearGradient id="launch-brand" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#258bca"/><stop offset=".5" stop-color="#39a676"/><stop offset="1" stop-color="#8335a3"/></linearGradient><linearGradient id="launch-metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="var(--launch-shade)"/><stop offset=".35" stop-color="var(--launch-ink)"/><stop offset=".52" stop-color="var(--launch-accent)"/><stop offset=".7" stop-color="var(--launch-ink)"/><stop offset="1" stop-color="var(--launch-shade)"/></linearGradient></defs>
    <g class="launch-ribbons" stroke="url(#launch-metal)" opacity="0"><path data-launch-ribbon/><path data-launch-ribbon/></g>
-   <path data-launch-mark d="${signatureOutline(0)}" fill="url(#launch-brand)" fill-rule="evenodd" transform="translate(-32 -58) scale(.64 1.38095238)"/>
+   <path data-launch-mark d="${signatureOutline(0)}" fill="url(#launch-brand)" fill-rule="evenodd" opacity="0" transform="translate(-32 -58) scale(.64 1.38095238)"/><image data-launch-original href="/assets/kolequant-mark.webp" x="-32" y="-58" width="64" height="116"/>
    <g class="launch-codons">${Array.from({length:12},(_,index)=>`<text data-launch-codon="${index}" text-anchor="middle" dominant-baseline="middle" opacity="0">${index<6?CODONS[index]:complement(CODONS[index-6])}</text>`).join('')}</g>
   </svg>
-  <div class="launch-wordmark"><h1 id="launch-title">${PUBLISHER_NAME}</h1><p class="launch-product">${APP_NAME}</p></div>
+  <div class="launch-wordmark"><h1 id="launch-title">${PUBLISHER_NAME}</h1><p>${APP_NAME}</p></div>
  </div>
  <div class="launch-footer" aria-hidden="true"><span>ATG</span><i></i><span data-launch-phase-label>CODE INTO CONTEXT</span></div>
 </section>`;
@@ -94,8 +94,10 @@ export function initializeLaunch({root=document,host=window,duration=LAUNCH_DURA
  function paint(milliseconds){
   const state=launchFrame(milliseconds);
   element.dataset.launchPhase=state.phase;
-  mark.setAttribute('opacity',String(1-ease((launchTime(milliseconds)-1530)/220)));
-  mark.setAttribute('d',signatureOutline(ease((launchTime(milliseconds)-580)/950)));
+  const morphProgress=ease((launchTime(milliseconds)-580)/950);
+  mark.setAttribute('opacity',String(ease(morphProgress*5)*(1-ease((launchTime(milliseconds)-1530)/220))));
+  mark.setAttribute('d',signatureOutline(morphProgress));
+  element.querySelector('[data-launch-original]').setAttribute('opacity',String(1-ease(morphProgress*5)));
   element.querySelector('.launch-ribbons').setAttribute('opacity',String(state.ribbonOpacity));
   ribbons.forEach((path,index)=>path.setAttribute('d',state.ribbons[index]));
   codons.forEach((codon,index)=>{const item=state.codons[index];codon.setAttribute('transform',`translate(${item.x.toFixed(2)} ${item.y.toFixed(2)}) rotate(${item.rotation.toFixed(2)})`);codon.setAttribute('opacity',String(item.opacity));});
