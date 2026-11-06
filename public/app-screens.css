@@ -506,3 +506,11 @@ footer {display:none}
 .unmeasured-mark .signature-light {stroke:var(--result-ink);stroke-width:.65;stroke-linecap:round;opacity:.65}
 
 .instrument-heading-empty {justify-content:flex-start}.instrument-heading-empty .instrument-tag {margin-left:0}
+
+.unmeasured-mark .signature-surface {transform-origin:50px 42px;animation:signature-twist 18s ease-in-out infinite}
+.unmeasured-mark .signature-light {stroke-dasharray:20 170;animation:signature-glint 14s ease-in-out infinite}
+@keyframes signature-twist {0%,100% {transform:perspective(500px) rotateY(0) rotate(0)}50% {transform:perspective(500px) rotateY(9deg) rotate(1deg)}}
+@keyframes signature-glint {0%,22% {stroke-dashoffset:30;opacity:0}35% {opacity:.55}62% {stroke-dashoffset:-160;opacity:0}100% {stroke-dashoffset:-160;opacity:0}}
+html[data-launch] .unmeasured-mark .signature-surface,html[data-launch] .unmeasured-mark .signature-light {animation:none}
+@media(prefers-reduced-motion:reduce) {.unmeasured-mark .signature-surface,.unmeasured-mark .signature-light {animation:none}}
+@media print {.unmeasured-mark .signature-surface,.unmeasured-mark .signature-light {animation:none}}

@@ -5,8 +5,8 @@ import {JSDOM} from 'jsdom';
 import {resultInstrument} from '../public/ui-components.mjs';
 import {CODONS,complement,initializeLaunch,launchBootstrap,launchFrame,launchMarkup,LAUNCH_DURATION,LAUNCH_BRAND_HOLD} from '../public/launch-screen.mjs';
 
-function fixture({pending=true,reduced=false,hidden=false,language='en'}={}){
- const dom=new JSDOM(`<html lang="${language}" ${pending?'data-launch="pending"':''}><body>${launchMarkup}<a class="skip" href="#main">Skip to content</a><div class="app-frame"><main id="main" tabindex="-1"><input id="answer" value="52">${resultInstrument({value:50,age:45,gap:5,sample:true})}</main></div></body></html>`,{pretendToBeVisual:true});
+function fixture({pending=true,reduced=false,hidden=false,language='en',empty=false}={}){
+ const dom=new JSDOM(`<html lang="${language}" ${pending?'data-launch="pending"':''}><body>${launchMarkup}<a class="skip" href="#main">Skip to content</a><div class="app-frame"><main id="main" tabindex="-1"><input id="answer" value="52">${resultInstrument({value:50,age:45,gap:5,sample:true,empty})}</main></div></body></html>`,{pretendToBeVisual:true});
  const {window}=dom;let nextId=0;const frames=new Map(),timers=new Map(),preferences=[];
  window.requestAnimationFrame=callback=>{const id=++nextId;frames.set(id,callback);return id;};window.cancelAnimationFrame=id=>frames.delete(id);
  window.setTimeout=callback=>{const id=++nextId;timers.set(id,callback);return id;};window.clearTimeout=id=>timers.delete(id);
@@ -16,6 +16,7 @@ function fixture({pending=true,reduced=false,hidden=false,language='en'}={}){
  const document=window.document;Object.defineProperty(document,'hidden',{value:hidden,configurable:true});
  document.querySelector('.instrument-dial').getBoundingClientRect=()=>({left:50,top:200,width:200,height:200});
  document.querySelector('.launch-scene').getBoundingClientRect=()=>({left:20,top:50,width:340,height:340});
+ const signature=document.querySelector('.unmeasured-mark');if(signature)signature.getBoundingClientRect=()=>({left:115,top:260,width:70,height:60});
  const controller=initializeLaunch({root:document,host:window});
  const advance=time=>{const callbacks=[...frames.values()];frames.clear();callbacks.forEach(callback=>callback(time));};
  return {dom,window,document,controller,frames,timers,advance,preferences,media,get starts(){return starts;},get settled(){return settled;}};
@@ -87,3 +88,12 @@ test('a refreshed home result replaces a borrowed clock without restoring stale 
   f.advance(LAUNCH_DURATION);assert.equal(f.document.querySelector('#main .instrument-dial'),updated);assert.match(updated.textContent,/60/);assert.equal(f.document.querySelectorAll('.dial-rings').length,1);
  }finally{f.dom.window.close();}
 });
+
+ test('launch morphs and returns the original signature, including interrupted cleanup',()=>{
+ for(const interrupt of [false,true]){const f=fixture({empty:true});try{
+ const node=f.document.querySelector('.unmeasured-mark'),parent=node.parentNode,final=node.querySelector('.signature-front').getAttribute('d');
+ f.advance(0);f.advance(1900);assert.equal(f.document.querySelector('.launch-signature-layer>.unmeasured-mark'),node);assert.notEqual(node.querySelector('.signature-front').getAttribute('d'),final);
+ if(interrupt)f.controller.finish();else f.advance(LAUNCH_DURATION);
+ assert.equal(node.parentNode,parent);assert.equal(node.querySelector('.signature-front').getAttribute('d'),final);assert.equal(f.document.querySelector('.launch-signature-layer'),null);assert.equal(node.hasAttribute('preserveAspectRatio'),false);
+ }finally{f.dom.window.close();}}
+ });

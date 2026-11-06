@@ -117,3 +117,5 @@ Leaving a value field reveals a subtle border and a text/symbol comparison: yell
 The unmeasured signature uses three faceted complementary base pairs (A–T, G–C, C–G), engraved into a staggered vertical fragment. Coverage checks show a short action and an expandable explanation; critical alerts retain their visible instructions.
 
 The unmeasured signature is now a single sculptural composition of two tapered, satin ribbons. Their quiet twist suggests paired genetic strands; letters, tiles, orbit rings and ladder marks are absent.
+
+The satin signature turns subtly over 18 seconds, with an occasional 14-second edge glint. Both rest under reduced motion and print. During launch, the actual Overview signature is temporarily borrowed beside the actual dial. Its strands interpolate from a logo-like helix into the final ribbons, then travel to their measured destination and return to their original node slot. Cleanup restores their exact final geometry.

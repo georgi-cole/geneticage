@@ -1,3 +1,4 @@
+import {paintSignature} from './signature-motion.mjs';
 // A brand animation, not a DNA analysis or a calculated personal result.
 import {translateText} from './language-system.mjs';
 import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
@@ -66,11 +67,21 @@ export function initializeLaunch({root=document,host=window,duration=LAUNCH_DURA
   clockLayer.classList.toggle('welcome-instrument',!!classes?.contains('welcome-instrument'));
   const computed=host.getComputedStyle(dial);
   const colors={accent:computed.getPropertyValue('--result-accent').trim()||'#cbd1dc',ink:computed.getPropertyValue('--result-ink').trim()||'#f2f4f8',muted:computed.getPropertyValue('--result-muted').trim()||'#bcc1ca'};
-  clock={dial,placeholder,destination,source,colors};dial.replaceWith(placeholder);clockLayer.append(dial);
+  const signature=dial.querySelector('.unmeasured-mark'),signatureDestination=signature?.getBoundingClientRect();
+  let signatureState=null;
+  if(signature&&signatureDestination.width){
+   const slot=root.createElement('span');slot.className='signature-placeholder';slot.style.width='100%';slot.style.height='100%';
+   const layer=root.createElement('div');layer.className='launch-signature-layer';layer.setAttribute('aria-hidden','true');
+   for(const [key,value]of Object.entries(colors))layer.style.setProperty('--result-'+key,value);
+   signature.replaceWith(slot);layer.append(signature);element.append(layer);signature.setAttribute('preserveAspectRatio','none');
+   signatureState={node:signature,slot,layer,destination:signatureDestination};
+  }
+  clock={dial,placeholder,destination,source,colors,signature:signatureState};dial.replaceWith(placeholder);clockLayer.append(dial);
  }
  function returnClock(){
   if(!clock)return;
-  const {dial,placeholder}=clock;
+  const {dial,placeholder,signature}=clock;
+  if(signature){paintSignature(signature.node,1);signature.node.removeAttribute('preserveAspectRatio');if(signature.slot.isConnected)signature.slot.replaceWith(signature.node);signature.layer.remove();}
   if(placeholder.isConnected)placeholder.replaceWith(dial);else dial.remove();
   clock=null;
  }
@@ -87,13 +98,21 @@ export function initializeLaunch({root=document,host=window,duration=LAUNCH_DURA
   ribbons.forEach((path,index)=>path.setAttribute('d',state.ribbons[index]));
   codons.forEach((codon,index)=>{const item=state.codons[index];codon.setAttribute('transform',`translate(${item.x.toFixed(2)} ${item.y.toFixed(2)}) rotate(${item.rotation.toFixed(2)})`);codon.setAttribute('opacity',String(item.opacity));});
   if(clock){
-   const {source,destination,colors}=clock,sourceSize=Math.min(source.width,source.height)*280/340;
+   const {source,destination,colors,signature}=clock,sourceSize=Math.min(source.width,source.height)*280/340;
    const size=interpolate(sourceSize,destination.width,state.travel);
    const left=interpolate(source.left+source.width/2-sourceSize/2,destination.left,state.travel);
    const top=interpolate(source.top+source.height/2-sourceSize*destination.height/destination.width/2,destination.top,state.travel);
    clockLayer.style.width=destination.width+'px';clockLayer.style.height=destination.height+'px';
    clockLayer.style.transform=`translate(${left.toFixed(3)}px,${top.toFixed(3)}px) scale(${size/destination.width})`;
    clockLayer.style.opacity=String(state.clockOpacity);
+   if(signature){
+    const t=ease((Math.max(0,milliseconds-LAUNCH_BRAND_HOLD)-580)/950),target=signature.destination;
+    const sourceWidth=source.width*64/340,sourceHeight=source.height*116/340;
+    const x=interpolate(source.left+source.width/2-sourceWidth/2,target.left,state.travel),y=interpolate(source.top+source.height/2-sourceHeight/2,target.top,state.travel);
+    signature.layer.style.width=interpolate(sourceWidth,target.width,state.travel)+'px';signature.layer.style.height=interpolate(sourceHeight,target.height,state.travel)+'px';
+    signature.layer.style.transform=`translate(${x}px,${y}px)`;signature.layer.style.opacity=String(ease((Math.max(0,milliseconds-LAUNCH_BRAND_HOLD)-580)/300));
+    paintSignature(signature.node,t);
+   }
    clockLayer.style.setProperty('--launch-readout',String(state.readoutOpacity));
    for(const [token,intro]of [['accent','accent'],['ink','ink'],['muted','muted']])clockLayer.style.setProperty('--result-'+token,`color-mix(in srgb,var(--launch-${intro}) ${(100-state.travel*100).toFixed(2)}%,${colors[token]})`);
   }
