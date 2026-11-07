@@ -1,19 +1,33 @@
 import {labs,normalizeLab} from './lab-definitions.mjs';
 import {reviewLabSafety,clinicalForDisplay,LAB_SAFETY_VERSION} from './lab-safety.mjs';
 export {labs,normalizeLab} from './lab-definitions.mjs';
+const weightKg=(value,unit)=>Number.isFinite(Number(value))&&Number(value)>0?Number(value)*(unit==='lb'?0.45359237:1):null;
+const weightChangeKg=a=>{
+ const current=weightKg(a.weight,a.weightUnit||'kg'),yearAgo=weightKg(a.weightYearAgo,a.weightYearAgoUnit||'kg');
+ return current!==null&&yearAgo!==null?{loss:yearAgo-current,previous:yearAgo}:null;
+};
+export const hasLargeRecentWeightLoss=a=>{
+ const change=weightChangeKg(a);
+ return change!==null&&change.loss>=Math.min(4.5359237,change.previous*0.05)-1e-9;
+};
 export const sections=[
  {name:'About you',title:'About you',intro:'Enter your age to begin. The other questions are optional.',questions:[
   {id:'age',label:'How old are you?',type:'number',unit:'years',required:true,min:18,max:120,step:1},
   {id:'country',label:'Which country do you live in?',type:'country',hint:'Helps KoleQuant check consultation availability. It does not affect your age estimate.'},
-  {id:'height',label:'What is your height?',type:'measure',units:['cm','in'],hint:'For feet and inches, enter the total in inches. Height and weight are recorded for reference; they are not used in the blood-based age calculation.'},
+  {id:'height',label:'What is your height?',type:'measure',units:['cm','in'],hint:'For feet and inches, enter the total in inches. Height and weight are recorded for health context; they do not change the blood-based age calculation.'},
   {id:'weight',label:'What is your weight?',type:'measure',units:['kg','lb']},
+  {id:'weightYearAgo',label:'About how much did you weigh 12 months ago?',type:'measure',units:['kg','lb'],hint:'Use your best estimate. If you are pregnant, enter your weight before pregnancy.'},
+  {id:'weightChangeIntent',label:'Was this weight loss intentional?',options:['Yes','No','Not sure','Prefer not to say'],show:hasLargeRecentWeightLoss},
   {id:'health',label:'How would you describe your overall health today?',options:['Excellent','Very good','Good','Fair','Poor','Not sure']} ]},
  {name:'Tobacco',title:'Smoking and nicotine',intro:'Include occasional smoking as well as daily use.',questions:[
-  {id:'smoking',label:'Which best describes your cigarette smoking?',hint:'Include any current cigarette smoking, even if it is occasional.',options:['Never smoked regularly','Used to smoke regularly','Smoke now','Prefer not to say'],optionLabels:{'Never smoked regularly':'I do not smoke and have never smoked regularly','Used to smoke regularly':'I used to smoke, but no longer do','Smoke now':'I smoke now, daily or occasionally'}},
-  {id:'cigarettes',label:'On a day when you smoke, how many cigarettes do you usually have?',type:'number',min:0.1,max:200,show:a=>a.smoking==='Smoke now'},
-  {id:'smokingYears',label:'For approximately how many years have you smoked cigarettes regularly?',type:'number',min:0,max:100,show:a=>['Smoke now','Used to smoke regularly'].includes(a.smoking)},
-  {id:'quit',label:'How long ago did you stop smoking regularly?',options:['Less than 1 year','1–4 years','5–9 years','10 years or more','Not sure'],show:a=>a.smoking==='Used to smoke regularly'},
-  {id:'nicotine',label:'Do you use tobacco or nicotine in any of these forms?',hint:'This is separate from cigarettes. You can select None, including if you have never smoked.',type:'multi',options:['Cigars or pipe','Shisha or waterpipe','Heated tobacco','Vape or e-cigarette','Oral tobacco','Nicotine replacement used to stop smoking','None','Prefer not to say']} ]},
+  {id:'smokingEver100',label:'Have you smoked at least 100 cigarettes in your life?',hint:'That is about five standard packs. This question is about cigarettes, not cigars, shisha or vaping.',options:['Yes','No','Not sure','Prefer not to say']},
+  {id:'smoking',label:'Do you currently smoke cigarettes?',hint:'Choose “Some days” if you smoke occasionally.',options:['Every day','Some days','Not at all','Prefer not to say']},
+  {id:'smokingRegular',label:'Have you ever smoked cigarettes fairly regularly?',hint:'“Regularly” means when you consider regular smoking to have begun.',options:['Yes','No','Not sure','Prefer not to say'],show:a=>a.smokingEver100==='Yes'||['Every day','Some days'].includes(a.smoking)},
+  {id:'smokingStartAge',label:'How old were you when you first began smoking cigarettes regularly?',hint:'If you started before age 6, enter 6. Skip if you are unsure.',type:'number',min:6,max:120,step:1,show:a=>a.smokingRegular==='Yes'},
+  {id:'smokingDays30',label:'On how many of the past 30 days did you smoke a cigarette?',type:'number',unit:'days',min:1,max:30,step:1,show:a=>a.smoking==='Some days'},
+  {id:'cigarettes',label:'On a day when you smoke, how many cigarettes do you usually have?',hint:'If you smoke only on some days, think of the past 30 days.',type:'number',min:0.1,max:200,show:a=>['Every day','Some days','Smoke now'].includes(a.smoking)},
+  {id:'quit',label:'How long ago did you stop smoking regularly?',options:['Less than 1 year','1–4 years','5–9 years','10–19 years','20–49 years','50 or more years','Not sure'],show:a=>a.smokingRegular==='Yes'&&a.smoking==='Not at all'},
+  {id:'nicotine',label:'Do you currently use any of these other tobacco or nicotine products?',hint:'Answer separately from cigarettes.',type:'multi',options:['Cigars or pipe','Shisha or waterpipe','Heated tobacco','Vape or e-cigarette','Oral tobacco','Nicotine replacement used to stop smoking','None','Prefer not to say']} ]},
  {name:'Alcohol',title:'Alcohol use',intro:'For the amount and frequency questions, think about the past four weeks.',questions:[
   {id:'alcohol',label:'Do you currently drink alcohol?',options:['No, I have never drunk alcohol regularly','No, I used to drink','Yes','Prefer not to say'],hint:'If you usually drink but had none in the past four weeks, you can enter 0 drinking days.'},
   {id:'alcoholDays',label:'In a typical week, on how many days did you drink alcohol?',options:['0','1','2','3','4','5','6','7','My pattern varies'],show:a=>a.alcohol==='Yes'},
@@ -35,6 +49,17 @@ export const sections=[
   {id:'context',label:'Does any of the following apply to you now?',type:'multi',options:['Pregnant','Recently gave birth','Receiving dialysis','Recovering from major surgery','None','Prefer not to say'],optionLabels:{'Recently gave birth':'Recovering after childbirth'}},
   {id:'illness',label:'Have you had a fever, infection or other short-term illness during the past two weeks?',options:['No','Yes','Not sure','Prefer not to say']} ]}
 ];
+export const legacySections=sections.map(section=>{
+ if(section.name==='About you')return {...section,questions:section.questions.filter(q=>!['weightYearAgo','weightChangeIntent'].includes(q.id))};
+ if(section.name==='Tobacco')return {...section,questions:[
+  {id:'smoking',label:'Which best describes your cigarette smoking?',options:['Never smoked regularly','Used to smoke regularly','Smoke now','Prefer not to say'],optionLabels:{'Never smoked regularly':'I do not smoke and have never smoked regularly','Used to smoke regularly':'I used to smoke, but no longer do','Smoke now':'I smoke now, daily or occasionally'}},
+  {id:'cigarettes',label:'On a day when you smoke, how many cigarettes do you usually have?',type:'number',min:0.1,max:200,show:a=>a.smoking==='Smoke now'},
+  {id:'smokingYears',label:'For approximately how many years have you smoked cigarettes regularly?',type:'number',min:0,max:100,show:a=>['Smoke now','Used to smoke regularly'].includes(a.smoking)},
+  {id:'quit',label:'How long ago did you stop smoking regularly?',options:['Less than 1 year','1–4 years','5–9 years','10 years or more','Not sure'],show:a=>a.smoking==='Used to smoke regularly'},
+  {id:'nicotine',label:'Do you use tobacco or nicotine in any of these forms?',type:'multi',options:['Cigars or pipe','Shisha or waterpipe','Heated tobacco','Vape or e-cigarette','Oral tobacco','Nicotine replacement used to stop smoking','None','Prefer not to say']}
+ ]};
+ return section;
+});
 export function calculatePhenoAge(age,x){
  const xb=-19.907-0.0336*x.albumin+0.0095*x.creatinine+0.1953*x.glucose+0.0954*Math.log(x.crp)-0.012*x.lymphocytes+0.0268*x.mcv+0.3306*x.rdw+0.00188*x.alp+0.0554*x.wbc+0.0804*age;
  // Algebraically equivalent to the published Gompertz mortality transformation;
@@ -51,7 +76,7 @@ export function eligibility(a,age){
  if(!Number.isInteger(Number(age))||age<20||age>84)return 'This version provides a blood-based age estimate for ages 20–84. You can still use the health and lifestyle assessment.';
  return null;
 }
-export const ASSESSMENT_PROTOCOL='clinical-inputs-2026-11-06-v3';
+export const ASSESSMENT_PROTOCOL='questionnaire-context-2026-11-07-v1';
 export function assessClinical({age,lab,contextConfirmed,fasting}){
  const checks=labs.map(({id})=>({id,...reviewLabSafety(id,lab?.[id])})).filter(check=>!['ok','missing'].includes(check.status)||check.warning);
  const metadata={checks,safetyVersion:LAB_SAFETY_VERSION};
@@ -67,6 +92,8 @@ export function assessClinical({age,lab,contextConfirmed,fasting}){
 export function validateQuestionnaire(a,{requireAge=true}={}){
  const errors={};
  for(const q of sections.flatMap(s=>s.questions).filter(q=>!q.show||q.show(a))){const v=a[q.id];if(q.id==='age'&&requireAge&&(v===undefined||v===''))errors.age='Enter your age in whole years.';if((q.type==='number'||q.type==='measure')&&v!==undefined&&v!==''){const n=Number(v);if(!Number.isFinite(n)||n<(q.min??0.1)||n>(q.max??1000)||(q.id==='age'&&!Number.isInteger(n)))errors[q.id]=q.id==='age'?'This assessment is for adults aged 18 or over. Enter your age in whole years.':'Check this number and the selected unit.';}}
+ if(a.smokingStartAge!==undefined&&a.smokingStartAge!==''&&(!Number.isInteger(Number(a.smokingStartAge))||Number(a.smokingStartAge)>Number(a.age)))errors.smokingStartAge='Starting age must be a whole number no greater than your current age.';
+ if(a.smokingDays30!==undefined&&a.smokingDays30!==''&&!Number.isInteger(Number(a.smokingDays30)))errors.smokingDays30='Enter a whole number of days.';
  if(a.smokingYears!==undefined&&a.smokingYears!==''&&a.age&&Number(a.smokingYears)>Number(a.age))errors.smokingYears='The number of years smoked cannot be greater than your age.';
  for(const q of sections.flatMap(s=>s.questions).filter(q=>q.type==='multi')){const v=a[q.id];if(Array.isArray(v)&&v.length>1&&v.some(x=>['None','Not sure','Prefer not to say'].includes(x)))errors[q.id]='Choose either the applicable answers or one of “None”, “Not sure” and “Prefer not to say”.';}
  if(a.moderate!==undefined&&a.vigorous!==undefined&&Number(a.moderate)+Number(a.vigorous)>10080)errors.vigorous='Together, these activity totals exceed the number of minutes in a week. Check that you entered weekly minutes.';
@@ -77,8 +104,10 @@ const known=v=>v!==undefined&&v!==null&&v!==''&&v!=='Not sure'&&v!=='Prefer not 
 export function sleepReference(age){return Number(age)>=65?'7–8 hours a day':Number(age)>=61?'7–9 hours a day':'at least 7 hours a day';}
 export function insights(a){
  const i=[];
- if(a.smoking==='Smoke now')i.push({key:'tobacco',name:'Smoking',tag:'Stopping smoking',text:'You currently smoke cigarettes. Stopping smoking reduces health risks, including the risk of heart disease.',action:'A clinician or stop-smoking service can help you choose support, including suitable medicines if needed.',sources:['tobacco']});
+ if(['Every day','Some days','Smoke now'].includes(a.smoking))i.push({key:'tobacco',name:'Smoking',tag:'Stopping smoking',text:`You currently smoke cigarettes${a.smoking==='Every day'?' every day':a.smoking==='Some days'?' on some days':''}. Stopping smoking reduces health risks, including the risk of heart disease.`,action:'A clinician or stop-smoking service can help you choose support, including suitable medicines if needed.',sources:['tobacco']});
  else if(a.nicotine?.some(x=>!['None','Prefer not to say','Nicotine replacement used to stop smoking'].includes(x)))i.push({key:'tobacco',name:'Tobacco and nicotine',tag:'Product-specific advice',text:'You use a tobacco or nicotine product. The risks and suitable cessation support depend on the product.',action:'Ask a clinician or pharmacist about options for reducing harm or stopping.',sources:['tobacco']});
+ const weightChange=weightChangeKg(a);
+ if(hasLargeRecentWeightLoss(a)&&a.weightChangeIntent==='No')i.push({key:'weight-change',name:'Recent weight change',tag:'Unintentional change',text:weightChange.loss/weightChange.previous>=0.05?'You reported losing at least 5% of your previous weight over the past year without intending to.':'You reported losing 10 lb (about 4.5 kg) or more over the past year without intending to.',action:'Consider discussing this change with a healthcare professional.',sources:['weight-change']});
  const adapted=(known(a.limitations)&&a.limitations!=='No')||a.illness==='Yes'||a.context?.some(x=>!['None','Prefer not to say'].includes(x));
  if(adapted)i.push({key:'movement',name:'Physical activity',tag:'Adapt activity to your health',text:'Your answers describe a health limitation, recent illness or recovery. A standard activity target may not suit you at present.',action:'Ask someone familiar with your care which activities and amounts are appropriate, and how to build up safely.',sources:['activity']});
  else if(known(a.moderate)&&known(a.vigorous)&&Number(a.moderate)+2*Number(a.vigorous)<150)i.push({key:'movement',name:'Physical activity',tag:'Aerobic activity',text:`Your entries add up to ${Number(a.moderate)+2*Number(a.vigorous)} moderate-equivalent minutes a week. General adult guidance starts at 150 minutes of moderate activity, 75 minutes of vigorous activity, or a mixture.`,action:'If suitable for your health, add an amount you can manage and increase gradually. Even a small increase can be useful.',sources:['activity']});
@@ -99,5 +128,5 @@ export function domainCards(a){return [
  ['Stress',a.stress||'Not provided',false]
  ];}
 export function alcoholGrams(drinks=[]){if(!drinks.length||drinks.some(d=>![d.count,d.ml,d.abv].every(v=>known(v)&&Number(v)>0)))return null;return drinks.reduce((t,d)=>t+Number(d.count)*Number(d.ml)*Number(d.abv)/100*0.789,0);}
-export const sampleAnswers={age:'45',country:'Bulgaria',height:'175',heightUnit:'cm',weight:'78',weightUnit:'kg',health:'Good',smoking:'Never smoked regularly',nicotine:['None'],alcohol:'Yes',alcoholDays:'2',drinks:[{type:'Wine',count:1,ml:150,abv:12}],moderate:'90',vigorous:'0',strength:'1',limitations:'No',sleep:'6.5',rested:'Sometimes',disrupted:'No',stress:'Occasionally',diet:'3–4',conditions:['None'],medicines:['None'],context:['None'],illness:'No'};
+export const sampleAnswers={age:'45',country:'Bulgaria',height:'175',heightUnit:'cm',weight:'78',weightUnit:'kg',weightYearAgo:'78',weightYearAgoUnit:'kg',health:'Good',smokingEver100:'No',smoking:'Not at all',nicotine:['None'],alcohol:'Yes',alcoholDays:'2',drinks:[{type:'Wine',count:1,ml:150,abv:12}],moderate:'90',vigorous:'0',strength:'1',limitations:'No',sleep:'6.5',rested:'Sometimes',disrupted:'No',stress:'Occasionally',diet:'3–4',conditions:['None'],medicines:['None'],context:['None'],illness:'No'};
 export function sampleLabs(){return Object.fromEntries(labs.map(l=>[l.id,{value:String(l.example),unit:l.units[0]}]));}

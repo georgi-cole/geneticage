@@ -34,10 +34,12 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await enter('[data-answer="country"]','Fictional test country');await submit('#questions');
  await enter('[data-answer="height"]','176');await submit('#questions');
  await enter('[data-answer="weight"]','77');await submit('#questions');
+ await enter('[data-answer="weightYearAgo"]','77');await submit('#questions');
  const health=$('[data-answer="health"][value="Good"]'),form=$('#questions');health.focus();health.click();await flush();
  assert.equal($('#questions'),form);assert.equal(document.activeElement,health);assert.equal(health.checked,true);
- await submit('#questions');await click('[data-answer="smoking"][value="Never smoked regularly"]');await submit('#questions');
- assert.match($('#main').textContent,/This is separate from cigarettes/);assert.equal(document.querySelectorAll('[data-answer="nicotine"]').length,8);
+ await submit('#questions');await click('[data-answer="smokingEver100"][value="No"]');await submit('#questions');
+ await click('[data-answer="smoking"][value="Not at all"]');await submit('#questions');
+ assert.match($('#main').textContent,/Answer separately from cigarettes/);assert.equal(document.querySelectorAll('[data-answer="nicotine"]').length,8);
  await click('[data-answer="nicotine"][value="Vape or e-cigarette"]');await click('[data-answer="nicotine"][value="None"]');
  assert.equal($('[data-answer="nicotine"][value="Vape or e-cigarette"]').checked,false);assert.equal($('[data-answer="nicotine"][value="None"]').checked,true);
  await click('.mobile-nav [data-route="history"]');await click('[data-action="start-labs"]');
