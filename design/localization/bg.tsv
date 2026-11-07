@@ -189,7 +189,10 @@ Which country do you live in?	В коя държава живеете?
 Helps KoleQuant check consultation availability. It does not affect your age estimate.	Помага на KoleQuant да провери възможностите за консултация. Не влияе на оценката за възрастта.
 What is your height?	Какъв е ръстът ви?
 What is your weight?	Какво е теглото ви?
-For feet and inches, enter the total in inches. Height and weight are recorded for reference; they are not used in the blood-based age calculation.	За футове и инчове въведете общия брой инчове. Ръстът и теглото се записват за справка; не участват в изчислението по кръвни показатели.
+About how much did you weigh 12 months ago?	Колко тежахте приблизително преди 12 месеца?
+Use your best estimate. If you are pregnant, enter your weight before pregnancy.	Посочете най-добрата си преценка. Ако сте бременна, въведете теглото си преди бременността.
+Was this weight loss intentional?	Умишлена ли беше загубата на тегло?
+For feet and inches, enter the total in inches. Height and weight are recorded for health context; they do not change the blood-based age calculation.	За футове и инчове въведете общия брой инчове. Ръстът и теглото се записват за здравен контекст, но не променят възрастта по кръвни показатели.
 How would you describe your overall health today?	Как оценявате здравето си днес?
 Enter your age to begin. The other questions are optional.	Започнете с възрастта си. Останалите въпроси можете да пропуснете.
 Excellent	Отлично
@@ -213,6 +216,25 @@ Not provided	Не е посочено
 Tobacco	Тютюн
 Smoking and nicotine	Тютюнопушене и никотин
 Include occasional smoking as well as daily use.	Включете и пушенето от време на време, не само ежедневното.
+Have you smoked at least 100 cigarettes in your life?	Изпушвали ли сте поне 100 цигари през живота си?
+That is about five standard packs. This question is about cigarettes, not cigars, shisha or vaping.	Това са около пет стандартни кутии. Въпросът е само за цигари, не за пури, наргиле или вейп.
+Do you currently smoke cigarettes?	Пушите ли цигари в момента?
+Choose “Some days” if you smoke occasionally.	Ако пушите от време на време, изберете „В някои дни“.
+Every day	Всеки ден
+Some days	В някои дни
+Not at all	Изобщо не
+Have you ever smoked cigarettes fairly regularly?	Пушили ли сте някога цигари редовно?
+“Regularly” means when you consider regular smoking to have begun.	За този въпрос преценете сами кога сте започнали да пушите редовно.
+How old were you when you first began smoking cigarettes regularly?	На каква възраст започнахте да пушите цигари редовно?
+If you started before age 6, enter 6. Skip if you are unsure.	Ако сте започнали преди 6-годишна възраст, въведете 6. Пропуснете въпроса, ако не помните.
+On how many of the past 30 days did you smoke a cigarette?	В колко от последните 30 дни сте пушили цигара?
+On a day when you smoke, how many cigarettes do you usually have?	Колко цигари обикновено изпушвате в ден, когато пушите?
+If you smoke only on some days, think of the past 30 days.	Ако пушите само в някои дни, имайте предвид последните 30 дни.
+10–19 years	10–19 години
+20–49 years	20–49 години
+50 or more years	50 или повече години
+Do you currently use any of these other tobacco or nicotine products?	Използвате ли в момента някой от тези други тютюневи или никотинови продукти?
+Answer separately from cigarettes.	Отговорете отделно за цигарите.
 Which best describes your cigarette smoking?	Пушите ли цигари?
 Never smoked regularly	Никога не съм пушил(а) редовно
 Used to smoke regularly	Преди пушех редовно
@@ -334,6 +356,13 @@ Part of your diet	Част от храненето ви
 Review your answers	Прегледайте отговорите си
 No specific priority identified	Не е определен конкретен приоритет
 You currently smoke cigarettes. Stopping smoking reduces health risks, including the risk of heart disease.	В момента пушите цигари. Отказването намалява здравните рискове, включително риска от сърдечни заболявания.
+You currently smoke cigarettes every day. Stopping smoking reduces health risks, including the risk of heart disease.	В момента пушите цигари всеки ден. Отказването намалява здравните рискове, включително риска от сърдечни заболявания.
+You currently smoke cigarettes on some days. Stopping smoking reduces health risks, including the risk of heart disease.	В момента пушите цигари в някои дни. Отказването намалява здравните рискове, включително риска от сърдечни заболявания.
+Recent weight change	Скорошна промяна в теглото
+Unintentional change	Неволна промяна
+You reported losing at least 5% of your previous weight over the past year without intending to.	Посочихте, че през последните 12 месеца неволно сте свалили поне 5% от теглото си отпреди година.
+You reported losing 10 lb (about 4.5 kg) or more over the past year without intending to.	Посочихте, че през последните 12 месеца неволно сте свалили поне 10 lb (около 4,5 kg).
+Consider discussing this change with a healthcare professional.	Обсъдете тази промяна със здравен специалист.
 A clinician or stop-smoking service can help you choose support, including suitable medicines if needed.	Лекар или програма за отказване от тютюнопушене могат да помогнат с подходяща подкрепа, включително лекарства при нужда.
 You use a tobacco or nicotine product. The risks and suitable cessation support depend on the product.	Използвате тютюнев или никотинов продукт. Рисковете и подходящата подкрепа за отказване зависят от продукта.
 Ask a clinician or pharmacist about options for reducing harm or stopping.	Попитайте лекар или фармацевт за възможностите за намаляване на вредата или отказване.

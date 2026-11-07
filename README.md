@@ -16,7 +16,7 @@ The current numerical-display policy requires age 20–84, all nine exact numeri
 
 The age difference is explicitly a simple subtraction, not an age-adjusted PhenoAgeAccel residual, a mortality probability, or an aging-rate estimate. Numerical results are rounded to whole years without an invented confidence interval. Estimates rounding outside the current 1–99 reporting window are withheld for entry/professional review rather than clamped; that window is an application choice, not a published biological validity limit. Missing biomarkers are not imputed; below-detection-limit CRP is not replaced with zero or the limit. Health habits do not add arbitrary years to the clinical formula.
 
-Profile refinements include separate strength-training feedback, fruit/vegetable feedback covering the 3–4-portion response, age-specific sleep guidance, no adverse interpretation of long sleep alone, and adapted activity advice for reported limitations/recovery. Optional unanswered information stays unknown. Activity totals, smoking duration and mutually exclusive choices receive consistency checks. Advice is educational, with source links, not prescribed treatment or a promise of age reversal.
+Profile refinements include separate strength-training feedback, fruit/vegetable feedback covering the 3–4-portion response, age-specific sleep guidance, no adverse interpretation of long sleep alone, and adapted activity advice for reported limitations/recovery. Optional unanswered information stays unknown. Activity totals, smoking start age, smoking frequency and mutually exclusive choices receive consistency checks. A large self-reported weight loss over the past year prompts a brief health-context note only; weight does not change the blood-based age calculation. Advice is educational, with source links, not prescribed treatment or a promise of age reversal.
 
 Sources and the clock comparison are maintained in `public/evidence.mjs`. Key evidence: Levine et al. (2018), https://www.aging-us.com/article/101414/text; Liu et al. (2018), https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.1002718; Lu et al. (2019), https://pmc.ncbi.nlm.nih.gov/articles/PMC6366976/; Belsky et al. (2022), https://elifesciences.org/articles/73420. Lifestyle sources are WHO, CDC and AHA guidance linked by topic. An ENABL Age-Q or another questionnaire-age model remains a research candidate, requiring implementation/licensing and external-validation review before use.
 
@@ -48,7 +48,7 @@ The **App checks** workflow builds both editions. A maintainer can run it manual
 
 ## Included features
 
-- A 26-question, six-section questionnaire with conditional questions, optional answers and validation.
+- A 31-question, six-section questionnaire with conditional questions, optional answers and validation.
 - A health profile, manual blood-entry route, and demo clinical PhenoAge calculation with unit conversions and explicit withholding states.
 - Report preview, Stripe hosted Checkout integration, verified purchased-report access and browser print/save-PDF layout. Charging stays disabled until merchant configuration and webhook delivery are ready.
 - Consultation enquiry preview with selectable sharing categories. No enquiry is transmitted.

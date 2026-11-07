@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {normalizeLab,calculatePhenoAge,validateLabs,sampleLabs,eligibility,assessClinical,validateQuestionnaire,sleepReference,insights,alcoholGrams,sections} from './public/model.mjs';
+import {normalizeLab,calculatePhenoAge,validateLabs,sampleLabs,eligibility,assessClinical,validateQuestionnaire,sleepReference,insights,alcoholGrams,hasLargeRecentWeightLoss,sections} from './public/model.mjs';
 const raw=sampleLabs(),x=normalizeLab(raw),age=45;
 const xb=-19.907-.0336*x.albumin+.0095*x.creatinine+.1953*x.glucose+.0954*Math.log(x.crp)-.012*x.lymphocytes+.0268*x.mcv+.3306*x.rdw+.00188*x.alp+.0554*x.wbc+.0804*age;
 const m=1-Math.exp(-Math.exp(xb)*Math.expm1(120*.0076927)/.0076927);
@@ -10,8 +10,17 @@ assert.ok(Math.abs(calculatePhenoAge(age,normalizeLab(alt))-value)<1e-9);
 assert.equal(Object.keys(validateLabs({})).length,9);assert.ok(validateLabs({...raw,crp:{value:'0',unit:'mg/L'}}).crp);assert.ok(validateLabs({...raw,lymphocytes:{value:'101',unit:'%'}}).lymphocytes);assert.ok(validateLabs({...raw,rdw:{value:'40',unit:'fL'}}).rdw);
 assert.ok(eligibility({},18));assert.equal(eligibility({illness:'Yes'},45),null);assert.equal(eligibility({illness:'No'},45),null);
 assert.equal(insights({})[0].key,'context');assert.equal(insights({moderate:'0',vigorous:'0',limitations:'Often'})[0].tag,'Adapt activity to your health');assert.equal(insights({smoking:'Smoke now'})[0].key,'tobacco');assert.equal(alcoholGrams([]),null);assert.ok(Math.abs(alcoholGrams([{count:1,ml:150,abv:12}])-14.202)<1e-6);
-assert.equal(sections.reduce((n,s)=>n+s.questions.length,0),26);
-console.log(JSON.stringify({clinicalAge:value,formulaAndConversions:'passed',missingAndInvalidInputs:'passed',eligibilityAndUnknowns:'passed',questionCount:26}));
+assert.equal(sections.reduce((n,s)=>n+s.questions.length,0),31);
+assert.equal(hasLargeRecentWeightLoss({weight:'70',weightUnit:'kg',weightYearAgo:'75',weightYearAgoUnit:'kg'}),true);
+assert.equal(hasLargeRecentWeightLoss({weight:'154',weightUnit:'lb',weightYearAgo:'164',weightYearAgoUnit:'lb'}),true);
+assert.equal(hasLargeRecentWeightLoss({weight:'66.4',weightUnit:'kg',weightYearAgo:'70',weightYearAgoUnit:'kg'}),true);
+assert.equal(hasLargeRecentWeightLoss({weight:'75',weightUnit:'kg',weightYearAgo:'70',weightYearAgoUnit:'kg'}),false);
+assert.ok(insights({weight:'70',weightUnit:'kg',weightYearAgo:'75',weightYearAgoUnit:'kg',weightChangeIntent:'No'}).some(item=>item.key==='weight-change'));
+assert.ok(insights({weight:'66.4',weightUnit:'kg',weightYearAgo:'70',weightYearAgoUnit:'kg',weightChangeIntent:'No'}).find(item=>item.key==='weight-change').text.includes('5%'));
+assert.ok(!insights({weight:'70',weightUnit:'kg',weightYearAgo:'75',weightYearAgoUnit:'kg',weightChangeIntent:'Yes'}).some(item=>item.key==='weight-change'));
+assert.ok(validateQuestionnaire({age:'45',smokingRegular:'Yes',smokingStartAge:'46'}).smokingStartAge);
+assert.ok(validateQuestionnaire({age:'45',smoking:'Some days',smokingDays30:'4.5'}).smokingDays30);
+console.log(JSON.stringify({clinicalAge:value,formulaAndConversions:'passed',missingAndInvalidInputs:'passed',eligibilityAndUnknowns:'passed',weightHistory:'passed',smokingInputs:'passed',questionCount:31}));
 
 assert.equal(eligibility({},84),null);assert.ok(eligibility({},85));
 assert.ok(assessClinical({age:45,lab:raw,contextConfirmed:true,fasting:'Not sure'}).reason);

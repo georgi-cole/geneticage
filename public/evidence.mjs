@@ -1,4 +1,4 @@
-export const CONTENT_VERSION='2026-11-06-lab-safety-v4';
+export const CONTENT_VERSION='2026-11-07-assessment-v5';
 export const references=[
  {id:'critical-mayo',label:'Mayo Clinic Laboratories · Critical results · October 2026',url:'https://www.mayocliniclabs.com/-/media/it-mmfiles/Special-Instructions/4/2/A/critical-values-semi-urgent-results-list.pdf'},
  {id:'critical-crouse',label:'Crouse Health · Critical value chart',url:'https://laboratory.crouse.org/healthcare-providers/laboratory-services/reporting-documents/critical-value-chart/'},
@@ -15,6 +15,10 @@ export const references=[
  {id:'diet',label:'WHO · Healthy diet',url:'https://www.who.int/news-room/fact-sheets/detail/healthy-diet'},
  {id:'alcohol',label:'WHO · Alcohol and health',url:'https://www.who.int/news-room/fact-sheets/detail/alcohol/'},
  {id:'tobacco',label:'American Heart Association · Tobacco and cardiovascular health',url:'https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8'},
+ {id:'nhis-smoking',label:'CDC/NCHS · NHIS Sample Adult Questionnaire, 2004',url:'https://ftp.cdc.gov/pub/health_Statistics/nchs/Survey_Questionnaires/NHIS/2004/english/QADULT.pdf'},
+ {id:'nhanes-smoking',label:'CDC/NCHS · NHANES Smoking - Cigarette Use, 2007–08',url:'https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2007/DataFiles/SMQ_E.htm'},
+ {id:'weight-history',label:'CDC/NCHS · NHANES Weight History, 2007–08',url:'https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2007/DataFiles/WHQ_E.htm'},
+ {id:'weight-change',label:'MedlinePlus · Unintentional weight loss',url:'https://medlineplus.gov/ency/article/003107.htm'},
 ];
 export const clockComparison=[
  {name:'Clinical PhenoAge',input:'Your age and nine routine blood measurements',meaning:'A clinical age estimate, expressed in years.',availability:'Calculated here when the required inputs and collection details are available.'},
