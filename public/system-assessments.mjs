@@ -25,6 +25,16 @@ export const systemAssessments = {
 
 export const systemAssessment = type => typeof type === 'string' && Object.hasOwn(systemAssessments, type) ? systemAssessments[type] : null;
 
+export const sampleFitnessInputs = () => ({
+  age:{value:'33',unit:'years'},
+  sex:'Male',
+  fitnessContext:'None of these',
+  waist:{value:'85',unit:'cm'},
+  pulse:{value:'62',unit:'beats/min'},
+  moderate:{value:'130',unit:'min / week'},
+  vigorous:{value:'15',unit:'min / week'},
+});
+
 const yesNo = ['Yes', 'No'];
 const contextAnswers = ['Yes', 'No', 'Not sure'];
 const sexes = ['Female', 'Male'];

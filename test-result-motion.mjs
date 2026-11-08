@@ -29,6 +29,7 @@ assert.match(renderThemeHome(welcome,{choices,selected:'phenoage',loadStatus:'lo
 const personal={...frozen,labSubmitted:true};
 assert.equal(overviewChoices([], [personal,savedSample,fitness]).find(item=>item.type==='phenoage').saved,personal,'A newer sample cannot replace the personal result.');
 assert.equal(overviewChoices([{...savedSample,assessment:true}], []).length,0,'An unsaved sample is still a preview.');
+assert.deepEqual(overviewChoices([], [savedSample,{...fitness,sample:true}]).map(item=>item.label),['Fitness · Sample','PhenoAge · Sample']);
 const fitnessHome=renderThemeHome(overviewPresentation(fitness));
 assert.match(fitnessHome,/home-workspace.*result-instrument.*APPROXIMATE FITNESS AGE/s);
 assert.match(fitnessHome,/Study age group.*20–29.*Open your report/s);

@@ -5,6 +5,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { handleAccountApi, CONSENT_VERSION } from './lib/account-api.mjs';
 import { sampleAnswers, sampleLabs, calculatePhenoAge, normalizeLab } from './public/model.mjs';
 import {REFERENCE_CATALOG_VERSION} from './public/lab-reference-catalog.mjs';
+import {sampleFitnessInputs} from './public/system-assessments.mjs';
 
 const sqlite = new DatabaseSync(':memory:');
 sqlite.exec('PRAGMA foreign_keys=ON');
@@ -153,6 +154,16 @@ assert.equal((await call(a,'assessments','POST',kidneyEntry)).response.status,20
 assert.deepEqual((await call(a,'assessments/'+kidneyId+'/report')).data.report,savedKidney);
 assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:kidneyId})).response.status,400);
 assert.equal((await call(a,'assessments/'+kidneyId,'DELETE',{confirm:true})).response.status,200);
+const fitnessSampleId=randomUUID();
+assert.equal((await call(a,'assessments','POST',{id:fitnessSampleId,assessmentType:'fitness',system:sampleFitnessInputs(),sample:true})).response.status,201);
+const fitnessSampleMeta=(await call(a,'assessments')).data.assessments.find(record=>record.id===fitnessSampleId);
+assert.equal(fitnessSampleMeta.assessmentType,'fitness');
+assert.equal(fitnessSampleMeta.sample,true);
+const fitnessSample=(await call(a,'assessments/'+fitnessSampleId)).data;
+assert.equal(fitnessSample.assessment.sample,true);
+assert.equal(fitnessSample.report.sample,true);
+assert.equal(fitnessSample.report.system.result.status,'ready');
+assert.equal((await call(a,'assessments/'+fitnessSampleId,'DELETE',{confirm:true})).response.status,200);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
 sqlite.prepare('UPDATE assessments SET payload=? WHERE id=?').run(stored.payload,withheldId);
 assert.equal((await call(a,'assessments/'+withheldId)).response.status,503);

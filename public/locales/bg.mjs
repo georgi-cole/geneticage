@@ -1149,6 +1149,8 @@ export const BG=Object.freeze({
   "Metabolic": "Метаболитно здраве",
   "Kidney": "Бъбречно здраве",
   "Fitness": "Физическа форма",
+  "Try a Fitness sample": "Вижте пример за физическа форма",
+  "Try a PhenoAge sample": "Вижте пример за PhenoAge",
   "Assessment result": "Резултат от анализа",
   "Choose an assessment from the menu on the card.": "Изберете анализ от менюто в картата с резултата.",
   "Complete a different age assessment to switch results.": "Завършете друг анализ на възрастта, за да сменяте резултата.",

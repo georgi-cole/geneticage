@@ -18,7 +18,7 @@ import {renderAssessmentReport} from './report-ui.mjs';
 import {assessHeartVascular, HEART_ASSESSMENT, heartOffersArterialAge} from './heart-vascular.mjs';
 import {heartSteps, heartRoute, readHeartForm, refreshHeartFeedback, changeHeartUnit, renderHeartForm, renderHeartReport, renderHeartArterialForm, readHeartArterialForm, heartRoutineAgeStep} from './heart-vascular-ui.mjs';
 import {heartPrefill} from './heart-prefill.mjs';
-import {assessSystem, systemAssessment, systemAssessments, systemField, systemPrefill} from './system-assessments.mjs';
+import {assessSystem, sampleFitnessInputs, systemAssessment, systemAssessments, systemField, systemPrefill} from './system-assessments.mjs';
 import {readSystemForm, refreshSystemFeedback, renderSystemForm, renderSystemReport, systemMethods, systemRoute, systemStepFor} from './system-assessment-ui.mjs';
 import {resultInstrument,screenHeading,uiIcon,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,assessmentTitle,statusMessage,unmeasuredMark} from './ui-components.mjs';
 import {questionContext,questionChoices,questionDestination,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
@@ -134,7 +134,12 @@ async function hydrateOverview(retry=false){
  }
  if(state.view==='home'&&(!auth.profile||overviewSnapshot(id)===snapshot&&overviewSelection().choice.saved?.id===id))renderOverview();
 }
-function consent(){return `<div class="wrap narrow"><div class="eyebrow">Before you start</div><h1>Before you begin.</h1><p class="lead">This is an educational service under development. It can help you understand the information you enter, but it does not diagnose a condition or replace medical care.</p><div class="notice">${PAGES_PREVIEW?'Your answers stay in this page’s memory. Cloud saving is available in the hosted app.':'Unsaved answers stay on this page. If you choose to save an assessment, its health information and report are stored in your account.'}</div><label class="checkline"><input id="consent" type="checkbox" ${state.consent?'checked':''}><span>I am 18 or older and have read the assessment note and <button class="text-link" data-action="privacy">information about my data</button>.</span></label>${state.errors.consent?`<p class="error" role="alert">${state.errors.consent}</p>`:''}<div class="actions"><button class="btn" data-action="consent-next">Continue ${arrow}</button><button class="text-btn" data-action="sample">View the sample instead</button></div></div>`;}
+function consent(){
+ const sample=state.goal==='fitness'
+  ? '<button class="text-btn" data-action="sample" data-type="fitness">Try a Fitness sample</button>'
+  : '<button class="text-btn" data-action="sample">Try a PhenoAge sample</button>';
+ return `<div class="wrap narrow"><div class="eyebrow">Before you start</div><h1>Before you begin.</h1><p class="lead">This is an educational service under development. It can help you understand the information you enter, but it does not diagnose a condition or replace medical care.</p><div class="notice">${PAGES_PREVIEW?'Your answers stay in this page’s memory. Cloud saving is available in the hosted app.':'Unsaved answers stay on this page. If you choose to save an assessment, its health information and report are stored in your account.'}</div><label class="checkline"><input id="consent" type="checkbox" ${state.consent?'checked':''}><span>I am 18 or older and have read the assessment note and <button class="text-link" data-action="privacy">information about my data</button>.</span></label>${state.errors.consent?`<p class="error" role="alert">${state.errors.consent}</p>`:''}<div class="actions"><button class="btn" data-action="consent-next">Continue ${arrow}</button>${sample}</div></div>`;
+}
 function inputField(q){const a=state.answers,v=a[q.id]??'';if(q.type==='multi'||q.options)return `<div class="options">${q.options.map(o=>`<label class="option"><input type="${q.type==='multi'?'checkbox':'radio'}" name="${q.id}" value="${esc(o)}" data-answer="${q.id}" ${q.type==='multi'?(Array.isArray(v)&&v.includes(o)?'checked':''):(v===o?'checked':'')}><i class="choice-mark" aria-hidden="true"></i><span>${esc(q.optionLabels?.[o]||o)}</span></label>`).join('')}</div>`;
  if(q.type==='country')return `<input type="text" data-answer="${q.id}" id="${q.id}" aria-label="${esc(q.label)}" value="${esc(v)}" list="countries" placeholder="Search or enter a country" autocomplete="off"><datalist id="countries">${['Australia','Austria','Belgium','Brazil','Bulgaria','Canada','China','Croatia','Cyprus','Czechia','Denmark','Estonia','Finland','France','Germany','Greece','Hungary','India','Ireland','Israel','Italy','Japan','Latvia','Lithuania','Malta','Netherlands','New Zealand','Norway','Poland','Portugal','Romania','Singapore','South Africa','Spain','Sweden','Switzerland','United Kingdom','United States'].map(x=>`<option>${x}</option>`).join('')}</datalist>`;
  if(q.type==='drinks')return `<div class="drink-list">${(a.drinks||[]).map((d,i)=>`<div class="drink-summary"><span><strong>${esc(d.type)}</strong><small>${esc(d.count||'?')} × ${esc(d.ml||'?')} mL · ${esc(d.abv||'?')}%</small></span><button class="text-link" type="button" data-action="edit-drink" data-index="${i}">Edit</button><button class="text-btn" type="button" data-action="remove-drink" data-index="${i}" aria-label="Remove drink ${i+1}">×</button></div>`).join('')}</div><button class="btn secondary" data-action="add-drink" type="button">+ Add a drink type</button>`;
@@ -169,7 +174,7 @@ function hasContext(){return state.answers.illness==='Yes'||['conditions','medic
 function pagesInfo(){modal('This preview is offline for accounts',`<p>Account creation needs the hosted app. You can use assessments in this preview, and your entries stay on this page.</p><a class="btn" href="${HOSTED_APP_URL}" target="_blank" rel="noopener noreferrer">Open hosted app ↗</a>`);}
 function report(){
  if(isHeartAssessment(state))return state.heart.result?renderHeartReport({heart:state.heart,saved:!!state.saved,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):heartForm();
- if(isSystemAssessment(state))return state.system.result?renderSystemReport({type:state.assessmentType,system:state.system,saved:!!state.saved,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):systemForm();
+ if(isSystemAssessment(state))return state.system.result?renderSystemReport({type:state.assessmentType,system:state.system,saved:!!state.saved,sample:state.sample,hasDraftBackup:!!draftBackup,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):systemForm();
  const reviewing=!!auth.reportReview||!!state.savedReport?.access?.review;state.unlocked=state.savedReport?.full===true||reviewing;
  return renderAssessmentReport({state,clinical:clinical(),full:state.unlocked,reviewing,pagesPreview:PAGES_PREVIEW,sourceLinks,ageComparison,hasDraftBackup:!!draftBackup});
 }
@@ -228,7 +233,7 @@ function clearAccountState(){
 function snapshot(){
  state.saveId??=crypto.randomUUID();
  if(isHeartAssessment(state))return {id:state.saveId,assessmentType:HEART_ASSESSMENT,heart:structuredClone(state.heart.inputs)};
- if(isSystemAssessment(state))return {id:state.saveId,assessmentType:state.assessmentType,system:structuredClone(state.system.inputs)};
+ if(isSystemAssessment(state))return {id:state.saveId,assessmentType:state.assessmentType,system:structuredClone(state.system.inputs),sample:state.sample};
  return {id:state.saveId,answers:structuredClone(state.answers),lab:structuredClone(state.lab),labAge:state.labAge,labDate:state.labDate,labSubmitted:!!state.labSubmitted,labContext:!!state.labContext,labFasting:state.labFasting||'Not recorded',labReferenceMode:state.labReferenceMode,labReferenceGroup:labReferenceGroup(state),labReferenceVersion:state.labReferenceVersion,sample:state.sample,unlocked:state.unlocked};
 }
 function save(){if(PAGES_PREVIEW){pagesInfo();return;}if(!state.assessment){goto('home');return;}if(!account()){state.pendingSave=true;signup();return;}modal('Save this assessment?',`<p>Store this questionnaire, blood entries, result and educational report in <strong data-no-translate>${esc(account().name)}</strong>. They will be available when you sign in on another device.</p><p>Saving does not share information with the consultation team or enrol you in research.</p><div class="notice">This creates a dated snapshot. Later assessments are saved separately so your history stays intact. The saved copy keeps the answers and result from this assessment.</div><button class="btn" data-action="confirm-save">Save to my account →</button><button class="text-btn" data-action="close" style="margin-left:15px">Cancel</button>`);}
@@ -556,7 +561,18 @@ function beginAssessment(goal){
  state=continueAssessment(state,goal);goto(state.view);
 }
 function rememberDraftForSample(){if(!state.sample&&assessmentProgress(state).hasData)draftBackup=structuredClone(state);}
-function loadSample(){rememberDraftForSample();state={...freshAssessment(),resultTab:'summary',answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labReferenceGroup:'male',labFasting:'Yes',labDate:'2026-11-01',labValid:true,labContext:true,sample:true,labSubmitted:true,consent:true,assessment:true,profileCompleted:true};state.lab.crp.assay='standard-crp';goto('results');}
+function loadSample(type){
+ rememberDraftForSample();
+ if(type==='fitness'){
+  const {inputs,result,review}=assessSystem('fitness',sampleFitnessInputs());
+  state={...freshAssessment('fitness'),system:{inputs,result,review},sample:true,consent:true,assessment:true};
+  goto('report');
+  return;
+ }
+ state={...freshAssessment(),resultTab:'summary',answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labReferenceGroup:'male',labFasting:'Yes',labDate:'2026-11-01',labValid:true,labContext:true,sample:true,labSubmitted:true,consent:true,assessment:true,profileCompleted:true};
+ state.lab.crp.assay='standard-crp';
+ goto('results');
+}
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-action]');if(!b)return;const act=b.dataset.action;e.preventDefault();
  if(state.view==='questionnaire')captureQuestion();else if(state.view==='labs')captureLabs();
  if(act==='start-system'&&systemAssessment(b.dataset.type)){await action(b,()=>beginAssessment(b.dataset.type));return;}
@@ -588,7 +604,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
     goto('system');
    }else editSystem(b.dataset.part,'report');
   }
-  if(act==='system-copy'&&state.saved){
+  if(act==='system-copy'&&state.saved&&!state.sample){
    const copy={...freshAssessment(state.assessmentType),consent:true,assessment:true,systemPrefillLoaded:true,system:structuredClone(state.system)};
    state=copy;
    goto('report');
@@ -669,7 +685,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
  if(act==='library-page'){state.libraryPage=Number(b.dataset.page);goto('account');return;}
  if(act==='lab-back'){if((state.labStep||0)>0){state.labStep--;goto('labs');}else goto('consent');return;}
  if(act==='consult-step'){advanceContactPage($('#consult-form'),Number(b.dataset.direction));return;}
- if(act==='account-area'||act==='assessments'){state.accountTab=b.dataset.tab||'history';state.libraryPage=0;goto('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='home'){goto('home');return;}if(act==='method'){method();return;}if(act==='privacy'){privacy();return;}if(act==='close'){close();return;}if(act==='start'){beginAssessment('profile');return;}if(act==='start-labs'){beginAssessment('labs');return;}if(act==='start-heart'){await action(b,()=>beginAssessment(HEART_ASSESSMENT));return;}if(act==='sample'){loadSample();return;}
+ if(act==='account-area'||act==='assessments'){state.accountTab=b.dataset.tab||'history';state.libraryPage=0;goto('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='home'){goto('home');return;}if(act==='method'){method();return;}if(act==='privacy'){privacy();return;}if(act==='close'){close();return;}if(act==='start'){beginAssessment('profile');return;}if(act==='start-labs'){beginAssessment('labs');return;}if(act==='start-heart'){await action(b,()=>beginAssessment(HEART_ASSESSMENT));return;}if(act==='sample'){loadSample(b.dataset.type);return;}
  if(act==='question-back'){if(questionChoices(state).page>0){state.optionPage--;render();return;}Object.assign(state,questionDestination(state,-1));goto(state.view);return;}if(act==='skip'){dirty();delete state.answers[b.dataset.id];Object.assign(state,questionDestination(state));goto(state.view);return;}if(act==='edit-section'){state.step=Number(b.dataset.index);state.questionIndex=0;state.optionPage=0;goto('questionnaire');return;}if(act==='add-drink'){editDrink();return;}if(act==='edit-drink'){editDrink(Number(b.dataset.index));return;}if(act==='remove-drink'){dirty();state.answers.drinks.splice(Number(b.dataset.index),1);render();return;}
  if(act==='without-labs'){state.profileCompleted=true;dirty();state.labSubmitted=false;state.assessment=true;goto('results');return;}if(act==='labs'){beginAssessment('labs');return;}if(act==='sample-labs'){loadSample();state.labStep=0;goto('labs');return;}if(act==='results'){if(state.view==='review')state.profileCompleted=true;state.assessment=true;state.resultTab='summary';goto(independentAssessment(state)?'report':'results');return;}if(act==='review'){goto('review');return;}if(act==='report'){state.reportTab='summary';goto('report');return;}if(act==='checkout'){checkout();return;}if(act==='print'){if(independentAssessment(state)||auth.reportReview||state.savedReport?.full===true){const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(d=>d.open);details.forEach(d=>d.open=true);window.addEventListener('afterprint',()=>details.forEach((d,i)=>d.open=previous[i]),{once:true});window.print();}else checkout();return;}
  if(act==='save-before-checkout'){await action(b,async()=>{await api('assessments','POST',snapshot());await openSaved(state.saveId,'report');checkout();});return;}

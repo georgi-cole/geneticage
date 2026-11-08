@@ -111,6 +111,7 @@ export function renderSystemForm({type, inputs, step, prefilled, errors, mode, t
       ${prefillUnavailable && current.id === 'age' ? '<p class="hint">Earlier answers could not be loaded. You can enter them here.</p>' : ''}
       ${current.specialist ? specialistHelp() : ''}
       ${current.id === 'creatinine' && !mode ? '<button class="text-btn system-alternate" type="button" data-action="system-partial">I don’t have this result yet</button>' : ''}
+      ${type === 'fitness' && index === 0 && !mode ? '<button class="text-btn system-alternate" type="button" data-action="sample" data-type="fitness">Try a Fitness sample</button>' : ''}
       <div class="form-nav">
         <button class="text-btn" type="button" data-action="system-back">${mode === 'report' ? 'Keep current results' : '← Back'}</button>
         <button class="btn" type="submit"><span${skip ? ' data-system-skip="'+esc(skip)+'"' : ''}>${mode === 'review' ? 'Save changes' : skip && !entered ? skip : next}</span>${arrow}</button>
@@ -275,7 +276,7 @@ const methodCopy = {
 
 export const systemMethods = type => methodCopy[type].map(paragraph => `<p>${esc(paragraph)}</p>`).join('');
 
-export function renderSystemReport({type, system, saved, pagesPreview, sourceLinks, tab = 'summary'}) {
+export function renderSystemReport({type, system, saved, sample, hasDraftBackup, pagesPreview, sourceLinks, tab = 'summary'}) {
   const spec = systemAssessment(type);
   const {inputs, result, review} = system;
   const ready = result.status === 'ready';
@@ -287,16 +288,17 @@ export function renderSystemReport({type, system, saved, pagesPreview, sourceLin
       ${review.a1cOutside ? '<p class="heart-reading-context">HbA1c is below the app’s calculation range. The age uses your questionnaire and body measurements.</p>' : ''}
       ${review.testIncomplete ? '<p class="heart-reading-context">For a measured comparison, check the test type and peak RER on your report.</p>' : ''}
       ${!ready && readings ? `<section class="heart-reading"><h2>Readings to review</h2><dl>${readings}</dl></section>` : ''}
-      ${saved ? '<button class="text-btn no-print" data-action="system-copy">Update from this report ↗</button>' : result.issue === 'fitness-age' ? '' : extraActions(type, inputs)}`,
+      ${sample ? '' : saved ? '<button class="text-btn no-print" data-action="system-copy">Update from this report ↗</button>' : result.issue === 'fitness-age' ? '' : extraActions(type, inputs)}`,
     measurements:`<section class="heart-reading"><h2>Your answers and measurements</h2><dl>${derived}${measurementRows(type, inputs, review)}</dl>
-      ${saved ? '' : '<button class="text-btn no-print" data-action="system-edit" data-part="age" data-review-all>Review answers ↗</button>'}</section>`,
+      ${saved || sample ? '' : '<button class="text-btn no-print" data-action="system-edit" data-part="age" data-review-all>Review answers ↗</button>'}</section>`,
     methods:`<section class="report-explanation"><h2>How this comparison works</h2>${systemMethods(type)}${sourceLinks(spec.sources)}</section>`,
   };
   const tabs = [['summary','Summary'], ['measurements','Measurements'], ['methods','Methods']];
   const selected = Object.hasOwn(panels, tab) ? tab : 'summary';
   return `<div class="wrap app-screen report-workspace system-report">
-    <header class="report-heading" data-theme-part><div><span class="eyebrow">ASSESSMENT REPORT</span><h1>${esc(spec.title)}</h1>${saved ? '<p>Saved assessment</p>' : ''}</div>
+    <header class="report-heading" data-theme-part><div><span class="eyebrow">${sample ? 'ILLUSTRATIVE SAMPLE' : 'ASSESSMENT REPORT'}</span><h1>${esc(spec.title)}</h1>${saved ? '<p>Saved assessment</p>' : ''}</div>
     <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print">${uiIcon('report')}<span>PDF</span></button></div></header>
+    ${sample && hasDraftBackup ? '<button class="text-link no-print" data-action="restore-draft">Return to your assessment</button>' : ''}
     <nav class="report-tabs heart-report-tabs no-print" aria-label="Report sections">${tabs.map(([id, label]) => `<button type="button" data-action="report-tab" data-tab="${id}"${id === selected ? ' aria-current="page"' : ''}>${label}</button>`).join('')}</nav>
     <article class="report-paper">${tabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}
       <p class="print-only report-footnote">Educational report. Prepared automatically.</p>
