@@ -124,6 +124,17 @@ assert.ok(savedArterial.sources.includes('https://doi.org/10.1038/s41598-024-741
 assert.deepEqual((await call(a,'assessments/'+youngEntry.id+'/report')).data.report,savedYoung);
 assert.equal((await call(a,'assessments/'+arterialEntry.id,'DELETE',{confirm:true})).response.status,200);
 assert.equal((await call(a,'assessments/'+youngEntry.id,'DELETE',{confirm:true})).response.status,200);
+const teenEntry={...heartEntry,id:randomUUID(),heart:{
+  age:19,country:'Bulgaria',sex:'Female',smoking:'No',conditions:'No',bpTreatment:'No',
+  systolic:{value:125,unit:'mmHg'},diastolic:{value:80,unit:'mmHg'},total:{value:200,unit:'mg/dL'},hdl:{value:50,unit:'mg/dL'},
+  glucose:{value:5,unit:'mmol/L'},result:{ageBand:{from:30,to:34}},
+}};
+assert.equal((await call(a,'assessments','POST',teenEntry)).response.status,201);
+const savedTeen=(await call(a,'assessments/'+teenEntry.id+'/report')).data.report;
+assert.equal(savedTeen.model,'pday-2006-coronary-age-band-v1');
+assert.deepEqual(savedTeen.heart.result.ageBand,{from:17,to:21});
+assert.equal(savedTeen.heart.result.risk,undefined);
+assert.equal((await call(a,'assessments/'+teenEntry.id,'DELETE',{confirm:true})).response.status,200);
 assert.equal((await call(a,'assessments/'+heartId,'DELETE',{confirm:true})).response.status,200);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
 sqlite.prepare('UPDATE assessments SET payload=? WHERE id=?').run(stored.payload,withheldId);

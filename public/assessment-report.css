@@ -89,6 +89,7 @@
 .heart-estimate .report-artwork {right:0;top:50%;transform:translateY(-50%)}
 .heart-estimate .report-age-line {margin:4px 0 6px}
 .heart-estimate .report-age-line>strong {font-size:clamp(54px,11vw,83px)}
+.heart-estimate .heart-age-band>strong {font-size:clamp(35px,9vw,56px);letter-spacing:-.04em}
 .heart-estimate .heart-age-bound>strong {font-size:clamp(26px,6vw,40px);letter-spacing:-.8px;line-height:1.14}
 .heart-estimate .heart-result-meta {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;border-top:1px solid var(--result-line);padding-top:12px;margin-top:12px}
 .heart-result-meta strong,.heart-result-meta span {display:block;overflow-wrap:anywhere}

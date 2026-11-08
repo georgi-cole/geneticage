@@ -1,5 +1,6 @@
-import {heartFraminghamAge, heartQuestions, HEART_UNSPECIFIED_CVD} from './heart-vascular.mjs';
-import {heartDecimal} from './heart-measurements.mjs';
+import {heartRoutineAge, heartQuestions, HEART_UNSPECIFIED_CVD} from './heart-vascular.mjs';
+import {heartDecimal, pdayBodyFields} from './heart-measurements.mjs';
+import {heartPdayAge} from './heart-pday.mjs';
 import {BG} from './locales/bg.mjs';
 
 const countryOptions = heartQuestions[0].options.filter(country => country !== 'Other country');
@@ -37,9 +38,20 @@ export function heartPrefill(answers = {}) {
   const medicines = Array.isArray(answers.medicines) ? answers.medicines : [];
   if (medicines.includes('Cholesterol-lowering medicine')) inputs.treatment = 'Yes';
   else if (medicines.includes('None')) inputs.treatment = 'No';
-  if (heartFraminghamAge(inputs.age)) {
+  if (heartRoutineAge(inputs.age)) {
     if (medicines.includes('Blood-pressure medicine')) inputs.bpTreatment = 'Yes';
     else if (medicines.includes('None')) inputs.bpTreatment = 'No';
+  }
+  if (heartPdayAge(inputs.age)) {
+    if (conditions.includes('Diabetes')) {
+      if (medicines.includes('Diabetes medicine')) inputs.diabetesMedicine = 'Yes';
+      else if (medicines.includes('None')) inputs.diabetesMedicine = 'No';
+    }
+    for (const {id, units, factor, coverage:[min,max]} of pdayBodyFields) {
+      const unit = answers[id+'Unit'], value = heartDecimal(answers[id]);
+      const converted = Number(value) * factor(unit);
+      if (units.includes(unit) && converted >= min && converted <= max) inputs[id] = {value, unit};
+    }
   }
   return inputs;
 }

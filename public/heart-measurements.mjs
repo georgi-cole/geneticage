@@ -1,11 +1,19 @@
 import {compareLabReference, validateReferenceLimits} from './lab-review.mjs';
 import {referenceCatalog} from './lab-reference-catalog.mjs';
+import {labs} from './lab-definitions.mjs';
+import {reviewLabSafety} from './lab-safety.mjs';
 
 export const HEART_MEASUREMENT_REVIEW = 'heart-measurement-review-v1';
 export const cholesterolMgDlPerMmol = 38.67;
 const cholesterolFactor = unit => unit === 'mg/dL' ? 1 / cholesterolMgDlPerMmol : 1;
 const upperGuide = (high, page) => ({high, highExclusive:true, unit:'mg/dL', page});
 export const arterialMeasurement = {id:'cfpwv', label:'Carotid–femoral pulse wave velocity (cfPWV)', units:['m/s'], group:'arterial', optional:true, coverage:[3, 25]};
+const glucose = labs.find(lab => lab.id === 'glucose');
+export const fastingGlucose = {id:'glucose', label:'Fasting glucose', units:glucose.units, factor:glucose.factor, group:'pday-glucose', optional:true};
+export const pdayBodyFields = [
+  {id:'height', label:'Height', units:['cm','in'], factor:unit => unit === 'in' ? 2.54 : 1, group:'pday-body', optional:true, coverage:[100,250]},
+  {id:'weight', label:'Weight', units:['kg','lb'], factor:unit => unit === 'lb' ? 0.45359237 : 1, group:'pday-body', optional:true, coverage:[25,350]},
+];
 export const heartMeasurements = [
   {id:'systolic', label:'Systolic blood pressure', units:['mmHg'], group:'pressure', coverage:[100, 180]},
   {id:'diastolic', label:'Diastolic blood pressure', units:['mmHg'], group:'pressure', optional:true},
@@ -15,6 +23,8 @@ export const heartMeasurements = [
   {id:'lpa', label:'Lp(a) (lipoprotein(a))', units:['nmol/L', 'mg/dL'], group:'specialist', optional:true, guide:upperGuide(30, 7)},
   {id:'hba1c', label:'HbA1c', units:['mmol/mol', '%'], group:'diabetes', optional:true, coverage:[20, 140]},
   {id:'egfr', label:'eGFR (kidney function)', units:['mL/min/1.73 m²'], group:'diabetes', optional:true, coverage:[60, 150]},
+  ...pdayBodyFields,
+  fastingGlucose,
   arterialMeasurement,
 ];
 
@@ -77,12 +87,14 @@ export function hba1cMmol(entry) {
   return entry?.unit === '%' ? (value - 2.152) / 0.09148 : value;
 }
 
-export function reviewHeartMeasurements(raw = {}, context = raw, {includeDiabetes = false, includeArterial = false} = {}) {
+export function reviewHeartMeasurements(raw = {}, context = raw, {includeDiabetes = false, includeArterial = false, includePday = false} = {}) {
   const inputs = {}, errors = {}, fields = {};
   for (const field of heartMeasurements) {
     const {id, units, group} = field;
     if (group === 'diabetes' && !includeDiabetes) continue;
     if (group === 'arterial' && !includeArterial) continue;
+    if (group === 'pday-glucose' && !includePday) continue;
+    if (group === 'pday-body' && (!includePday || context.sex !== 'Male')) continue;
     const entry = raw?.[id];
     if (entry == null || typeof entry === 'object' && !entered(entry.value)) continue;
     const value = heartDecimal(entry.value, group === 'specialist' || group === 'diabetes');
@@ -110,12 +122,13 @@ export function reviewHeartMeasurements(raw = {}, context = raw, {includeDiabete
     const {id, group, coverage} = field;
     const entry = inputs[id], error = errors[id], referenceError = errors[id+'Reference'];
     if (!entry && !error) continue;
-    const value = id === 'total' ? total : id === 'hdl' ? hdl : id === 'hba1c' ? hba1cMmol(entry) : Number(entry?.value);
+    const value = id === 'total' ? total : id === 'hdl' ? hdl : id === 'hba1c' ? hba1cMmol(entry) : Number(entry?.value) * (field.factor?.(entry?.unit) ?? 1);
     const outside = coverage && !highPressureFields.includes(id) && (value < coverage[0] || value > coverage[1]);
     const status = error ? 'invalid' : outside ? 'review' : 'ok';
     outsideCoverage ||= status === 'review' && (group === 'pressure' || !group);
     const comparison = error || referenceError || !field.guide ? null : compareHeartLipid(field, entry, context);
-    fields[id] = {check:{status, ...(error ? {message:error} : {})}, comparison, direction:comparison?.status || 'unknown', referenceError};
+    const warning = id === 'glucose' && entry && reviewLabSafety(id, entry).warning;
+    fields[id] = {check:{status, ...(error ? {message:error} : {}), ...(warning ? {warning} : {})}, comparison, direction:comparison?.status || 'unknown', referenceError};
   }
   return {inputs, errors, review:{version:HEART_MEASUREMENT_REVIEW, fields,
       ...(highPressure ? {pressureWarning:{...pressureWarning, fields:highPressureFields}} : {}),

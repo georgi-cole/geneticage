@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {assessHeartVascular, framinghamVascularAge, heartQuestions} from '../public/heart-vascular.mjs';
+import {pdayCoronaryPoints} from '../public/heart-pday.mjs';
 import {heartPrefill} from '../public/heart-prefill.mjs';
 import {heartRoute} from '../public/heart-vascular-ui.mjs';
 import {BG} from '../public/locales/bg.mjs';
@@ -133,8 +134,44 @@ test('age 33 uses routine values without pulse-wave data and asks for only the m
   assert.deepEqual(assessHeartVascular({...profile,bpTreatment:'Not sure',hdl:undefined}).result.missing, ['bpTreatment','hdl']);
   assert.deepEqual(assessHeartVascular({...profile,diabetesType:undefined,bpTreatment:undefined}).result.missing, ['diabetesType','bpTreatment']);
   assert.equal(assessHeartVascular({...profile,diabetesType:'Type 1 diabetes'}).result.issue, 'framingham-diabetes');
-  assert.equal(assessHeartVascular({...profile,age:29}).result.issue, 'young');
+  assert.equal(assessHeartVascular({...profile,age:29}).result.issue, 'pday-data');
   assert.equal(assessHeartVascular({...profile,systolic:{value:180,unit:'mmHg'}}).result.issue, 'pressure');
+});
+
+const pdayExample = {...example,age:19,sex:'Female',smoking:'Never smoked',bpTreatment:'No',
+  systolic:{value:125,unit:'mmHg'},diastolic:{value:80,unit:'mmHg'},total:{value:200,unit:'mg/dL'},hdl:{value:50,unit:'mg/dL'},
+  glucose:{value:5,unit:'mmol/L'}};
+
+test('PDAY reproduces the published coronary points and gives an age band at 18 and 19', () => {
+  // McMahan et al. 2005 example. The modifiable factors sum to 11.
+  assert.equal(pdayCoronaryPoints({sex:'Male',nonHdl:160,hdl:50,smoking:true,pressure:false,diabetes:false,bmi:31}),11);
+  for (const age of [18,19]) {
+    const {errors,result,review} = assessHeartVascular({...pdayExample,age},{requireHistory:true});
+    assert.deepEqual(errors,{});
+    assert.deepEqual(result,{method:'PDAY',version:'pday-2006-coronary-age-band-v1',ageBand:{from:17,to:21},ageRange:null});
+    assert.equal(review.arterialAge,undefined);
+  }
+  const elevated = {...pdayExample,diastolic:{value:85,unit:'mmHg'},bpTreatment:'Not sure'};
+  assert.deepEqual(assessHeartVascular(elevated).result.ageBand,{from:21,to:25});
+  assert.deepEqual(assessHeartVascular({...pdayExample,glucose:{value:126,unit:'mg/dL'}}).result.ageBand,{from:22,to:26});
+  assert.deepEqual(assessHeartVascular({...pdayExample,glucose:{value:7,unit:'mmol/L'}}).result.ageBand,{from:22,to:26});
+  const male = {...pdayExample,sex:'Male',height:{value:180,unit:'cm'},weight:{value:98,unit:'kg'}};
+  assert.deepEqual(assessHeartVascular(male).result.ageBand,{from:23,to:27});
+  assert.equal(assessHeartVascular({...male,age:29,diastolic:{value:85,unit:'mmHg'}}).result.ageRange,'above');
+});
+
+test('PDAY asks for missing inputs and keeps critical readings out of the age comparison', () => {
+  assert.deepEqual(assessHeartVascular({...pdayExample,bpTreatment:'Not sure',diastolic:undefined,glucose:undefined}).result.missing,
+    ['bpTreatment','diastolic','glucose']);
+  assert.deepEqual(assessHeartVascular({...pdayExample,sex:'Male'}).result.missing,['height','weight']);
+  const treated = {...pdayExample,conditions:'Yes',diagnoses:['Diabetes'],diabetesMedicine:'Yes',glucose:undefined};
+  assert.deepEqual(assessHeartVascular(treated).result.ageBand,{from:22,to:26});
+  assert.ok(!heartRoute(treated).some(step=>step.id==='pday-glucose'));
+  const critical = assessHeartVascular({...pdayExample,glucose:{value:50,unit:'mg/dL'},cfpwv:{value:'8.3',unit:'m/s',method:'direct-80'}});
+  assert.equal(critical.result.issue,'glucose-alert');
+  assert.ok(critical.review.fields.glucose.check.warning);
+  assert.equal(critical.review.arterialAge,undefined);
+  assert.ok(assessHeartVascular({...pdayExample,age:17}).errors.age);
 });
 
 test('measured arterial stiffness gives a separate age comparison at 33', () => {
@@ -213,6 +250,10 @@ test('lifestyle prefill carries matching facts forward and leaves narrower heart
     smoking:'Used to smoke', conditions:'Yes', diagnoses:['Currently pregnant'],
   });
   assert.deepEqual(heartPrefill({age:'33',medicines:['Blood-pressure medicine']}), {age:33,bpTreatment:'Yes'});
+  const younger = heartPrefill({age:'19',height:'70',heightUnit:'in',weight:'170',weightUnit:'lb',medicines:['None']});
+  assert.deepEqual(younger.height,{value:'70',unit:'in'});
+  assert.ok(heartRoute({...younger,sex:'Male'},Object.keys(younger))[0].fields.some(field=>field.id==='weight'));
+  assert.ok(!heartRoute({...younger,sex:'Male'},Object.keys(younger)).some(step=>step.id==='pday-body'));
 });
 
 test('lipid reviews separate own intervals, educational guides and calculation coverage', () => {

@@ -1,5 +1,12 @@
-import {heartQuestions, heartRegionLabels, heartDiagnosisQuestion, heartDiagnosisActive, heartSmokingFields, heartLegacySmoking, heartStartIssue, heartLimitations, heartModelForReport, heartSources, HEART_UNSPECIFIED_CVD, SCORE2_DIABETES, heartDiabetesTypeQuestion, heartDiabetesDamageQuestion, heartNeedsDiabetesType, heartNeedsDiabetesDamage, heartUsesDiabetesLabs, heartCanCompareArterialAge, arterialReference, FRAMINGHAM, heartFraminghamAge, heartNeedsBpTreatment, heartBpTreatmentQuestion, heartFraminghamMissing} from './heart-vascular.mjs';
-import {arterialMeasurement, heartDecimal, heartMeasurements, reviewHeartMeasurements} from './heart-measurements.mjs';
+import {
+  heartQuestions, heartRegionLabels, heartDiagnosisQuestion, heartDiagnosisActive, heartSmokingFields, heartLegacySmoking,
+  heartStartIssue, heartLimitations, heartModelForReport, heartSources, HEART_UNSPECIFIED_CVD, SCORE2_DIABETES, FRAMINGHAM,
+  heartDiabetesTypeQuestion, heartDiabetesDamageQuestion, heartNeedsDiabetesType, heartNeedsDiabetesDamage, heartUsesDiabetesLabs,
+  heartOffersArterialAge, arterialReference, heartRoutineAge, heartNeedsBpTreatment, heartBpTreatmentQuestion, heartRoutineAgeMissing,
+  heartDiabetesMedicineQuestion, heartNeedsPdayMedicine, heartNeedsPdayBody, heartUsesPdayGlucose,
+} from './heart-vascular.mjs';
+import {arterialMeasurement, heartDecimal, heartMeasurements, reviewHeartMeasurements, pdayBodyFields, fastingGlucose} from './heart-measurements.mjs';
+import {pday, heartPdayAge} from './heart-pday.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
 import {measurementFeedbackMarkup, safetyMarkup} from './lab-feedback.mjs';
 import {escapeHTML as esc, reportArtwork, screenHeading, uiIcon} from './ui-components.mjs';
@@ -15,26 +22,30 @@ const diagnosisAge = {id:'diagnosisAge', label:'Age at diabetes diagnosis'};
 const diabetesFields = [diagnosisAge, ...diabetesLabs];
 const pressures = heartMeasurements.filter(field => field.group === 'pressure');
 const [topPressure, bottomPressure] = pressures;
-const framinghamFields = [
+const routineAgeFields = [
   {id:'diabetesType', label:'Type of diabetes', step:'diabetes-type'},
   {id:'bpTreatment', label:'Blood pressure medicine', step:'bp-treatment'},
-  {...topPressure, step:'blood-pressure'},
+  {id:'diabetesMedicine', label:'Diabetes medicine', step:'diabetes-medicine'},
+  ...pressures.map(field => ({...field, step:'blood-pressure'})),
   ...routine.map(field => ({...field, step:'measurements'})),
+  ...pdayBodyFields.map(field => ({...field, step:'pday-body'})),
+  {...fastingGlucose, step:'pday-glucose'},
 ];
 const measurementSteps = [
   {id:'blood-pressure', phase:2, fields:pressures},
   {id:'measurements', phase:2, fields:[...routine, ...specialist]},
 ];
 
-export function heartFraminghamStep(missing) {
-  return framinghamFields.find(field => missing.includes(field.id))?.step;
+export function heartRoutineAgeStep(missing) {
+  return routineAgeFields.find(field => missing.includes(field.id))?.step;
 }
 
-function offerDiabetesLabs(inputs) {
-  if (!heartUsesDiabetesLabs(inputs)) return false;
+function measurementsSupportLabs(inputs) {
   const {highPressure, outsideCoverage} = reviewHeartMeasurements(inputs);
   return !highPressure && !outsideCoverage;
 }
+const offerDiabetesLabs = inputs => heartUsesDiabetesLabs(inputs) && measurementsSupportLabs(inputs);
+const offerPdayGlucose = inputs => heartUsesPdayGlucose(inputs) && measurementsSupportLabs(inputs);
 
 export function heartSteps(inputs) {
   const history = [
@@ -43,22 +54,29 @@ export function heartSteps(inputs) {
     {id:'conditions', fields:[conditions]},
     {id:'diagnoses', fields:heartDiagnosisActive(inputs) ? [heartDiagnosisQuestion] : []},
     {id:'diabetes-type', fields:heartNeedsDiabetesType(inputs) ? [heartDiabetesTypeQuestion] : []},
-    {id:'treatment', fields:heartFraminghamAge(inputs.age) ? [] : [treatment]},
+    {id:'treatment', fields:heartRoutineAge(inputs.age) ? [] : [treatment]},
     {id:'bp-treatment', fields:heartNeedsBpTreatment(inputs) ? [heartBpTreatmentQuestion] : []},
+    {id:'diabetes-medicine', fields:heartNeedsPdayMedicine(inputs) ? [heartDiabetesMedicineQuestion] : []},
     {id:'diabetes-damage', fields:heartNeedsDiabetesDamage(inputs) ? [heartDiabetesDamageQuestion] : []},
   ].filter(step => step.fields.length).map(step => ({...step, phase:1}));
   const steps = [...aboutYou, ...history, ...measurementSteps];
+  if (heartNeedsPdayBody(inputs)) steps.push({id:'pday-body', phase:2, fields:pdayBodyFields});
+  if (offerPdayGlucose(inputs)) steps.push({id:'pday-glucose', phase:2, fields:[fastingGlucose]});
   if (offerDiabetesLabs(inputs)) steps.push({id:'diabetes-labs', phase:2, fields:diabetesFields});
   return steps;
 }
 
-const hasAnswer = value => Array.isArray(value) ? value.length > 0 : value != null && value !== '';
+function hasAnswer(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  const answer = value?.value ?? value;
+  return answer != null && answer !== '';
+}
 export function heartRoute(inputs, prefilled = []) {
   const steps = heartSteps(inputs);
   if (!prefilled.length) return steps;
   const reused = field => prefilled.includes(field.id) && hasAnswer(inputs[field.id]);
   if (!steps.some(step => step.fields.some(reused))) return steps;
-  const remaining = steps.filter(step => step.phase === 2 || !step.fields.every(reused)
+  const remaining = steps.filter(step => (step.phase === 2 && step.id !== 'pday-body') || !step.fields.every(reused)
     || step.id === 'diagnoses' && inputs.diagnoses.includes(HEART_UNSPECIFIED_CVD));
   const fields = steps.filter(step => !remaining.includes(step)).flatMap(step => step.fields);
   return [{id:'review', phase:0, fields}, ...remaining];
@@ -95,7 +113,8 @@ const answerText = (id, value) => id === 'smoking' ? heartLegacySmoking[value] |
 function prefillReview(inputs, errors, prefilled) {
   const groups = heartSteps(inputs).filter(step => step.fields.some(field => prefilled.includes(field.id) && hasAnswer(inputs[field.id])));
   const labels = {country:'Country of residence', age:'Age in years', smoking:'Cigarette smoking', 'smoking-history':'Smoking history',
-    conditions:'Health history', diagnoses:'Reported health history', treatment:'Cholesterol-lowering medicine', 'bp-treatment':'Blood pressure medicine'};
+    conditions:'Health history', diagnoses:'Reported health history', treatment:'Cholesterol-lowering medicine', 'bp-treatment':'Blood pressure medicine',
+    'diabetes-medicine':'Diabetes medicine', 'pday-body':'Height and weight'};
   return `<fieldset class="question heart-prompt heart-prefill" data-theme-part>
     <legend>Review your answers</legend>
     <p class="hint">We started with your Health & lifestyle answers. Update anything that has changed.</p>
@@ -103,6 +122,7 @@ function prefillReview(inputs, errors, prefilled) {
       const fields = step.fields.filter(field => prefilled.includes(field.id) && hasAnswer(inputs[field.id]));
       const value = step.id === 'diagnoses' ? inputs.diagnoses.map(item => `<span>${esc(item)}</span>`).join(' · ')
         : step.id === 'smoking-history' ? fields.map(field => `<span>${esc(smokingLabel(field, inputs))}</span> <strong>${esc(inputs[field.id])}</strong>`).join('<br>')
+        : step.id === 'pday-body' ? fields.map(field => `<span>${esc(field.label)}</span> <strong>${esc(inputs[field.id].value)} ${esc(inputs[field.id].unit)}</strong>`).join('<br>')
         : esc(answerText(step.id, inputs[step.id]));
       return `<div class="heart-prefill-row"><div><span id="heart-review-${step.id}" class="small muted">${esc(labels[step.id])}</span><div>${value}</div>
         ${fields.map(field => fieldError(field.id, errors)).join('')}</div>
@@ -227,8 +247,17 @@ function pressureFeedback(review, touched = {}) {
 }
 
 function measurementStep(step, inputs, errors, showOptional, touched) {
-  const {review} = reviewHeartMeasurements(inputs, inputs, {includeDiabetes:heartUsesDiabetesLabs(inputs)});
+  const {review} = reviewHeartMeasurements(inputs, inputs, {includeDiabetes:heartUsesDiabetesLabs(inputs), includePday:heartPdayAge(inputs.age)});
   const field = (definition, placeholder) => measurementField(definition, inputs, errors, review, touched, placeholder);
+  if (step === 'pday-body' || step === 'pday-glucose') {
+    const body = step === 'pday-body';
+    return `<div class="lab-fields heart-measurements"><fieldset class="question" data-theme-part>
+      <legend>${body ? 'Height and weight' : 'Blood sugar'}</legend>
+      <p class="hint">${body ? 'PDAY uses these measurements to calculate body mass index. For feet and inches, enter the total in inches.'
+        : 'Use a fasting glucose result from your lab report.'}</p>
+      <div class="heart-measurement-list">${(body ? pdayBodyFields : [fastingGlucose]).map(definition => field(definition)).join('')}</div>
+    </fieldset></div>`;
+  }
   if (step === 'diabetes-labs') return `<div class="lab-fields heart-measurements">
     <fieldset class="question" data-theme-part>
       <legend>Complete your diabetes measurements</legend>
@@ -243,15 +272,17 @@ function measurementStep(step, inputs, errors, showOptional, touched) {
   </div>`;
   if (step === 'blood-pressure') {
     const issue = heartStartIssue(inputs);
+    const pdayPressure = heartPdayAge(inputs.age) && heartNeedsBpTreatment(inputs);
     return `<div class="lab-fields heart-measurements">
       ${heartNeedsBpTreatment(inputs) ? '<aside class="heart-scope-note"><p>Blood pressure and a routine cholesterol panel can give you a vascular age comparison.</p></aside>'
-        : issue ? `<aside class="heart-scope-note"><p>${heartFraminghamAge(inputs.age) ? '' : `<span>${esc(heartLimitations[issue].reason)}</span> `}<span>Your readings will appear in a prevention review.</span></p></aside>` : ''}
+        : issue ? `<aside class="heart-scope-note"><p>${heartRoutineAge(inputs.age) ? '' : `<span>${esc(heartLimitations[issue].reason)}</span> `}<span>Your readings will appear in a prevention review.</span></p></aside>` : ''}
       <fieldset class="question heart-pressure" data-theme-part aria-describedby="heart-bp-hint">
         <legend>Blood pressure</legend>
-        <p id="heart-bp-hint" class="hint">For 150/90, enter 150 in the first box and 90 in the second. The estimate uses the top number.</p>
+        <p id="heart-bp-hint" class="hint">${pdayPressure ? 'For 150/90, enter 150 in the first box and 90 in the second. PDAY uses both numbers.'
+          : 'For 150/90, enter 150 in the first box and 90 in the second. The estimate uses the top number.'}</p>
         <div class="heart-pressure-inputs">
           ${field({...topPressure, label:'Top number (systolic)'}, '150')}
-          ${field({...bottomPressure, label:'Bottom number (optional)'}, '90')}
+          ${field({...bottomPressure, label:pdayPressure ? 'Bottom number (diastolic)' : 'Bottom number (optional)'}, '90')}
         </div>
         <div class="lab-feedback" data-heart-pressure-feedback role="status" aria-live="polite">${pressureFeedback(review, touched)}</div>
       </fieldset>
@@ -275,7 +306,8 @@ function measurementStep(step, inputs, errors, showOptional, touched) {
 }
 
 export function refreshHeartFeedback(form, inputs, touched) {
-  const {review} = reviewHeartMeasurements(inputs, inputs, {includeDiabetes:heartUsesDiabetesLabs(inputs), includeArterial:form.id === 'heart-arterial-form'});
+  const {review} = reviewHeartMeasurements(inputs, inputs, {includeDiabetes:heartUsesDiabetesLabs(inputs),
+    includeArterial:form.id === 'heart-arterial-form', includePday:heartPdayAge(inputs.age)});
   for (const container of form.querySelectorAll('[data-heart-measurement]')) {
     const id = container.dataset.heartMeasurement;
     const field = heartMeasurements.find(item => item.id === id);
@@ -298,7 +330,7 @@ export function refreshHeartFeedback(form, inputs, touched) {
 }
 
 function arterialSummary({inputs, result, review}, secondary) {
-  if (result.issue === 'pressure' || !heartCanCompareArterialAge(inputs)) return '';
+  if (!heartOffersArterialAge(inputs, result)) return '';
   const comparison = review?.arterialAge;
   if (secondary) return `<details class="report-answer-group"${comparison ? ' open' : ''}>
     <summary>Optional pulse-wave comparison</summary>
@@ -352,7 +384,7 @@ export function renderHeartForm({inputs = {}, errors = {}, step = 'country', sho
   const {phase, fields} = step === 'review' ? {phase:0} : steps.find(item => item.id === step) || steps[0];
   const phases = ['About you', 'Health history', 'Your measurements'];
   const measures = phase === 2;
-  const last = steps.at(-1).id === step;
+  const last = heartRoute(inputs, prefilled).at(-1).id === step;
   return `<div class="wrap app-screen task-screen question-screen heart-entry${measures ? ' lab-screen' : ''}">
     ${screenHeading('CARDIOVASCULAR ASSESSMENT', 'Heart & Vascular', '', pulseMark())}
     <div class="task-caption"><span>${phases[phase]}</span><span>${phase + 1} / ${phases.length}</span></div>
@@ -374,7 +406,8 @@ export function renderHeartForm({inputs = {}, errors = {}, step = 'country', sho
 
 function riskSummary({inputs, result, review}) {
   if (result.reason) {
-    const priority = diabetesLabs.filter(field => result.outside?.includes(field.id));
+    const priority = [...diabetesLabs.filter(field => result.outside?.includes(field.id)),
+      ...(review?.fields?.glucose?.check.warning ? [fastingGlucose] : [])];
     const measurements = [...priority, ...routine].filter(field => inputs[field.id]);
     if (!inputs.systolic && !measurements.length) measurements.push(...specialist.filter(field => inputs[field.id]));
     const hasReadings = !!inputs.systolic || measurements.length > 0;
@@ -386,18 +419,25 @@ function riskSummary({inputs, result, review}) {
     </section>`;
   }
   const model = heartModelForReport(result);
+  const band = result.ageBand;
   const age = result.ageRange === 'above' ? `<span>Above</span> ${model.maxAge}`
-    : result.ageRange === 'below' ? `<span>Below</span> ${model.minAge}` : esc(result.age);
+    : result.ageRange === 'below' ? `<span>Below</span> ${model.minAge}`
+    : band ? (band.from === null ? `<span>Up to</span> ${esc(band.to)}`
+      : band.to === null ? `<span>At least</span> ${esc(band.from)}` : `${esc(band.from)}–${esc(band.to)}`)
+    : esc(result.age);
+  const isPday = result.method === pday.name;
   const isFramingham = result.method === FRAMINGHAM;
-  const risk = isFramingham ? '' : result.risk < 0.1 ? '&lt;0.1%' : `${result.risk.toFixed(1)}%`;
+  const ageOnly = isPday || isFramingham;
+  const ageStyle = band && band.from !== null && band.to !== null ? ' heart-age-band' : result.ageRange || band ? ' heart-age-bound' : '';
+  const risk = ageOnly ? '' : result.risk < 0.1 ? '&lt;0.1%' : `${result.risk.toFixed(1)}%`;
   return `<section class="report-estimate result-surface heart-estimate" data-theme-part>
     <div class="heart-result-main">
       ${reportArtwork()}
-      <span class="eyebrow">${isFramingham ? 'VASCULAR AGE' : 'VASCULAR RISK AGE'}</span>
-      <div class="report-age-line${result.ageRange ? ' heart-age-bound' : ''}"><strong>${age}</strong>${result.ageRange ? '' : '<span>years</span>'}</div>
-      <p>${isFramingham ? 'Framingham reference · U.S. study' : 'Approximate age comparison'}</p>
+      <span class="eyebrow">${isPday ? 'EARLY VASCULAR AGE' : isFramingham ? 'VASCULAR AGE' : 'VASCULAR RISK AGE'}</span>
+      <div class="report-age-line${ageStyle}"><strong>${age}</strong>${result.ageRange ? '' : '<span>years</span>'}</div>
+      <p>${isPday ? 'PDAY · Coronary plaque risk comparison' : isFramingham ? 'Framingham reference · U.S. study' : 'Approximate age comparison'}</p>
     </div>
-    ${isFramingham ? '' : `<div class="heart-result-meta">
+    ${ageOnly ? '' : `<div class="heart-result-meta">
       <div><strong>${risk}</strong><span>${model.name === SCORE2_DIABETES ? '10-year SCORE2-Diabetes risk' : model.name === 'SCORE2-OP' ? '10-year SCORE2-OP risk' : '10-year SCORE2 risk'}</span></div>
       <div><strong>${esc(inputs.country)}</strong><span>${esc(heartRegionLabels[result.region])}</span></div>
     </div>`}
@@ -424,10 +464,15 @@ function pressureRow(inputs, review) {
 function measurementsPanel(inputs, review) {
   const optional = specialist.filter(field => inputs[field.id]);
   const diabetes = diabetesLabs.filter(field => inputs[field.id]);
+  const body = pdayBodyFields.filter(field => inputs[field.id]);
   return `<div class="report-section-heading"><h2>Your measurements</h2><button class="text-btn" data-action="heart-edit" data-part="measurements">Edit ${arrow}</button></div>
     <section class="heart-reading"><dl>${pressureRow(inputs, review)}</dl>${pressureFeedback(review)}
       <button class="text-btn" data-action="heart-edit" data-part="blood-pressure">Edit blood pressure ${arrow}</button></section>
     <section class="heart-reading"><h3>Cholesterol</h3><dl>${routine.map(field => measurementRow(field, inputs, review)).join('')}</dl></section>
+    ${body.length ? `<section class="heart-reading"><h3>Height and weight</h3><dl>${body.map(field => measurementRow(field, inputs, review)).join('')}</dl>
+      <button class="text-btn" data-action="heart-edit" data-part="pday-body">Edit height and weight ${arrow}</button></section>` : ''}
+    ${inputs.glucose ? `<section class="heart-reading"><h3>Blood sugar</h3><dl>${measurementRow(fastingGlucose, inputs, review)}</dl>
+      ${offerPdayGlucose(inputs) ? `<button class="text-btn" data-action="heart-edit" data-part="pday-glucose">Edit fasting glucose ${arrow}</button>` : ''}</section>` : ''}
     ${diabetes.length ? `<section class="heart-reading"><h3>Diabetes measurements</h3><dl>${diabetes.map(field => measurementRow(field, inputs, review)).join('')}</dl>
       ${offerDiabetesLabs(inputs) ? `<button class="text-btn" data-action="heart-edit" data-part="diabetes-labs">Edit diabetes measurements ${arrow}</button>` : ''}</section>` : ''}
     ${inputs.cfpwv ? `<section class="heart-reading"><h3>Arterial stiffness</h3><dl>${measurementRow(arterialMeasurement, inputs, review)}</dl>
@@ -440,8 +485,11 @@ function measurementsPanel(inputs, review) {
 
 function methodsPanel(inputs, result, review, sourceLinks) {
   const model = heartModelForReport(result);
+  const isPday = model?.name === pday.name || result.issue?.startsWith('pday-') || result.issue === 'glucose-alert';
   const isFramingham = model?.name === FRAMINGHAM || result.issue === 'framingham-data';
-  const coverage = isFramingham
+  const coverage = isPday
+    ? 'For eligible adults aged 18–29, PDAY compares risk factors for plaque buildup in the arteries that supply the heart.'
+    : isFramingham
     ? 'For ages 30–39, this assessment uses the Framingham general cardiovascular model with routine cholesterol results.'
     : model?.name === SCORE2_DIABETES
     ? 'SCORE2-Diabetes estimates 10-year risk for eligible adults aged 40–69 with type 2 diabetes.'
@@ -452,10 +500,12 @@ function methodsPanel(inputs, result, review, sourceLinks) {
   return `<h2>Details & methods</h2>
     <details class="report-answer-group" open><summary>How the estimate works</summary>
       <p>${esc(coverage)}</p>
-      <p>${isFramingham ? 'The model uses age, sex, smoking, systolic blood pressure, blood pressure medicine, diabetes, and total and HDL cholesterol. Its outcome includes coronary disease, stroke, peripheral artery disease and heart failure.'
+      <p>${isPday ? 'The model uses both blood pressure numbers, blood pressure treatment, total and HDL cholesterol, smoking, and fasting glucose or diabetes treatment. It also uses body mass index for male participants.'
+        : isFramingham ? 'The model uses age, sex, smoking, systolic blood pressure, blood pressure medicine, diabetes, and total and HDL cholesterol. Its outcome includes coronary disease, stroke, peripheral artery disease and heart failure.'
         : 'The risk models use age, sex, current cigarette smoking, systolic blood pressure, total cholesterol and HDL cholesterol. The country of residence selects the regional calibration.'}</p>
       ${model?.name === SCORE2_DIABETES ? '<p>SCORE2-Diabetes also uses age at diagnosis, HbA1c and eGFR. This assessment uses exact HbA1c from 20 to 140 mmol/mol and eGFR from 60 to 150 mL/min/1.73 m². The study used the CKD-EPI 2009 equation for eGFR.</p>' : ''}
-      <p>Health history helps determine eligibility. Smoking frequency and history, diastolic blood pressure, ApoB and Lp(a) appear in the report for context.</p>
+      <p>${isPday ? 'Health history helps determine eligibility. ApoB and Lp(a) appear in the report for context.'
+        : 'Health history helps determine eligibility. Smoking frequency and history, diastolic blood pressure, ApoB and Lp(a) appear in the report for context.'}</p>
       <p>Calculation coverage is systolic blood pressure from 100 to under 180 mmHg, total cholesterol 2.5–8 mmol/L and HDL cholesterol 0.5–3 mmol/L.</p>
     </details>
     ${review ? `<details class="report-answer-group"><summary>How measurements are checked</summary>
@@ -463,14 +513,18 @@ function methodsPanel(inputs, result, review, sourceLinks) {
       <p>The published HDL comparison uses the sex entered for the estimate. Lp(a) stays in the unit printed on your report.</p>
       <p>Reference comparisons describe the measurement. Eligibility and calculation checks determine whether the risk estimate can be shown.</p>
     </details>` : ''}
-    ${isFramingham ? `<details class="report-answer-group"><summary>The reference age</summary>
+    ${isPday ? `<details class="report-answer-group"><summary>The reference age</summary>
+      <p>PDAY used U.S. coronary artery data from ages 15–34. CARDIA followed young adults from age 18 and linked the score with later coronary artery calcium and coronary events.</p>
+      <p>The study scales one point to about one year of modeled plaque risk. The app shifts your five-year age band by the risk-factor points and shows the part supported by the study's ages 15–34.</p>
+      <p>For this score, the pressure cutoffs are 130 systolic or 85 diastolic. The glucose cutoff is 126 mg/dL or 7 mmol/L. Treatment for either condition also counts in the corresponding factor.</p>
+    </details>` : isFramingham ? `<details class="report-answer-group"><summary>The reference age</summary>
       <p>The comparison matches your modeled risk to a nonsmoker of the same sex with no diabetes, untreated systolic pressure of 125 mmHg, total cholesterol of 180 mg/dL and HDL cholesterol of 45 mg/dL. Reference ages span 30–74.</p>
       <p>The model was developed in the United States. The report shows the comparison age. SCORE2 provides country-calibrated percentages for eligible adults starting at age 40.</p>
     </details>` : model ? `<details class="report-answer-group"><summary>The reference age</summary>
       <p>Vascular risk age is an app comparison. It matches your risk to a nonsmoker of the same sex and region with systolic blood pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. Reference ages stay within the model’s age range.</p>
       ${model.name === SCORE2_DIABETES ? '<p>The comparison matches the SCORE2-Diabetes risk to the standard SCORE2 reference profile.</p>' : ''}
     </details>` : ''}
-    ${result.issue !== 'pressure' && heartCanCompareArterialAge(inputs) ? `<details class="report-answer-group"><summary>Arterial stiffness age</summary>
+    ${heartOffersArterialAge(inputs, result) ? `<details class="report-answer-group"><summary>Arterial stiffness age</summary>
       <p>The comparison finds the age at which the median carotid–femoral pulse wave velocity in the Austrian LEAD study matches your result. It uses the reference curve for your sex and stays within ages 18–80.</p>
       <p>The measurement uses 80% of the direct carotid–femoral distance. Blood pressure at the time of the test can affect the reading. This age describes arterial stiffness. A 10-year event risk uses a separate calculation.</p>
     </details>` : ''}
@@ -479,6 +533,7 @@ function methodsPanel(inputs, result, review, sourceLinks) {
         ${heartQuestions.filter(({id}) => inputs[id]).map(({id, label}) => row(label, id === 'smoking' && Object.hasOwn(heartLegacySmoking, inputs[id]) ? heartLegacySmoking[inputs[id]] : inputs[id])).join('')}
         ${heartDiagnosisActive(inputs) && inputs.diagnoses?.length ? inputs.diagnoses.map(diagnosis => row('Reported health history', diagnosis)).join('') : ''}
         ${inputs.bpTreatment ? row('Blood pressure medicine', inputs.bpTreatment) : ''}
+        ${inputs.diabetesMedicine ? row('Diabetes medicine', inputs.diabetesMedicine) : ''}
         ${[heartDiabetesTypeQuestion, heartDiabetesDamageQuestion, diagnosisAge].filter(field => inputs[field.id] !== undefined).map(field => row(field.label, inputs[field.id])).join('')}
         ${heartSmokingFields(inputs).filter(field => inputs[field.id] !== undefined).map(field => row(smokingLabel(field, inputs), inputs[field.id])).join('')}
       </dl>
@@ -502,7 +557,8 @@ function nextStep(result, inputs, review) {
   const pressureOutsideRange = result.issue === 'measurements' && review?.fields.systolic?.check.status === 'review';
   const edit = needsType ? 'diabetes-type' : pressureOutsideRange ? 'blood-pressure' : result.issue === 'young' ? null : issue?.edit;
   const label = {age:'Edit age', measurements:'Edit measurements', 'blood-pressure':'Edit blood pressure',
-    'diabetes-type':'Add diabetes type', 'diabetes-labs':'Edit diabetes measurements'}[edit] || 'Review answers';
+    'diabetes-type':'Add diabetes type', 'diabetes-labs':'Edit diabetes measurements',
+    'pday-body':'Edit height and weight', 'pday-glucose':'Edit fasting glucose'}[edit] || 'Review answers';
   const history = heartLimitations[result.historyIssue];
   let next = history?.next || issue?.next || 'Review your measurements and health history with a clinician.';
   if (result.dial2 && result.issue !== 'diabetes-complications') {
@@ -516,7 +572,7 @@ function nextStep(result, inputs, review) {
     <h2>What you can do next</h2>
     <p class="heart-limit-reason">${esc(result.reason)}</p>
     ${history && !result.dial2 ? `<p>${esc(history.reason)}</p>` : ''}
-    ${review?.pressureWarning ? '' : `<p>${esc(next)}</p>`}
+    ${review?.pressureWarning || review?.fields?.glucose?.check.warning ? '' : `<p>${esc(next)}</p>`}
     <div class="actions no-print">
       ${!inputs.systolic && !inputs.total && !inputs.hdl
         ? `<button class="text-btn" data-action="heart-edit" data-part="blood-pressure">Add readings ${arrow}</button>`
@@ -526,11 +582,11 @@ function nextStep(result, inputs, review) {
   </section>`;
 }
 
-function finishVascularAge(missing) {
+function finishVascularAge(missing, isPday) {
   return `<section class="report-explanation heart-missing">
-    <h2>Finish your vascular age estimate</h2>
-    <ul>${framinghamFields.filter(field => missing.includes(field.id)).map(field => `<li>${esc(field.label)}</li>`).join('')}</ul>
-    <button class="btn no-print" data-action="heart-edit" data-part="${heartFraminghamStep(missing)}" data-complete-age>Add missing details ${arrow}</button>
+    <h2>${isPday ? 'Finish your early vascular age estimate' : 'Finish your vascular age estimate'}</h2>
+    <ul>${routineAgeFields.filter(field => missing.includes(field.id)).map(field => `<li>${esc(field.label)}</li>`).join('')}</ul>
+    <button class="btn no-print" data-action="heart-edit" data-part="${heartRoutineAgeStep(missing)}" data-complete-age>Add missing details ${arrow}</button>
   </section>`;
 }
 
@@ -540,16 +596,19 @@ export function renderHeartReport({heart, saved, pagesPreview, sourceLinks, tab 
   const summary = riskSummary(heart);
   const next = result.reason ? nextStep(result, inputs, review) : '';
   const isFramingham = result.method === FRAMINGHAM;
-  const missing = result.issue === 'framingham-data' ? result.missing : result.issue === 'young' ? heartFraminghamMissing(inputs) : [];
-  const arterial = arterialSummary(heart, isFramingham || missing.length > 0);
+  const isPday = result.method === pday.name;
+  const missing = ['framingham-data','pday-data'].includes(result.issue) ? result.missing
+    : result.issue === 'young' ? heartRoutineAgeMissing(inputs) : [];
+  const arterial = arterialSummary(heart, isFramingham || isPday || missing.length > 0);
   const panels = {
-    summary: result.reason ? (missing.length ? finishVascularAge(missing) + summary + arterial
+    summary: result.reason ? (missing.length ? finishVascularAge(missing, heartPdayAge(inputs.age)) + summary + arterial
       : result.issue === 'diabetes-data' ? next + summary : arterial + summary + next)
       : `${summary}<section class="report-explanation">
         <h2>What this tells you</h2>
-        <p>${isFramingham ? 'Your answers and readings match the modeled risk of someone this age with the study’s reference readings.'
+        <p>${isPday ? 'This range compares your risk factors for coronary plaque with the study’s reference profile.'
+          : isFramingham ? 'Your answers and readings match the modeled risk of someone this age with the study’s reference readings.'
           : 'The percentage estimates the chance of a first heart attack, stroke, or cardiovascular death over 10 years. Vascular risk age expresses that risk as a comparison with a reference profile.'}</p>
-      </section>${isFramingham && review?.pressureFollowUp ? `<section class="heart-reading"><dl>${pressureRow(inputs, review)}</dl></section>` : ''}${arterial}`,
+      </section>${(isFramingham || isPday) && review?.pressureFollowUp ? `<section class="heart-reading"><dl>${pressureRow(inputs, review)}</dl></section>` : ''}${arterial}`,
     measurements: measurementsPanel(inputs, review),
     methods: methodsPanel(inputs, result, review, sourceLinks),
   };

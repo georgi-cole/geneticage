@@ -318,3 +318,40 @@ Your clinic pulse-wave measurement is compared with adult reference values for a
 D’Agostino et al. (2008) · Framingham vascular age	D’Agostino и съавт. (2008) · Съдова възраст по Framingham
 Framingham Heart Study · Published cardiovascular equation	Проучване Framingham · Публикувана сърдечносъдова формула
 For eligible adults aged 30–39, the Framingham model compares vascular age using blood pressure and routine cholesterol results.	При хора на 30–39 години, които отговарят на условията, моделът Framingham сравнява съдовата възраст по кръвното налягане и стандартните изследвания за холестерол.
+
+# PDAY early vascular age
+Do you take medicine to treat diabetes?	Приемате ли лекарство за лечение на диабет?
+Height	Ръст
+Weight	Тегло
+Height unit	Мерна единица за ръст
+Weight unit	Мерна единица за тегло
+Height and weight	Ръст и тегло
+Blood sugar	Кръвна захар
+Fasting glucose	Кръвна захар на гладно
+Fasting glucose unit	Мерна единица за кръвна захар на гладно
+PDAY uses these measurements to calculate body mass index. For feet and inches, enter the total in inches.	PDAY използва тези измервания, за да изчисли индекса на телесна маса. Ако ръстът е във футове и инчове, въведете общия брой инчове.
+Use a fasting glucose result from your lab report.	Използвайте стойността за кръвна захар на гладно от лабораторния си отчет.
+For 150/90, enter 150 in the first box and 90 in the second. PDAY uses both numbers.	При 150/90 въведете 150 в първото поле и 90 във второто. PDAY използва и двете стойности.
+Bottom number (diastolic)	Долна стойност (диастолно)
+Add the remaining details to estimate your early vascular age.	Добавете липсващите данни, за да получите оценка за ранната си съдова възраст.
+Height or weight is outside the calculation range.	Ръстът или теглото е извън диапазона за изчисление.
+Check the measurements and units you entered.	Проверете въведените стойности и мерни единици.
+The fasting glucose result needs attention before an age comparison.	Резултатът за кръвна захар на гладно изисква внимание преди сравнение по възраст.
+Edit height and weight	Редактирайте ръста и теглото
+Edit fasting glucose	Редактирайте кръвната захар на гладно
+Finish your early vascular age estimate	Завършете оценката на ранната съдова възраст
+EARLY VASCULAR AGE	РАННА СЪДОВА ВЪЗРАСТ
+PDAY · Coronary plaque risk comparison	PDAY · Сравнение на риска за коронарни плаки
+Up to	До
+At least	Поне
+For eligible adults aged 18–29, PDAY compares risk factors for plaque buildup in the arteries that supply the heart.	При хора на 18–29 години, които отговарят на условията, PDAY сравнява факторите за натрупване на плаки в артериите, които кръвоснабдяват сърцето.
+The model uses both blood pressure numbers, blood pressure treatment, total and HDL cholesterol, smoking, and fasting glucose or diabetes treatment. It also uses body mass index for male participants.	Моделът използва двете стойности на кръвното налягане, лечението за кръвно налягане, общия и HDL холестерола, тютюнопушенето и кръвната захар на гладно или лечението на диабета. За мъжете използва и индекс на телесна маса.
+Health history helps determine eligibility. ApoB and Lp(a) appear in the report for context.	Здравната история помага да се определи дали оценката е приложима. ApoB и Lp(a) се показват в доклада за допълнителна информация.
+PDAY used U.S. coronary artery data from ages 15–34. CARDIA followed young adults from age 18 and linked the score with later coronary artery calcium and coronary events.	PDAY използва данни от САЩ за коронарните артерии при хора на възраст 15–34 години. CARDIA проследява млади хора от 18-годишна възраст и свързва резултата с по-късна коронарна калцификация и коронарни събития.
+The study scales one point to about one year of modeled plaque risk. The app shifts your five-year age band by the risk-factor points and shows the part supported by the study's ages 15–34.	В проучването една точка съответства на около една година според модела на риска за плаки. Приложението измества петгодишния ви възрастов диапазон според точките за рискови фактори и показва частта, обхваната в проучването от 15 до 34 години.
+For this score, the pressure cutoffs are 130 systolic or 85 diastolic. The glucose cutoff is 126 mg/dL or 7 mmol/L. Treatment for either condition also counts in the corresponding factor.	За този резултат праговете за налягане са 130 систолно или 85 диастолно. Прагът за кръвна захар е 126 mg/dL или 7 mmol/L. Лечението за всяко от двете състояния също се отчита за съответния фактор.
+This range compares your risk factors for coronary plaque with the study’s reference profile.	Диапазонът сравнява вашите рискови фактори за коронарни плаки с референтния профил от проучването.
+McMahan et al. (2005) · PDAY coronary risk score	McMahan и съавт. (2005) · Оценка на коронарния риск по PDAY
+Gidding et al. (2006) · PDAY in living young adults	Gidding и съавт. (2006) · PDAY при млади възрастни
+Gidding et al. (2022) · CARDIA follow-up	Gidding и съавт. (2022) · Проследяване в CARDIA
+For eligible adults aged 18–29, PDAY estimates an early vascular age range from routine measurements and health history.	При хора на 18–29 години, които отговарят на условията, PDAY оценява диапазон на ранната съдова възраст по стандартни измервания и здравна история.

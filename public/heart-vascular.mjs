@@ -1,4 +1,5 @@
-import {heartMeasurements, heartDecimal as decimal, heartPressureMessage, reviewHeartMeasurements, hba1cMmol, cholesterolMgDlPerMmol} from './heart-measurements.mjs';
+import {heartMeasurements, heartDecimal as decimal, heartPressureMessage, reviewHeartMeasurements, hba1cMmol, cholesterolMgDlPerMmol, pdayBodyFields} from './heart-measurements.mjs';
+import {pday, heartPdayAge, pdayHighPressure, pdayHighGlucose, pdayVascularAgeBand} from './heart-pday.mjs';
 
 export const HEART_ASSESSMENT = 'heart-vascular';
 const SCORE2 = 'SCORE2';
@@ -11,6 +12,8 @@ export const arterialReference = {minAge:18, maxAge:80, method:'direct-80'};
 export function heartSources(result, review) {
   const labs = Object.values(review?.fields || {}).some(field => field.comparison?.sourceKind === 'published') ? ['adult-intervals'] : [];
   if (review?.pressureFollowUp || review?.pressureWarning) labs.push('esc-blood-pressure');
+  if (review?.fields?.glucose?.check.warning) labs.push('critical-mayo');
+  if (result.method === pday.name || result.issue?.startsWith('pday-')) return ['pday-coronary', 'pday-cardia-inputs', 'pday-cardia-events', 'arterial-reference', ...labs];
   if (result.method === FRAMINGHAM || result.issue === 'framingham-data') return ['framingham-vascular-age', 'framingham-equation', 'arterial-reference', ...labs];
   if (result.issue) {
     const extras = [result.issue === 'pressure' && !labs.includes('esc-blood-pressure') && 'esc-blood-pressure', result.issue === 'young' && 'life-cvd2',
@@ -59,6 +62,7 @@ const diagnosesByIssue = {
 export const heartDiagnosisQuestion = {id:'diagnoses', label:'Which apply to you?', hint:'Select all that apply.', options:[...Object.keys(diagnosesByIssue), 'Not sure which'], multiple:true};
 export const heartDiagnosisActive = inputs => inputs.conditions === 'Yes';
 export const heartBpTreatmentQuestion = {id:'bpTreatment', label:'Do you take medicine for high blood pressure?', options:yesNo};
+export const heartDiabetesMedicineQuestion = {id:'diabetesMedicine', label:'Do you take medicine to treat diabetes?', options:yesNo};
 export const heartDiabetesTypeQuestion = {id:'diabetesType', label:'Which type of diabetes were you diagnosed with?', options:['Type 2 diabetes', 'Type 1 diabetes', 'Another type or not sure']};
 export const heartDiabetesDamageQuestion = {id:'diabetesDamage', label:'Has a clinician identified complications from diabetes?',
   hint:'For example, kidney disease, protein in your urine, diabetic eye disease, or nerve damage.', options:yesNo};
@@ -126,6 +130,7 @@ export function heartFraminghamAge(value) {
   const age = Number(decimal(value));
   return Number.isInteger(age) && age >= framingham.minAge && age < score2.minAge;
 }
+export const heartRoutineAge = age => heartPdayAge(age) || heartFraminghamAge(age);
 
 function reportedDiabetes(inputs) {
   return heartDiagnosisActive(inputs) && Array.isArray(inputs.diagnoses) && inputs.diagnoses.includes('Diabetes');
@@ -134,17 +139,31 @@ function reportedDiabetes(inputs) {
 const onlyDiabetes = inputs => reportedDiabetes(inputs) && inputs.diagnoses.every(diagnosis => diagnosis === 'Diabetes');
 
 export function heartNeedsBpTreatment(inputs) {
-  return heartFraminghamAge(inputs.age) && inputs.sex !== 'Prefer not to say' && !['Not sure', 'Prefer not to say'].includes(inputs.smoking) &&
-    (!inputs.conditions || inputs.conditions === 'No' || onlyDiabetes(inputs) && (!inputs.diabetesType || inputs.diabetesType === 'Type 2 diabetes'));
+  return heartRoutineAge(inputs.age) && inputs.sex !== 'Prefer not to say' && !['Not sure', 'Prefer not to say'].includes(inputs.smoking) &&
+    (!inputs.conditions || inputs.conditions === 'No' || onlyDiabetes(inputs) &&
+      (heartPdayAge(inputs.age) || !inputs.diabetesType || inputs.diabetesType === 'Type 2 diabetes'));
 }
 
-function framinghamCandidate(inputs) {
+function routineCandidate(inputs) {
   return heartNeedsBpTreatment(inputs) && ['Female', 'Male'].includes(inputs.sex) && knownSmoking(inputs.smoking) &&
     (inputs.conditions === 'No' || onlyDiabetes(inputs));
 }
 
-export function heartFraminghamMissing(inputs) {
-  if (!framinghamCandidate(inputs)) return [];
+export const heartNeedsPdayMedicine = inputs => heartPdayAge(inputs.age) && heartNeedsBpTreatment(inputs) && onlyDiabetes(inputs);
+export const heartNeedsPdayBody = inputs => heartPdayAge(inputs.age) && heartNeedsBpTreatment(inputs) && inputs.sex !== 'Female';
+const pdayMedicine = inputs => heartNeedsPdayMedicine(inputs) && inputs.diabetesMedicine === 'Yes';
+export const heartUsesPdayGlucose = inputs => heartPdayAge(inputs.age) && routineCandidate(inputs)
+  && (!pdayMedicine(inputs) || inputs.glucose != null);
+
+export function heartRoutineAgeMissing(inputs) {
+  if (!routineCandidate(inputs)) return [];
+  if (heartPdayAge(inputs.age)) return [
+    ...(!pdayHighPressure(inputs.systolic, inputs.diastolic) && !['Yes','No'].includes(inputs.bpTreatment) ? ['bpTreatment'] : []),
+    ...(heartNeedsPdayMedicine(inputs) && !pdayHighGlucose(inputs.glucose) && !['Yes','No'].includes(inputs.diabetesMedicine) ? ['diabetesMedicine'] : []),
+    ...(inputs.sex === 'Male' ? ['height','weight'].filter(id => !inputs[id]?.value) : []),
+    ...['systolic','diastolic','total','hdl'].filter(id => !inputs[id]?.value),
+    ...(!pdayMedicine(inputs) && !inputs.glucose?.value ? ['glucose'] : []),
+  ];
   return [
     ...(onlyDiabetes(inputs) && !inputs.diabetesType ? ['diabetesType'] : []),
     ...(!['Yes', 'No'].includes(inputs.bpTreatment) ? ['bpTreatment'] : []),
@@ -190,10 +209,11 @@ export function heartUsesDiabetesLabs(inputs) {
 
 export function heartModelForReport(result) {
   if (result.reason) return null;
-  const {name, minAge, maxAge} = result.method === FRAMINGHAM ? framingham
+  const {name, minAge, maxAge} = result.method === pday.name ? pday : result.method === FRAMINGHAM ? framingham
     : result.method === SCORE2_DIABETES ? score2Diabetes : result.method === SCORE2_OP ? score2Op : score2;
   return {name, minAge, maxAge};
 }
+export const heartSavedMethod = version => [...models, score2Diabetes, framingham, pday].find(model => model.version === version)?.name || 'Needs review';
 
 function scoreLogHazard({age, sex, region, smoking, systolic, total, hdl, diabetes}, {center, scale, coefficients}) {
   const model = coefficients[sex];
@@ -235,6 +255,9 @@ export const heartLimitations = {
   young:{reason:'The European 10-year risk estimates in this assessment start at age 40.', next:'Review your blood pressure, cholesterol and family history with a clinician to discuss risk at your age.', edit:'age'},
   'framingham-data':{reason:'Add the remaining details to calculate your vascular age.'},
   'framingham-diabetes':{reason:'This vascular age comparison covers adults without diabetes and adults with type 2 diabetes.', next:'Ask your diabetes care team which cardiovascular assessment fits your history.', edit:'diabetes-type'},
+  'pday-data':{reason:'Add the remaining details to estimate your early vascular age.'},
+  'pday-body':{reason:'Height or weight is outside the calculation range.', next:'Check the measurements and units you entered.', edit:'pday-body'},
+  'glucose-alert':{reason:'The fasting glucose result needs attention before an age comparison.', edit:'pday-glucose'},
   older:{reason:'The European 10-year risk estimates in this assessment cover ages 40–89.', next:reviewMeasurements, edit:'age'},
   region:{reason:'The country selected is outside the SCORE2 regions covered here.', next:'Check your country of residence or ask a clinician which risk assessment is used where you live.', edit:'country'},
   cvd:{reason:'These equations estimate the chance of a first cardiovascular event. Risk with established disease uses a separate assessment.', next:'Ask the clinician who manages your heart or blood vessel condition about a follow-up risk assessment.'},
@@ -267,6 +290,7 @@ export function heartCanCompareArterialAge(inputs) {
     (inputs.conditions === 'No' || inputs.conditions === 'Yes' && inputs.diagnoses?.length > 0 &&
       !inputs.diagnoses.some(diagnosis => ['Currently pregnant', 'Not sure which'].includes(diagnosis)));
 }
+export const heartOffersArterialAge = (inputs, result) => !!result && !['pressure','glucose-alert'].includes(result.issue) && heartCanCompareArterialAge(inputs);
 
 function compareArterialAge({sex, cfpwv}) {
   // Invert the sex-specific median curves in Table 3 of the Austrian LEAD study.
@@ -284,18 +308,18 @@ function historyIssue(inputs) {
     const known = ['pregnancy', 'cvd', 'diabetes', 'kidney', 'inherited'].find(issue => issues.includes(issue));
     if (known) return known;
   }
-  if (!heartFraminghamAge(inputs.age) && inputs.treatment === 'Yes') return 'treatment';
+  if (!heartRoutineAge(inputs.age) && inputs.treatment === 'Yes') return 'treatment';
   return null;
 }
 
 function scopeIssue(inputs, region, history) {
   const startIssue = heartStartIssue(inputs);
-  if (heartFraminghamAge(inputs.age)) {
+  if (heartRoutineAge(inputs.age)) {
     if (history && history !== 'diabetes') return history;
     if (inputs.conditions === 'Not sure' || inputs.diagnoses?.includes('Not sure which')) return 'conditions';
     if (inputs.sex === 'Prefer not to say') return 'sex';
     if (['Not sure', 'Prefer not to say'].includes(inputs.smoking)) return 'smoking';
-    if (onlyDiabetes(inputs) && inputs.diabetesType && inputs.diabetesType !== 'Type 2 diabetes') return 'framingham-diabetes';
+    if (heartFraminghamAge(inputs.age) && onlyDiabetes(inputs) && inputs.diabetesType && inputs.diabetesType !== 'Type 2 diabetes') return 'framingham-diabetes';
     if (history === 'diabetes' && !onlyDiabetes(inputs)) return 'diabetes';
   }
   if (startIssue) return startIssue;
@@ -331,6 +355,21 @@ function diabetesValues(inputs) {
   return {diagnosisAge:inputs.diagnosisAge, hba1c:hba1cMmol(inputs.hba1c), egfr:Number(inputs.egfr?.value)};
 }
 
+function assessPday(inputs, total, hdl) {
+  const [height, weight] = pdayBodyFields.map(field => {
+    const entry = inputs[field.id];
+    return Number(entry?.value) * field.factor(entry?.unit);
+  });
+  return pdayVascularAgeBand(inputs.age, {
+    sex:inputs.sex, bmi:weight / (height / 100) ** 2,
+    nonHdl:Number(((total - hdl) * cholesterolMgDlPerMmol).toPrecision(12)),
+    hdl:Number((hdl * cholesterolMgDlPerMmol).toPrecision(12)),
+    smoking:currentSmoking.includes(inputs.smoking),
+    pressure:inputs.bpTreatment === 'Yes' || pdayHighPressure(inputs.systolic, inputs.diastolic),
+    diabetes:pdayMedicine(inputs) || pdayHighGlucose(inputs.glucose),
+  });
+}
+
 export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   const inputs = {};
   const errors = {};
@@ -342,7 +381,7 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   const startIssue = heartStartIssue({age:inputs.age, country:raw?.country});
   for (const {id, options} of heartQuestions) {
     const value = raw?.[id];
-    if (id === 'treatment' && heartFraminghamAge(inputs.age)) {
+    if (id === 'treatment' && heartRoutineAge(inputs.age)) {
       if (options.includes(value)) inputs[id] = value;
       continue;
     }
@@ -361,6 +400,10 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   readDiabetesInputs(inputs, raw, errors, requireHistory);
   if (heartBpTreatmentQuestion.options.includes(raw.bpTreatment)) inputs.bpTreatment = raw.bpTreatment;
   else if (heartNeedsBpTreatment(inputs) && raw.bpTreatment != null && raw.bpTreatment !== '') errors.bpTreatment = 'Choose an answer.';
+  if (heartNeedsPdayMedicine(inputs)) {
+    if (heartDiabetesMedicineQuestion.options.includes(raw.diabetesMedicine)) inputs.diabetesMedicine = raw.diabetesMedicine;
+    else if (raw.diabetesMedicine != null && raw.diabetesMedicine !== '') errors.diabetesMedicine = 'Choose an answer.';
+  }
 
   for (const {id, min, max, integer} of heartSmokingFields(inputs)) {
     const entry = raw?.[id];
@@ -376,11 +419,13 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   const history = historyIssue(inputs), issue = scopeIssue(inputs, region, history);
   const includeDiabetes = heartUsesDiabetesLabs(inputs);
   const includeArterial = heartCanCompareArterialAge(inputs);
-  const measurements = reviewHeartMeasurements(raw, inputs, {includeDiabetes, includeArterial});
+  const includePday = heartPdayAge(inputs.age) && routineCandidate(inputs);
+  const measurements = reviewHeartMeasurements(raw, inputs, {includeDiabetes, includeArterial, includePday});
   Object.assign(inputs, measurements.inputs);
   Object.assign(errors, measurements.errors);
   const {review, highPressure, outsideCoverage, values:{systolic, total, hdl}} = measurements;
-  if (inputs.cfpwv && !highPressure) {
+  const glucoseWarning = review.fields.glucose?.check.warning;
+  if (inputs.cfpwv && !highPressure && !glucoseWarning) {
     if (raw.cfpwv.method !== arterialReference.method) errors.cfpwvMethod = 'Confirm that your report uses 80% of the direct carotid–femoral distance.';
     else if (review.fields.cfpwv.check.status === 'review') errors.cfpwv = 'Enter the pulse wave velocity in m/s, from 3 to 25.';
     else {
@@ -388,7 +433,7 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
       review.arterialAge = compareArterialAge(inputs);
     }
   }
-  if (highPressure) {
+  if (highPressure || glucoseWarning) {
     delete inputs.cfpwv;
     delete errors.cfpwv;
     delete review.fields.cfpwv;
@@ -400,9 +445,17 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   }
   if (Object.keys(errors).length) return {inputs, errors, review, result:null};
   if (highPressure) return {inputs, errors, review, result:unavailable('pressure')};
-  if (framinghamCandidate(inputs)) {
+  if (glucoseWarning) return {inputs, errors, review, result:unavailable('glucose-alert')};
+  if (routineCandidate(inputs)) {
     if (outsideCoverage) return {inputs, errors, review, result:unavailable('measurements')};
-    const missing = heartFraminghamMissing(inputs);
+    if (includePday && pdayBodyFields.some(({id}) => review.fields[id]?.check.status === 'review')) {
+      return {inputs, errors, review, result:unavailable('pday-body')};
+    }
+    const missing = heartRoutineAgeMissing(inputs);
+    if (includePday) {
+      const result = missing.length ? {...unavailable('pday-data'), missing} : assessPday(inputs, total, hdl);
+      return {inputs, errors, review, result};
+    }
     const result = missing.length ? {...unavailable('framingham-data'), missing}
       : framinghamVascularAge({age:inputs.age, sex:inputs.sex, smoking:currentSmoking.includes(inputs.smoking),
         diabetes:onlyDiabetes(inputs), treated:inputs.bpTreatment === 'Yes', systolic, total, hdl});
