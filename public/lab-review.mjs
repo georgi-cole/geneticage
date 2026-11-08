@@ -50,6 +50,16 @@ export function labReferenceGroup({labReferenceGroup:chosen,answers}={}){
  return chosen??(answers?.sex==='Female'?'female':answers?.sex==='Male'?'male':'unspecified');
 }
 
+export function comparisonValueText(comparison){
+ for(let digits=4;digits<=12;digits++){
+  const value=Number(comparison.comparisonValue.toPrecision(digits));
+  const status=compareLabReference({value,referenceLow:comparison.low,referenceHigh:comparison.high,
+   referenceLowExclusive:comparison.lowExclusive,referenceHighExclusive:comparison.highExclusive}).status;
+  if(status===comparison.status)return String(value);
+ }
+ return String(comparison.comparisonValue);
+}
+
 export function reviewLabReference(id,entry={},context={}){
  const lab=labs.find(item=>item.id===id),unit=entry.unit||lab?.units[0];
  const own=entered(entry.referenceLow)||entered(entry.referenceHigh);

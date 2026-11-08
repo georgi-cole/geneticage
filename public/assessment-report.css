@@ -72,6 +72,33 @@
 .report-panel h2 {font-size:21px;line-height:1.25;font-weight:450;letter-spacing:-.5px;margin:0}
 .report-panel h3 {font-size:17px;line-height:1.3;font-weight:450;letter-spacing:-.3px;margin:0 0 9px}
 .report-panel p {font-size:12px;line-height:1.65;margin:0}
+.report-offers {border-top:1px solid var(--line);margin-top:4px}
+.report-offer {display:grid;grid-template-columns:32px minmax(0,1fr);gap:11px;padding:15px 0}
+.report-offer+.report-offer {border-top:1px solid var(--line)}
+.offer-symbol {display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--line);border-radius:10px;color:var(--accent)}
+.offer-symbol svg {width:16px;height:16px}
+.report-offer h2 {font-size:16px;margin:0 0 4px}
+.report-offer p {color:var(--muted)}
+.report-offer .offer-price,.modal .offer-price {font-weight:600;color:var(--ink);margin:7px 0 0}
+.offer-actions {display:flex;align-items:center;flex-wrap:wrap;gap:2px 14px;margin-top:5px}
+.offer-actions .text-link {display:inline-flex;align-items:center;gap:5px;min-height:44px;text-align:start}
+.offer-actions svg {width:14px;height:14px;flex:none}
+.modal [data-report-sample] {display:inline-flex;align-items:center;gap:6px;min-height:44px}
+.modal [data-report-sample] svg {width:14px;height:14px}
+.review-screen .review-detail-card {min-width:0}
+.review-detail-card h3 {font-size:15px;margin:14px 0 5px}
+.review-detail-card .pill+h2 {margin-top:10px}
+.review-person-text,.review-detail-card dd {white-space:pre-wrap;overflow-wrap:anywhere}
+.review-detail-card dd small {display:block;margin-top:4px;color:var(--muted)}
+.review-detail-card .report-answer-group {margin-top:14px}
+.review-quote-heading {display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;justify-content:space-between}
+.review-quote-heading strong {font-size:18px;color:var(--accent)}
+.review-terms {display:grid;gap:10px;margin:14px 0}
+.review-terms>div {display:flex;gap:10px;justify-content:space-between}
+.review-terms dt {color:var(--muted)}
+.review-terms dd {margin:0;text-align:end}
+.review-form textarea {resize:vertical}
+.review-form>.btn {margin-top:12px}
 .report-panel .eyebrow {font-size:8px;letter-spacing:1.3px;margin:0 0 8px;color:var(--accent)}
 .report-estimate {position:relative;isolation:isolate;overflow:hidden;padding:22px;border-radius:15px}
 .report-estimate .eyebrow {color:var(--result-accent)}

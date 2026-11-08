@@ -32,6 +32,11 @@ test('Pages export works under the project path and publishes only static browse
   assert.equal((await fetch(origin+'/',{redirect:'manual'})).headers.get('location'),'/geneticage/');
   for(const filename of ['index.html','app.js','themes.css','launch-screen.css','assets/kolequant-mark.webp','manifest.webmanifest'])assert.equal((await fetch(origin+'/geneticage/'+filename)).status,200,filename);
   assert.match((await fetch(origin+'/geneticage/app.js')).headers.get('content-type'),/javascript/);
+  for(const locale of ['en','bg']){
+   const sample=await fetch(origin+'/geneticage/assets/report-samples/'+locale+'.pdf');
+   assert.equal(sample.headers.get('content-type'),'application/pdf');
+   assert.equal(Buffer.from(await sample.arrayBuffer()).subarray(0,5).toString(),'%PDF-');
+  }
   const missing=await fetch(origin+'/geneticage/missing');assert.equal(missing.status,404);assert.equal(await missing.text(),html);
   // A second build replaces only a recognized, non-linked output directory.
   await buildPages({directory:output});

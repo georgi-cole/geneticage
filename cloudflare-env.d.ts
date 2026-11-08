@@ -12,7 +12,10 @@ declare namespace Cloudflare {
     STRIPE_SECRET_KEY?: string;
     STRIPE_WEBHOOK_SECRET?: string;
     STRIPE_REPORT_PRICE_ID?: string;
+    STRIPE_SPECIALIST_PRODUCT_ID?: string;
     STRIPE_AUTOMATIC_TAX?: string;
     REPORT_REVIEW_MODE?: string;
+    SPECIALIST_REVIEWS_ENABLED?: string;
+    SPECIALIST_REVIEWERS_JSON?: string;
   }
 }
