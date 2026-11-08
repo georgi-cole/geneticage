@@ -74,7 +74,11 @@ test('Pages runs the actual app without a backend, fake account or stored health
   await submit('#labs-form');
  }
  $('#lab-valid').checked=true;$('#lab-context').checked=true;await submit('#labs-form');
- assert.ok($('.result-instrument'));await click('[data-action="report"]');
+ assert.ok($('.result-instrument'));
+ await click('.mobile-nav [data-route="home"]');
+ assert.equal($('#overview-result'),null,'One result needs no selector.');
+ await click('.instrument-footer [data-action="results"]');
+ await click('[data-action="report"]');
  assert.equal(document.querySelectorAll('.report-tabs button').length,4);assert.equal(document.querySelector('#report-chapter'),null);
  await click('[data-action="report-tab"][data-tab="details"]');
  assert.match($('[data-report-panel="details"]').textContent,/Fictional test country/);assert.match($('[data-report-panel="details"]').textContent,/52 years/);
@@ -258,6 +262,19 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('.mobile-nav [data-route="home"]');
  assert.ok($('.home-workspace .result-instrument'));
  assert.match($('.readout-label').textContent,/APPROXIMATE KIDNEY AGE/);
+ assert.deepEqual([...$('#overview-result').options].map(option=>option.value),['kidney','heart-vascular','phenoage']);
+ $('#overview-result').focus();
+ await enter('#overview-result','phenoage','change');
+ assert.equal(document.activeElement,$('#overview-result'));
+ assert.equal(document.querySelectorAll('.home-workspace .result-instrument').length,1);
+ assert.match($('.readout-label').textContent,/CLINICAL PHENOAGE/);
+ await click('.instrument-footer [data-action="open-overview-draft"]');
+ assert.ok($('#main [data-action="report"]'),'The result link opens the selected draft.');
+ await click('.mobile-nav [data-route="home"]');
+ assert.equal($('#overview-result').value,'phenoage');
+ await enter('#overview-result','kidney','change');
+ await click('.instrument-footer [data-action="open-overview-draft"]');
+ assert.match($('.heart-estimate').textContent,/APPROXIMATE KIDNEY AGE/);
  assert.equal(requests,0);
  assert.ok(Object.keys(localStorage).every(key=>['kq-theme-v2','kq-language-v1'].includes(key)));
 });

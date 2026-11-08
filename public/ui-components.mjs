@@ -22,7 +22,7 @@ export function unmeasuredMark(){
 }
 
 // Calibration is decorative, not a health score, confidence interval or aging speed.
-export function resultInstrument({value,age=null,gap=null,sample=false,illustrative=false,empty=false,profileOnly=false,withheld=false,action='sample',actionLabel='',recordId='',title='A look at the result',date='',readoutLabel='CLINICAL PHENOAGE',caption='BLOOD-BASED ESTIMATE',ageLabel='Age at blood draw',comparison,boundary,direction}){
+export function resultInstrument({value,age=null,gap=null,sample=false,illustrative=false,empty=false,profileOnly=false,withheld=false,action='sample',actionLabel='',recordId='',title='A look at the result',date='',readoutLabel='CLINICAL PHENOAGE',caption='BLOOD-BASED ESTIMATE',ageLabel='Age at blood draw',comparison,boundary,direction,headingControl=''}){
   const boundLabel={below:'Below',above:'Above','at-least':'At least','up-to':'Up to'}[direction];
   const bounded=typeof boundLabel==='string'&&Number.isInteger(boundary);
   if(!empty&&!profileOnly&&!withheld&&!isReportableAge(value)&&!bounded){withheld=true;profileOnly=true;}
@@ -34,7 +34,7 @@ export function resultInstrument({value,age=null,gap=null,sample=false,illustrat
     : `<div><span>Simple difference</span><strong>${instrumentValue(gap,{signed:true})}<small>years</small></strong></div>`;
   return `<section class="result-instrument result-surface ${sample?'sample-panel':'personal-result'} ${noAge?'welcome-instrument':''}" aria-labelledby="result-instrument-title" data-theme-part ${!noAge&&Number.isFinite(value)?'data-result-motion':''}>
     <img class="theme-orb" data-theme-asset="blood-moon" src="/assets/blood-moon-overview-v2.webp" srcset="/assets/blood-moon-overview-v2-small.webp 256w, /assets/blood-moon-overview-v2.webp 512w" sizes="260px" width="512" height="512" alt="" decoding="async">
-    <div class="instrument-heading ${empty?'instrument-heading-empty':''}"><h2 id="result-instrument-title" ${empty?'class="sr-only"':''}>${empty?'Start here':escapeHTML(title)}</h2><span class="instrument-tag">${empty?'START HERE':withheld?'REVIEW NEEDED':profileOnly?'HEALTH PROFILE':sample||illustrative?'SAMPLE':'YOUR RESULT'}</span></div>
+    <div class="instrument-heading ${empty?'instrument-heading-empty':''}"><h2 id="result-instrument-title" ${empty||headingControl?'class="sr-only"':''}>${empty?'Start here':escapeHTML(title)}</h2>${headingControl}<span class="instrument-tag">${empty?'START HERE':withheld?'REVIEW NEEDED':profileOnly?'HEALTH PROFILE':sample||illustrative?'SAMPLE':'YOUR RESULT'}</span></div>
     <div class="instrument-stage">
       <div class="instrument-atmosphere" aria-hidden="true"><span class="bionic-rib rib-one"></span><span class="bionic-rib rib-two"></span><span class="bionic-rib rib-three"></span></div>
       <div class="instrument-dial">

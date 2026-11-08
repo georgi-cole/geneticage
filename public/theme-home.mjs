@@ -1,4 +1,4 @@
-import {resultInstrument,screenHeading,uiIcon} from './ui-components.mjs';
+import {escapeHTML,resultInstrument,screenHeading,uiIcon} from './ui-components.mjs';
 import {clinicalForDisplay} from './lab-safety.mjs';
 import {HEART_ASSESSMENT,heartAgeReadout} from './heart-vascular.mjs';
 import {systemAssessment} from './system-assessments.mjs';
@@ -26,11 +26,21 @@ export function overviewPresentation(record,{hasProfile=false}={}){
 }
 
 // One shared screen, with theme identity expressed in materials.
-export function renderThemeHome({value,gap,age=45,sample=true,empty=false,profileOnly=false,withheld=false,hasProfile=false,action='sample',actionLabel='',recordId='',date='',title,readoutLabel,caption,ageLabel,comparison,boundary,direction}){
+export function renderThemeHome({age=45,sample=true,...presentation},{choices=[],selected,loadStatus='',loadingTitle}={}){
+ const {empty=false,profileOnly=false,withheld=false,hasProfile=false}=presentation;
+ const welcome=empty&&!loadStatus;
+ const picker=choices.length>1?'<select id="overview-result" class="overview-result-select" aria-label="Assessment result">'+choices.map(({type,label})=>`<option value="${escapeHTML(type)}" ${type===selected?'selected':''}>${escapeHTML(label)}</option>`).join('')+'</select>':'';
+ const title=(picker?choices.find(choice=>choice.type===selected)?.label:null)??presentation.title??(empty?'Your first assessment':withheld?'Review your assessment':profileOnly?'Your health profile':'A look at the result');
+ const instrument=loadStatus
+  ? `<section class="result-instrument result-surface personal-result" aria-labelledby="result-instrument-title" data-theme-part>
+      <div class="instrument-heading"><h2 id="result-instrument-title" ${picker?'class="sr-only"':''}>${escapeHTML(loadingTitle)}</h2>${picker}<span class="instrument-tag">YOUR RESULT</span></div>
+      <div class="instrument-stage"><div class="overview-load-state"><p role="status">${loadStatus==='error'?'Could not load your saved result.':'Loading your saved result…'}</p>${loadStatus==='error'?'<button class="text-link" data-action="retry-overview">Try again</button>':''}</div></div>
+    </section>`
+  : resultInstrument({age,sample,...presentation,title,headingControl:picker});
  return `<div class="wrap home-workspace app-screen">
-  ${screenHeading('YOUR HEALTH',profileOnly?'Your health, in context.':'Your age, in context.',empty?(hasProfile?'Your workspace is ready. Start your first assessment.':'Start an assessment. No profile needed.'):'A personal perspective, grounded in science.')}
-  ${resultInstrument({value,gap,age,sample,empty,profileOnly,withheld,action,actionLabel,recordId,date,readoutLabel,caption,ageLabel,comparison,boundary,direction,title:title??(empty?'Your first assessment':withheld?'Review your assessment':profileOnly?'Your health profile':'A look at the result')})}
-  <div class="overview-actions" data-theme-part><button class="btn" data-action="assessments">${empty?'Start assessment':'New assessment'} ${uiIcon('arrow')}</button><button class="overview-method text-btn" data-action="method" aria-label="Understand the method"><span>The method</span>${uiIcon('external')}</button></div>
+  ${screenHeading('YOUR HEALTH',profileOnly?'Your health, in context.':'Your age, in context.',welcome?(hasProfile?'Your workspace is ready. Start your first assessment.':'Start an assessment. No profile needed.'):'A personal perspective, grounded in science.')}
+  ${instrument}
+  <div class="overview-actions" data-theme-part><button class="btn" data-action="assessments">${welcome?'Start assessment':'New assessment'} ${uiIcon('arrow')}</button><button class="overview-method text-btn" data-action="method" aria-label="Understand the method"><span>The method</span>${uiIcon('external')}</button></div>
   <p class="overview-footnote">For adults 18+ · Saving is optional</p>
  </div>`;
 }

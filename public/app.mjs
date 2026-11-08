@@ -27,6 +27,8 @@ import {references,clockComparison} from './evidence.mjs';
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state={...freshAssessment(),view:'home'},draftBackup=null;
 const parkedAssessments=new Map();
+const overviewSnapshots=new Map();
+let overviewType='';
 const assessmentType=draft=>draft.assessmentType||'profile';
 const isHeartAssessment=draft=>assessmentType(draft)===HEART_ASSESSMENT;
 const isSystemAssessment=draft=>!!systemAssessment(assessmentType(draft));
@@ -39,7 +41,7 @@ const resultMotion=initializeResultMotion();
 initializeLaunch();
 initializeLabFeedback({getState:()=>state});
 const today=()=>new Date().toLocaleDateString('en-CA');
-async function api(path,method='GET',data){if(PAGES_PREVIEW)throw new Error('Cloud services are unavailable in the GitHub Pages preview.');const response=await fetch('/api/'+path,{method,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000),headers:method==='GET'?{}:{'Content-Type':'application/json','X-KQ-CSRF':auth.csrf||''},...(data===undefined?{}:{body:JSON.stringify(data)})});let result;try{result=await response.json();}catch{throw new Error('Account storage could not be reached. Please try again.');}if(!response.ok){if(response.status===401){auth.authenticated=false;auth.profile=null;auth.history=[];}throw new Error(result.error||'Your request could not be completed.');}return result;}
+async function api(path,method='GET',data){if(PAGES_PREVIEW)throw new Error('Cloud services are unavailable in the GitHub Pages preview.');const csrf=auth.csrf;const response=await fetch('/api/'+path,{method,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000),headers:method==='GET'?{}:{'Content-Type':'application/json','X-KQ-CSRF':csrf||''},...(data===undefined?{}:{body:JSON.stringify(data)})});let result;try{result=await response.json();}catch{throw new Error('Account storage could not be reached. Please try again.');}if(!response.ok){if(response.status===401&&auth.csrf===csrf){auth.authenticated=false;auth.profile=null;auth.history=[];overviewSnapshots.clear();}throw new Error(result.error||'Your request could not be completed.');}return result;}
 let accountRefresh=null;
 async function refreshAccount(){
  if(PAGES_PREVIEW){auth.loading=false;auth.authenticated=false;auth.profile=null;auth.history=[];auth.purchases=[];auth.error='';auth.reportReview=true;nav();return;}
@@ -48,15 +50,20 @@ async function refreshAccount(){
  auth.loading=true;auth.error='';auth.collectionsError='';auth.purchaseError='';
  accountRefresh=(async()=>{try{
   const response=await fetch('/api/session',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000)});
-  if(response.status===401){auth.authenticated=false;auth.profile=null;auth.history=[];auth.purchases=[];auth.csrf=null;return;}
+  if(response.status===401){auth.authenticated=false;auth.profile=null;auth.history=[];auth.purchases=[];auth.csrf=null;overviewSnapshots.clear();return;}
   const session=await response.json();if(!response.ok)throw new Error(session.error||'Account storage is unavailable.');
+  if(auth.csrf!==session.csrf){auth.history=[];auth.purchases=[];overviewSnapshots.clear();}
   auth.authenticated=true;auth.csrf=session.csrf;auth.reportReview=!!session.reportReview;auth.payments=session.payments;auth.profile=session.profile;
   if(session.profile){const [history,purchases]=await Promise.allSettled([api('assessments'),api('purchases')]);
-   if(history.status==='fulfilled')auth.history=history.value.assessments;else auth.collectionsError='Saved assessments could not refresh. Please retry.';
+   if(history.status==='fulfilled'){
+    auth.history=history.value.assessments;
+    const ids=new Set(auth.history.map(record=>record.id));
+    for(const id of overviewSnapshots.keys())if(!ids.has(id))overviewSnapshots.delete(id);
+   }else auth.collectionsError='Saved assessments could not refresh. Please retry.';
    if(purchases.status==='fulfilled')auth.purchases=purchases.value.purchases;else auth.purchaseError='Purchase status could not refresh. Please retry.';
   }else{auth.history=[];auth.purchases=[];}
  }catch(error){auth.error=error.name==='TimeoutError'?'The account connection took too long. Your current assessment is safe on this screen.':error.message;}
- finally{auth.loading=false;nav();}})().finally(()=>{accountRefresh=null;});
+ finally{auth.loading=false;nav();if(state.view==='home'){renderOverview();void hydrateOverview();}}})().finally(()=>{accountRefresh=null;});
  return accountRefresh;
 }
 async function action(button,fn){if(button.disabled)return;button.disabled=true;button.setAttribute('aria-busy','true');try{await fn();}catch(error){modal('Your change was not completed.', '<p role="alert">'+esc(error.message)+'</p><p>Your current assessment is still on this page. Please retry after refreshing the account connection.</p><button class="btn" data-action="close">Close</button>');}finally{button.disabled=false;button.removeAttribute('aria-busy');}}
@@ -72,7 +79,7 @@ function nav(){
  const route=state.view==='account'?(['history','saved','reports','report-history','progress'].includes(state.accountTab)?(['reports','report-history'].includes(state.accountTab)?'reports':'history'):'settings'):state.view==='report'?'reports':['consent','questionnaire','review','labs','heart','system'].includes(state.view)?'history':state.view==='results'?'home':state.view;
  document.querySelectorAll('.workspace-link[data-route]').forEach(link=>{if(link.dataset.route===route)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
 }
-function goto(view){state.view=view;state.errors={};render();$('#main').scrollTop=0;$('#main').focus({preventScroll:true});}
+function goto(view){state.view=view;state.errors={};render();$('#main').scrollTop=0;$('#main').focus({preventScroll:true});if(view==='home')void hydrateOverview();}
 function modal(title,body){$('#modal-root').innerHTML=`<div class="overlay"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="close" data-action="close" aria-label="Close dialog">×</button><h2 id="modal-title">${title}</h2>${body}</section></div>`;decorateDirectionalSymbols($('.modal'));setTimeout(()=>$('.modal button')?.focus(),0);}
 function close(){ $('#modal-root').innerHTML='';$('#main').focus({preventScroll:true});}
 
@@ -85,22 +92,55 @@ function ageComparison(c,age){const n=Math.round(c.value)-Number(age);return n==
 function method(){modal('About the assessments',`<p>Biological age is an estimate of aspects of health and aging. Different methods measure different features, so their results are not interchangeable.</p><details open><summary>Health and lifestyle profile</summary><p>Your answers are compared with selected health guidance to identify topics for review. This is an educational profile, not a validated age clock or a clinical risk score. It does not calculate an age in years.</p></details><details><summary>Blood-based age: clinical PhenoAge</summary><p>The published formula combines your age with nine blood measurements. It was developed using US population data and expresses a pattern associated with health outcomes on an age scale.</p><p>This version reports estimates for ages 20–84, using confirmed fasting samples and a collection-history check. These are the app’s interpretation rules. They do not establish accuracy for every person or country.</p><p>The displayed difference is clinical PhenoAge minus age at the blood draw. It is not the study’s age-adjusted PhenoAgeAccel measure, a measure of aging speed, or a forecast of years left to live.</p></details><details><summary>Heart & Vascular</summary><p>For eligible adults aged 18–29, PDAY estimates an early vascular age range from routine measurements and health history.</p><p>For eligible adults aged 30–39, the Framingham model compares vascular age using blood pressure and routine cholesterol results.</p><p>SCORE2 and SCORE2-Diabetes cover eligible adults aged 40–69. SCORE2-OP covers ages 70–89. The 10-year risk estimate uses the region for your country of residence.</p><p>Younger adults can add a clinical pulse-wave result for a separate arterial stiffness age comparison.</p></details>${Object.entries(systemAssessments).map(([type,spec])=>`<details><summary>${spec.title}</summary>${systemMethods(type)}${sourceLinks(spec.sources)}</details>`).join('')}<details><summary>Glycan and protein clocks</summary><p>GlycanAge uses IgG glycans. Organ proteomic clocks use panels of blood proteins. Each needs the measurements and reference from its own study.</p>${sourceLinks(['glycan-age','igg-diabetes','organ-proteome','grimage-2'])}</details><details><summary>Epigenetic laboratory tests</summary><p>These use DNA methylation: chemical marks on DNA. They require a suitable laboratory assay and a defined calculation. Routine blood chemistry and lifestyle answers cannot substitute for those measurements.</p><div class="clock-list">${clockComparison.slice(1).map(c=>`<article><h3>${c.name}</h3><p>${c.meaning}</p><p class="small muted">${c.availability}</p></article>`).join('')}</div><p>Laboratory clocks also produce estimates. A test cannot establish one exact biological or “genetic” age. KoleQuant can advise which question a test may help answer and whether it is available.</p></details><details><summary>Mortality risk and progress over time</summary><p>Some clocks are associated with mortality in research populations. That association does not, by itself, provide your probability of death. A personal risk estimate needs a model with a defined time period and evidence that it applies to the relevant population.</p><p>Repeated clinical age estimates can be compared as a history. Changes may reflect illness, sampling conditions, measurement variation or a change in health. A falling result is not proof of reversed aging.</p></details><details><summary>Research and health guidance</summary>${sourceLinks(references.map(r=>r.id))}</details>`);}
 function privacy(){if(PAGES_PREVIEW){modal('Privacy & data','<p>Your answers stay in this page’s memory. Reloading or closing the page clears them. Only theme and language preferences are stored on this device.</p><p>This preview does not send your answers to an account database or payment service. GitHub delivers the static app files.</p>');return;}modal('Your account & information',`<p>You can explore an assessment without saving it. Unsaved questionnaire and blood entries stay in this page’s memory.</p><p>KoleQuant stores your sign-in email, nickname and consent record. Resend delivers a one-time code to your email address. Sign-in emails contain no health information.</p><p>When you explicitly save, your questionnaire, blood entries, results and educational report are sent over HTTPS and stored in the hosted account database. Health records are encrypted by the application before database storage. Authorized service operators can administer the service; this is not end-to-end encryption.</p><p>Saving is optional and is not permission for research, marketing or sharing with a consultation team. Those uses are not enabled. Hosting providers may process ordinary connection logs.</p><p>You can export or delete individual assessments, or delete your KoleQuant account and its live records in Data & settings. Provider backups may retain deleted data for a limited period. Downloaded copies remain on your device.</p><p>For a report purchase, Stripe collects payment and billing details. We store the purchase status, amount, payment references and receipt link. No questionnaire, blood entries or results are sent to Stripe. Deleting a purchased report removes account access; this does not request a refund. Stripe retains its own payment records.</p><p>Legacy demo accounts remain in their original browser storage unless you remove them. They are not uploaded automatically.</p><p class="small muted">The age calculation and consultation enquiry remain prototype features. A clinician has not reviewed results. Report purchases use Stripe when enabled; purchase availability is shown before checkout.</p>`);}
 
-function home(){
- const saved=auth.profile&&auth.history.some(item=>item.id===auth.overview?.assessment?.id)?auth.overview:null;
- const record=state.assessment?{...state,clinical:clinical()}:saved?{...saved.assessment,clinical:saved.report.clinical,overviewSaved:true}:null;
- return renderThemeHome(overviewPresentation(record,{hasProfile:!!auth.profile}));
+function overviewSelection(){
+ const byType=new Map();
+ const history=auth.profile?auth.history:[];
+ const add=(record,source)=>{
+  const type=independentAssessment(record)?assessmentType(record):record.labSubmitted||typeof record.value==='number'?'phenoage':null;
+  if(type&&!record.sample&&!byType.has(type))byType.set(type,{type,label:assessmentTitle(record),[source]:record});
+ };
+ for(const draft of [state.sample?draftBackup:state,...[...parkedAssessments.values()].reverse()]){
+  if(draft?.assessment)add(draft,'draft');
+ }
+ for(const record of [...history].reverse())add(record,'saved');
+ const choices=[...byType.values()];
+ const choice=byType.get(overviewType)||choices[0]||(state.assessment?{draft:state}:{saved:history.at(-1)});
+ return {choices,choice};
 }
-let overviewRefresh=null;
-async function hydrateOverview(){
- const latest=auth.profile?auth.history.at(-1):null;
- if(!latest){auth.overview=null;return;}
- if(state.assessment||auth.overview?.assessment?.id===latest.id||overviewRefresh)return;
- overviewRefresh=(async()=>{try{
-  const saved=await api('assessments/'+latest.id);
-  if(auth.profile&&auth.history.at(-1)?.id===latest.id){auth.overview=saved;if(state.view==='home'&&!state.assessment)render();}
- }catch{ /* The welcome screen and private library remain usable if loading fails. */ }
- })().finally(()=>{overviewRefresh=null;});
- return overviewRefresh;
+function overviewSnapshot(id){
+ const snapshot=overviewSnapshots.get(id);
+ return auth.profile&&snapshot?.csrf===auth.csrf?snapshot:null;
+}
+function home(){
+ const {choices,choice}=overviewSelection();
+ const snapshot=choice.saved?overviewSnapshot(choice.saved.id):null;
+ const record=choice.draft?{...choice.draft,clinical:clinical(choice.draft)}:snapshot?.record;
+ const loadStatus=choice.saved&&!record?(snapshot?.failed?'error':'loading'):'';
+ const presentation=overviewPresentation(record,{hasProfile:!!auth.profile});
+ if(choice.draft&&choice.draft!==state)presentation.action='open-overview-draft';
+ return renderThemeHome(presentation,{choices,selected:choice.type,loadStatus,loadingTitle:choice.saved&&assessmentTitle(choice.saved)});
+}
+function renderOverview(){
+ const focused=$('#overview-result')===document.activeElement;
+ render();
+ if(focused)($('#overview-result')||$('#main')).focus({preventScroll:true});
+}
+async function hydrateOverview(retry=false){
+ if(state.view!=='home')return;
+ const id=overviewSelection().choice.saved?.id;
+ if(!id)return;
+ const cached=overviewSnapshot(id);
+ if(cached&&!(retry&&cached.failed))return;
+ const snapshot={csrf:auth.csrf};
+ overviewSnapshots.set(id,snapshot);
+ if(retry)renderOverview();
+ try{
+  const {assessment,report}=await api('assessments/'+id);
+  snapshot.record={...assessment,clinical:report.clinical,overviewSaved:true};
+ }catch{
+  snapshot.failed=true;
+ }
+ if(state.view==='home'&&(!auth.profile||overviewSnapshot(id)===snapshot&&overviewSelection().choice.saved?.id===id))renderOverview();
 }
 function consent(){return `<div class="wrap narrow"><div class="eyebrow">Before you start</div><h1>Before you begin.</h1><p class="lead">This is an educational service under development. It can help you understand the information you enter, but it does not diagnose a condition or replace medical care.</p><div class="notice">${PAGES_PREVIEW?'Your answers stay in this page’s memory. Cloud saving is available in the hosted app.':'Unsaved answers stay on this page. If you choose to save an assessment, its health information and report are stored in your account.'}</div><label class="checkline"><input id="consent" type="checkbox" ${state.consent?'checked':''}><span>I am 18 or older and have read the assessment note and <button class="text-link" data-action="privacy">information about my data</button>.</span></label>${state.errors.consent?`<p class="error" role="alert">${state.errors.consent}</p>`:''}<div class="actions"><button class="btn" data-action="consent-next">Continue ${arrow}</button><button class="text-btn" data-action="sample">View the sample instead</button></div></div>`;}
 function inputField(q){const a=state.answers,v=a[q.id]??'';if(q.type==='multi'||q.options)return `<div class="options">${q.options.map(o=>`<label class="option"><input type="${q.type==='multi'?'checkbox':'radio'}" name="${q.id}" value="${esc(o)}" data-answer="${q.id}" ${q.type==='multi'?(Array.isArray(v)&&v.includes(o)?'checked':''):(v===o?'checked':'')}><i class="choice-mark" aria-hidden="true"></i><span>${esc(q.optionLabels?.[o]||o)}</span></label>`).join('')}</div>`;
@@ -120,7 +160,7 @@ function editDrink(index=-1){const d=state.answers.drinks?.[index]||{type:'Wine'
 function questionnaire(){return renderQuestionnaire(state,inputField);}
 function review(){return `<div class="wrap narrow"><div class="eyebrow">Questionnaire</div><h1>Review your answers</h1><p class="lead">You can edit a section before viewing your health profile. Unanswered questions remain missing; they are not treated as healthy answers.</p>${sampleBadge()}<div class="card">${sections.map((s,i)=>{const qs=s.questions.filter(q=>!q.show||q.show(state.answers));const n=qs.filter(q=>state.answers[q.id]!==undefined&&state.answers[q.id]!==''&&(!Array.isArray(state.answers[q.id])||state.answers[q.id].length)).length;return `<div class="row" style="display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line)"><span>${s.name} <span class="small muted">${n} of ${qs.length} answered</span></span><button class="text-link" data-action="edit-section" data-index="${i}">Edit</button></div>`;}).join('')}</div><div class="actions" style="margin-top:25px"><button class="btn" data-action="results">View health profile ${arrow}</button><button class="btn secondary" data-action="labs">Add blood results</button></div></div>`;}
 function labForm(){return renderLabForm(state,labHelp);}
-function clinical(){if(state.savedReport)return clinicalForDisplay(state.savedReport.clinical,{stored:true});if(!state.labSubmitted)return null;return assessClinical({age:Number(state.labAge),lab:state.lab,contextConfirmed:state.labContext===true,fasting:state.labFasting});}
+function clinical(draft=state){if(draft.savedReport)return clinicalForDisplay(draft.savedReport.clinical,{stored:true});if(!draft.labSubmitted)return null;return assessClinical({age:Number(draft.labAge),lab:draft.lab,contextConfirmed:draft.labContext===true,fasting:draft.labFasting});}
 function result(){
  const c=clinical(),all=state.savedReport?state.savedReport.priorities:insights(state.answers),tab=state.resultTab||'summary';
  const tabs=`<nav class="result-tabs" aria-label="Result details">${[['summary','Result'],['insights','Insights'],['details','Details']].map(([id,label])=>`<button data-action="result-tab" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${label}</button>`).join('')}</nav>`;
@@ -187,7 +227,8 @@ async function finishSignIn(){
 }
 function clearAccountState(){
  signIn={};
- auth={...auth,authenticated:false,csrf:null,profile:null,history:[],purchases:[],overview:null,reportReview:false};
+ auth={...auth,authenticated:false,csrf:null,profile:null,history:[],purchases:[],reportReview:false};
+ overviewType='';overviewSnapshots.clear();
  draftBackup=null;parkedAssessments.clear();state=freshAssessment();
 }
 
@@ -560,6 +601,12 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
   return;
  }
  if(act==='pages-info'){pagesInfo();return;}
+ if(act==='retry-overview'){void hydrateOverview(true);return;}
+ if(act==='open-overview-draft'){
+  const {draft}=overviewSelection().choice;
+  if(draft){selectAssessment(assessmentType(draft));goto(independentAssessment(state)?'report':'results');}
+  return;
+ }
  if(act==='auth-change-email'){signIn={};signup();return;}
  if(act==='auth-resend'){await sendEmailCode(b.closest('form'),signIn.email,b);return;}
  if(act==='sign-out'){
@@ -627,7 +674,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
  if(act==='library-page'){state.libraryPage=Number(b.dataset.page);goto('account');return;}
  if(act==='lab-back'){if((state.labStep||0)>0){state.labStep--;goto('labs');}else goto('consent');return;}
  if(act==='consult-step'){advanceContactPage($('#consult-form'),Number(b.dataset.direction));return;}
- if(act==='account-area'||act==='assessments'){state.accountTab=b.dataset.tab||'history';state.libraryPage=0;goto('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='home'){goto('home');void hydrateOverview();return;}if(act==='method'){method();return;}if(act==='privacy'){privacy();return;}if(act==='close'){close();return;}if(act==='start'){beginAssessment('profile');return;}if(act==='start-labs'){beginAssessment('labs');return;}if(act==='start-heart'){await action(b,()=>beginAssessment(HEART_ASSESSMENT));return;}if(act==='sample'){loadSample();return;}
+ if(act==='account-area'||act==='assessments'){state.accountTab=b.dataset.tab||'history';state.libraryPage=0;goto('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='home'){goto('home');return;}if(act==='method'){method();return;}if(act==='privacy'){privacy();return;}if(act==='close'){close();return;}if(act==='start'){beginAssessment('profile');return;}if(act==='start-labs'){beginAssessment('labs');return;}if(act==='start-heart'){await action(b,()=>beginAssessment(HEART_ASSESSMENT));return;}if(act==='sample'){loadSample();return;}
  if(act==='question-back'){if(questionChoices(state).page>0){state.optionPage--;render();return;}Object.assign(state,questionDestination(state,-1));goto(state.view);return;}if(act==='skip'){dirty();delete state.answers[b.dataset.id];Object.assign(state,questionDestination(state));goto(state.view);return;}if(act==='edit-section'){state.step=Number(b.dataset.index);state.questionIndex=0;state.optionPage=0;goto('questionnaire');return;}if(act==='add-drink'){editDrink();return;}if(act==='edit-drink'){editDrink(Number(b.dataset.index));return;}if(act==='remove-drink'){dirty();state.answers.drinks.splice(Number(b.dataset.index),1);render();return;}
  if(act==='without-labs'){state.profileCompleted=true;dirty();state.labSubmitted=false;state.assessment=true;goto('results');return;}if(act==='labs'){beginAssessment('labs');return;}if(act==='sample-labs'){loadSample();state.labStep=0;goto('labs');return;}if(act==='results'){if(state.view==='review')state.profileCompleted=true;state.assessment=true;state.resultTab='summary';goto(independentAssessment(state)?'report':'results');return;}if(act==='review'){goto('review');return;}if(act==='report'){state.reportTab='summary';goto('report');return;}if(act==='checkout'){checkout();return;}if(act==='print'){if(independentAssessment(state)||auth.reportReview||state.savedReport?.full===true){const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(d=>d.open);details.forEach(d=>d.open=true);window.addEventListener('afterprint',()=>details.forEach((d,i)=>d.open=previous[i]),{once:true});window.print();}else checkout();return;}
  if(act==='save-before-checkout'){await action(b,async()=>{await api('assessments','POST',snapshot());await openSaved(state.saveId,'report');checkout();});return;}
@@ -660,6 +707,14 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
 
 });
 document.addEventListener('input',e=>{const t=e.target;if(t.form?.id==='heart-arterial-form'){reviewArterialField(t,true);return;}if(t.form?.id==='heart-form'){if(!t.dataset.heartUnit)captureHeart(t.form);if(t.dataset.heartValue||t.dataset.heartReference&&t.type==='text')reviewHeartField(t,true);return;}if(t.dataset.labReference){dirty();state.lab[t.dataset.labReference]??={};state.lab[t.dataset.labReference][t.dataset.referenceKey]=t.value;delete state.errors[t.dataset.labReference+'Reference'];t.closest('details')?.querySelector('.error')?.remove();}});
+document.addEventListener('change',e=>{
+ if(e.target.id!=='overview-result'||state.view!=='home')return;
+ const type=e.target.value;
+ if(!overviewSelection().choices.some(choice=>choice.type===type))return;
+ overviewType=type;
+ renderOverview();
+ void hydrateOverview();
+});
 document.addEventListener('change',e=>{const t=e.target;if(t.form?.id==='heart-form'){if(t.dataset.heartUnit)changeHeartUnit(t,state.heart.inputs[t.dataset.heartUnit]);captureHeart(t.form);if(t.dataset.heartUnit||t.dataset.heartReference&&t.tagName==='SELECT')reviewHeartField(t);return;}if(['lab-reference-mode','lab-reference-group','crp-assay'].includes(t.id)){dirty();if(t.id==='crp-assay'){state.lab.crp??={};state.lab.crp.assay=t.value;}else{state[t.id==='lab-reference-mode'?'labReferenceMode':'labReferenceGroup']=t.value;state.labReferenceVersion=REFERENCE_CATALOG_VERSION;}}if(t.dataset.labReferenceRule){dirty();state.lab[t.dataset.labReferenceRule]??={};state.lab[t.dataset.labReferenceRule][t.dataset.referenceKey]=t.value==='exclusive';}});
 document.addEventListener('toggle',e=>{if(e.target.matches?.('.reference-editor[open]'))document.querySelectorAll('.reference-editor[open]').forEach(editor=>{if(editor!==e.target)editor.open=false;});},true);
 for(const event of ['input','change','focusout']){
@@ -764,5 +819,5 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('.overlay'))close
 document.addEventListener('click',e=>{if(e.target.closest('[data-action="reset"]')){reset();goto('home');}});
 initializeAppearance();
 render();
-refreshAccount().then(async()=>{if(location.hash==='#account'){state.accountTab='settings';goto('account');}else if(['account','report','results'].includes(state.view))render();else if(state.view==='home'){if(auth.profile&&!auth.history.length)render();await hydrateOverview();}await paymentReturn();});
+refreshAccount().then(async()=>{if(location.hash==='#account'){state.accountTab='settings';goto('account');}else if(['account','report','results'].includes(state.view))render();await paymentReturn();});
 window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
