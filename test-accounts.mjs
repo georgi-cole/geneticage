@@ -112,7 +112,7 @@ const savedYoung=(await call(a,'assessments/'+youngEntry.id+'/report')).data.rep
 assert.equal(savedYoung.model,'framingham-2008-lipids-age-v1');
 assert.equal(savedYoung.heart.result.age,54);
 assert.equal(savedYoung.heart.result.risk,undefined);
-assert.ok(savedYoung.sources.includes('https://pubmed.ncbi.nlm.nih.gov/18212285/'));
+assert.ok(savedYoung.sources.some(url=>url==='https://pubmed.ncbi.nlm.nih.gov/18212285/'));
 const arterialEntry={...youngEntry,id:randomUUID(),heart:{...youngEntry.heart,
   cfpwv:{value:'8.3',unit:'m/s',method:'direct-80'},review:{arterialAge:{age:25}},
 }};
