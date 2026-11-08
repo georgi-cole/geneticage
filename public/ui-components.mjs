@@ -65,7 +65,7 @@ export function reportArtwork(){return `<div class="report-artwork" aria-hidden=
 export function statusMessage({loading,error}){return `${loading?'<span class="sync-status" role="status">Connecting to your account…</span>':''}${error?`<div class="connection-note" role="status">${escapeHTML(error)} <button class="text-link" data-action="refresh-account">Retry</button></div>`:''}`;}
 export function pageSlice(items,page=0,size=2){const pages=Math.max(1,Math.ceil(items.length/size)),index=Math.max(0,Math.min(Number(page)||0,pages-1));return {items:items.slice(index*size,(index+1)*size),page:index,pages};}
 export function libraryPager(page,pages){return pages<2?'':`<nav class="compact-pager" aria-label="Saved records pages"><button class="text-btn" data-action="library-page" data-page="${page-1}" ${page===0?'disabled':''}>← Previous</button><span>${page+1} / ${pages}</span><button class="text-btn" data-action="library-page" data-page="${page+1}" ${page===pages-1?'disabled':''}>Next →</button></nav>`;}
-export const assessmentTitle=s=>systemAssessment(s.assessmentType)?.title||(s.assessmentType===HEART_ASSESSMENT?'Heart & Vascular':s.labSubmitted||s.value!==null?'Clinical PhenoAge':'Health & lifestyle');
+export const assessmentTitle=s=>systemAssessment(s.assessmentType)?.title||(s.assessmentType===HEART_ASSESSMENT?'Heart & Vascular':s.labSubmitted||Number.isFinite(s.value)?'Clinical PhenoAge':'Health & lifestyle');
 const removeLocalButton=(id='',iconOnly=false)=>`<button class="${iconOnly?'record-remove':'text-btn'}" type="button" data-action="remove-local" ${id?`data-id="${escapeHTML(id)}"`:''} ${iconOnly?'aria-label="Remove from this device" title="Remove from this device"':''}>${iconOnly?uiIcon('remove'):'Remove from this device'}</button>`;
 function recordStatus(s){
  if(systemAssessment(s.assessmentType))return escapeHTML(s.method||'Needs review');
@@ -85,14 +85,17 @@ function historyRows(history,reports=false,page=0){
  return `<div class="record-list">${rows.join('')}</div>${libraryPager(slice.page,slice.pages)}`;
 }
 export function renderRecordLibrary({history=[],reports=false,page=0}){return `<div class="wrap app-screen account-subscreen">${backButton('account-tab',reports?'Reports':'My assessments',reports?'reports':'history')}${screenHeading('YOUR PRIVATE LIBRARY',reports?'Saved reports':'Assessment history',`${history.length} dated ${history.length===1?'record':'records'}`)}${historyRows(history,reports,page)}${!reports?'<button class="text-link" data-action="account-tab" data-tab="progress">View progress over time ↗</button>':''}</div>`;}
-const recordSummary=(history,reports=false)=>`<button class="record-summary" data-action="account-tab" data-tab="${reports?'report-history':'saved'}"><span class="record-icon">${uiIcon(reports?'report':'pulse')}</span><span><strong>${history.length} saved ${reports?'reports':'assessments'}</strong><small>Open your private library</small></span>${uiIcon('arrow')}</button>`;
+function recordSummary(history,reports=false){
+ const noun=reports?'report':'assessment';
+ return `<button class="record-summary" data-action="account-tab" data-tab="${reports?'report-history':'saved'}"><span class="record-icon">${uiIcon(reports?'report':'pulse')}</span><span><strong>${history.length} saved ${noun}${history.length===1?'':'s'}</strong></span>${uiIcon('arrow')}</button>`;
+}
 
 const systemRouteCard=(title,icon,caption,action,type='')=>`<button class="assessment-route" data-action="${action}" ${type ? `data-type="${type}"` : ''} data-theme-part><span class="route-icon">${uiIcon(icon)}</span><span><strong>${title}</strong><small>${caption}</small></span></button>`;
 
 export function renderAssessments({profile,history=[],loading=false,error='',pagesPreview=false,progress=null,resumeLabs=false,canStartNew=false,currentRecordId='',heartDraft=false,systemDrafts={}}){
  return `<div class="wrap app-screen assessments-screen">${screenHeading('YOUR WORKSPACE','My assessments')}
-  <section class="assessment-intro" data-theme-part>${libraryMotif()}<span class="eyebrow">ASSESSMENT OPTIONS</span><h2>Choose where to begin.</h2><p>Start with what you have.</p></section>
-  ${progress?.hasData?`<section class="current-assessment"><div><strong>Continue your assessment</strong><p><span>${progress.answered} / ${progress.total}</span> <span>questions answered</span> · <span>${progress.measurements} / 9</span> <span>blood measurements</span></p></div><button class="text-btn" data-action="${resumeLabs?'start-labs':'start'}">Continue</button></section>`:''}
+  <section class="assessment-intro" data-theme-part>${libraryMotif()}<h2>Choose an assessment</h2><p>Start fresh or continue a draft.</p></section>
+  ${progress?.hasData?`<section class="current-assessment"><div><strong>${resumeLabs?'Clinical PhenoAge':'Health & lifestyle'}</strong><p>${resumeLabs?`<span>${progress.measurements} / 9</span> <span>blood measurements</span>`:`<span>${progress.answered} / ${progress.total}</span> <span>questions answered</span>`}</p></div><button class="text-btn" data-action="${resumeLabs?'start-labs':'start'}">Continue</button></section>`:''}
   <div class="assessment-routes"><button class="assessment-route" data-action="start" data-theme-part><span class="route-icon">${uiIcon('person')}</span><span><strong>Health & lifestyle</strong><small>Guided profile · One question at a time</small></span>${uiIcon('arrow')}</button><button class="assessment-route" data-action="start-labs" data-theme-part><span class="route-icon">${uiIcon('drop')}</span><span><strong>Blood-based age</strong><small>9 measurements · Guided entry</small></span>${uiIcon('arrow')}</button></div>
   <section class="system-routes" aria-labelledby="system-routes-title"><div class="section-caption"><h2 id="system-routes-title">System assessments</h2></div>
     <div class="system-route-grid">
@@ -106,27 +109,30 @@ export function renderAssessments({profile,history=[],loading=false,error='',pag
  </div>`;
 }
 
-export function renderReportLibrary({profile,history=[],loading=false,error='',assessment=false,currentRecordId='',pagesPreview=false}){
- return `<div class="wrap app-screen reports-screen">${screenHeading('YOUR WORKSPACE','Reports','The detail behind your result.')}
-  <button class="report-feature" data-action="${assessment?'report':'sample-report'}" data-theme-part>${reportArtwork()}<span class="eyebrow">${assessment?'LATEST ASSESSMENT':'EXPLORE A SAMPLE'}</span><strong>Your health,<br>explained.</strong><span class="report-feature-caption">Interpretation · Findings · Sources</span><span class="report-feature-action">${assessment?'Open your report':'Preview a sample report'} ${uiIcon('arrow')}</span></button>
-  ${assessment?`<div class="assessment-controls">${removeLocalButton(currentRecordId)}</div>`:''}
-  <section class="saved-records"><div class="section-caption"><h2>Saved reports</h2><span>PRIVATE LIBRARY</span></div>${statusMessage({loading,error})}${history.length?recordSummary(history,true):'<div class="quiet-empty"><p>'+(pagesPreview?'Cloud history is available in the hosted app.':'Save an assessment to keep its dated report here.')+'</p></div>'}</section>
+export function renderReportLibrary({profile,history=[],loading=false,error='',draft=null,latest=null,pagesPreview=false}){
+ const featured=draft||latest;
+ const label=latest?'LATEST ASSESSMENT':draft&&!draft.sample?'UNSAVED REPORT':'SAMPLE REPORT';
+ const action=draft?'report':latest?'open-report':'sample-report';
+ return `<div class="wrap app-screen reports-screen">${screenHeading('YOUR WORKSPACE','Reports')}
+  <button class="report-feature" data-action="${action}" ${latest?`data-id="${escapeHTML(latest.id)}"`:''} data-theme-part>${reportArtwork()}<span class="eyebrow">${label}</span><strong>${featured?assessmentTitle(featured):'Clinical PhenoAge'}</strong>${latest?.sample?'<span class="report-feature-caption">Sample</span>':''}<span class="report-feature-action">Read report ${uiIcon('arrow')}</span></button>
+  ${featured?`<div class="assessment-controls">${removeLocalButton(latest?.id)}</div>`:''}
+  <section class="saved-records" aria-label="Saved reports">${statusMessage({loading,error})}${history.length?recordSummary(history,true):'<div class="section-caption"><h2>Saved reports</h2></div><div class="quiet-empty"><p>'+(pagesPreview?'Cloud history is available in the hosted app.':'Save an assessment to keep its dated report here.')+'</p></div>'}</section>
   ${pagesPreview?'<button class="account-nudge text-btn" data-action="pages-info">Cloud features ↗</button>':!profile?'<button class="account-nudge text-btn" data-action="signup">Sign in to access saved reports <span aria-hidden="true">↗</span></button>':''}
  </div>`;
 }
 
-export function renderAccount({profile,authenticated,loading,error}){
+export function renderAccount({profile,loading,error}){
  const row=(name,sub,action,extra='',symbol='report')=>`<button class="account-setting" data-action="${action}" ${extra}><span class="setting-symbol">${uiIcon(symbol)}</span><span class="setting-copy"><strong>${name}</strong><small>${sub}</small></span>${uiIcon('external')}</button>`;
- return `<div class="wrap app-screen account-screen">${screenHeading('YOUR WORKSPACE','Account','Your profile, preferences and information.')}
+ return `<div class="wrap app-screen account-screen">${screenHeading('YOUR WORKSPACE','Account')}
  <section class="profile-card" data-theme-part><span class="profile-avatar">${uiIcon('person')}</span><div><h2${profile?' data-no-translate':''}>${escapeHTML(profile?.name||'Your private workspace')}</h2><p>${profile?'Signed in with email':'Keep your assessments across devices'}</p></div>${!profile?'<button class="btn" data-action="signup">Sign in / Create account →</button>':''}</section>
- ${statusMessage({loading,error})}<section class="account-settings" data-theme-part>${row('Privacy & data','Your information and choices','privacy','','shield')}${row('Assessment methods','Evidence and interpretation','method','','science')}${row('Purchases','Report access and payments','account-tab','data-tab="purchases"')}${profile?row('Manage saved data','Export and account controls','account-tab','data-tab="data"','history'):row('Saving assessments',authenticated?'Choose which assessments to save':'Sign in to save assessments','signup','','shield')}${row('About this app','Information and support','account-tab','data-tab="about"','spark')}</section>
+ ${statusMessage({loading,error})}<section class="account-settings" data-theme-part>${row('Privacy notice','How your information is used','privacy','','shield')}${row('Assessment methods','Evidence and interpretation','method','','science')}${row('Purchases','Report access and payments','account-tab','data-tab="purchases"')}${profile?row('Manage saved data','Export your data or delete your account','account-tab','data-tab="data"','history'):''}${row('About this app','Information and support','account-tab','data-tab="about"','spark')}</section>
  ${profile?'<button class="account-signout text-btn" type="button" data-action="sign-out">Sign out</button>':''}
  <p class="account-footnote">${uiIcon('shield')}<span>You choose what to save.</span></p></div>`;
 }
 
 export function renderPagesAccount(){
  const row=(name,sub,action,symbol,extra='')=>`<button class="account-setting" data-action="${action}" ${extra}><span class="setting-symbol">${uiIcon(symbol)}</span><span class="setting-copy"><strong>${name}</strong><small>${sub}</small></span>${uiIcon('external')}</button>`;
- return `<div class="wrap app-screen account-screen">${screenHeading('YOUR WORKSPACE','Account','Themes, language and app information.')}
+ return `<div class="wrap app-screen account-screen">${screenHeading('YOUR WORKSPACE','Account')}
  <section class="profile-card" data-theme-part><span class="profile-avatar">${uiIcon('person')}</span><div><h2>On this device</h2><p>GitHub Pages preview</p></div></section>
  <section class="account-settings" data-theme-part>${row('Privacy & data','Answers stay in this page’s memory','privacy','shield')}${row('Assessment methods','Evidence and interpretation','method','science')}${row('Cloud features','Accounts, saved history and purchases','pages-info','history')}${row('About this app','Information and support','account-tab','spark','data-tab="about"')}</section>
  <p class="account-footnote">${uiIcon('shield')}<span>This preview does not create an account.</span></p></div>`;

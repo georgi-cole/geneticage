@@ -11,7 +11,23 @@ for(const key of ['window','document','NodeFilter','MutationObserver','CustomEve
 for(const key of ['requestAnimationFrame','cancelAnimationFrame','getComputedStyle'])globalThis[key]=window[key].bind(window);
 let requests=0;globalThis.fetch=async()=>{requests++;throw Error('A static preview must not call the backend.');};
 const $=selector=>document.querySelector(selector);
-const flush=()=>new Promise(resolve=>setImmediate(resolve));
+let moving;
+const historyGo=history.go.bind(history);
+history.go=delta=>{
+ moving=new Promise((resolve,reject)=>{
+  const timeout=setTimeout(()=>reject(Error('Browser history traversal timed out')),1000);
+  window.addEventListener('popstate',()=>{clearTimeout(timeout);resolve();},{once:true});
+ });
+ historyGo(delta);
+};
+async function flush(){
+ await new Promise(resolve=>setImmediate(resolve));
+ while(moving){
+  const traversal=moving;
+  await traversal;
+  if(moving===traversal)moving=null;
+ }
+}
 async function click(selector){assert.ok($(selector),selector);$(selector).click();await flush();}
 async function enter(selector,value,event='input'){const input=$(selector);assert.ok(input,selector);input.value=value;input.dispatchEvent(new window.Event(event,{bubbles:true}));await flush();}
 async function submit(selector){$(selector).dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));await flush();}
@@ -332,6 +348,9 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.match($('.heart-estimate').textContent,/APPROXIMATE KIDNEY AGE/);
  await click('.mobile-nav [data-route="history"]');
  await click('[data-action="start-system"][data-type="metabolic"]');
+ assert.equal($('.consent-screen .eyebrow').textContent,'Metabolic');
+ assert.equal($('.consent-screen h1').textContent,'Before you begin');
+ assert.doesNotMatch($('.consent-screen').textContent,/under development|Before you start/);
  assert.equal($('.consent-screen .task-back').textContent,'My assessments');
  await click('.consent-screen .task-back');
  assert.ok($('.assessments-screen'));
@@ -341,14 +360,17 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.match($('.system-report .report-heading').textContent,/ILLUSTRATIVE SAMPLE.*Metabolic/s);
  assert.match($('.heart-estimate').textContent,/APPROXIMATE METABOLIC AGE/);
  await click('.system-report [data-action="report-tab"][data-tab="methods"]');
- await click('.system-report .task-back');
+ history.go(-1);await flush();
  assert.ok($('.consent-screen [data-action="sample"][data-type="metabolic"]'),'A preview returns to the exact screen it was opened from.');
  await click('.consent-screen [data-action="sample"][data-type="metabolic"]');
  await click('.mobile-nav [data-route="reports"]');
  await click('.reports-screen [data-action="report"]');
  assert.equal($('.system-report .task-back').textContent,'Reports');
- await click('.system-report .task-back');
+ history.go(-1);await flush();
  assert.ok($('.reports-screen'));
+ history.go(1);await flush();
+ assert.ok($('.system-report'));
+ await click('.system-report .task-back');
  await click('.reports-screen [data-action="remove-local"]');
  await click('[data-action="confirm-remove-local"]');
  assert.ok($('.reports-screen [data-action="sample-report"]'),'Removing an unsaved sample clears the current report.');

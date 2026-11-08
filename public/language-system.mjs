@@ -13,9 +13,9 @@ export function translateText(text,language='en',{protectedPrefix=''}={}){
  const source=normalize(text);
  let translated=BG[source];
  if(translated===undefined){
-  const match=source.match(/^(\d+) saved (assessments|reports)$/);
+  const match=source.match(/^(\d+) saved (assessment|report)s?$/);
   const dated=source.match(/^(\d+) dated (record|records)$/);
-  if(match)translated=match[1]+(Number(match[1])===1?' запазен ':' запазени ')+(match[2]==='reports'?(Number(match[1])===1?'доклад':'доклада'):(Number(match[1])===1?'анализ':'анализа'));
+  if(match)translated=match[1]+(Number(match[1])===1?' запазен ':' запазени ')+(match[2]==='report'?(Number(match[1])===1?'доклад':'доклада'):(Number(match[1])===1?'анализ':'анализа'));
   else if(dated)translated=dated[1]+(Number(dated[1])===1?' запис с дата':' записа с дата');
   else translated=source.replace(phrasePattern,phrase=>BG[phrase]);
  }

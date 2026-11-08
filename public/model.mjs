@@ -86,7 +86,7 @@ export function assessClinical({age,lab,contextConfirmed,fasting}){
  if(!contextConfirmed)return {...metadata,reason:'Your health or treatment at the time of the blood draw needs individual review. We have not calculated an age estimate.'};
  if(fasting!=='Yes')return {...metadata,reason:'Fasting for at least eight hours has not been confirmed. This version uses fasting samples to match the conditions of the validation study. Your blood values can still be saved for review.'};
  if(Object.keys(validateLabs(lab)).length)return {...metadata,reason:'The calculation needs all nine blood values in the correct units. Check your entries against the laboratory report.'};
- if(checks.some(check=>['invalid','review'].includes(check.status)))return {...metadata,withheld:'input-coverage',reason:'Some entries need checking or fall outside the data coverage used by this prototype. Correct laboratory results can still be outside that coverage. No age is calculated. Review the values, units and test types with your laboratory or clinician.'};
+ if(checks.some(check=>['invalid','review'].includes(check.status)))return {...metadata,withheld:'input-coverage',reason:'Some readings need checking or fall outside the range used to estimate age. Review the values, units and test types with your laboratory or clinician.'};
  const x=normalizeLab(lab),value=calculatePhenoAge(Number(age),x);
  return clinicalForDisplay({...metadata,x,value,gap:value-Number(age)});
 }

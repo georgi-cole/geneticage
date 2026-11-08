@@ -9,7 +9,7 @@ export function clinicalCheckSummary(clinical){
 }
 
 export function safetyMarkup(check,{reviewTitle='Age estimate unavailable',reviewText='Check the value and unit against your lab report.'}={}){
- const input=['invalid','review'].includes(check.status)?`<div class="lab-entry-note"><span class="lab-check-symbol" aria-hidden="true">?</span><div><strong>${check.status==='invalid'?'Check the entry':esc(reviewTitle)}</strong><p>${esc(check.status==='invalid'?check.message:reviewText)}</p>${check.coverage?`<details class="coverage-explanation"><summary>Why?</summary><p>Correct results can fall outside this prototype’s estimation coverage. Ask your laboratory or clinician if unsure.</p><a href="${check.coverage.url}" target="_blank" rel="noopener noreferrer">Estimation coverage source ↗</a></details>`:''}</div></div>`:'';
+ const input=['invalid','review'].includes(check.status)?`<div class="lab-entry-note"><span class="lab-check-symbol" aria-hidden="true">?</span><div><strong>${check.status==='invalid'?'Check the entry':esc(reviewTitle)}</strong><p>${esc(check.status==='invalid'?check.message:reviewText)}</p>${check.coverage?`<details class="coverage-explanation"><summary>Why?</summary><p>A correct lab result can still fall outside the range used to estimate age.</p><a href="${check.coverage.url}" target="_blank" rel="noopener noreferrer">Estimation coverage source ↗</a></details>`:''}</div></div>`:'';
  const warning=check.warning?`<div class="lab-critical-note"><span class="lab-alert-symbol" aria-hidden="true">!</span><p><strong>Potentially critical result</strong><span>${check.warning.message}</span><a href="${check.warning.url}" target="_blank" rel="noopener noreferrer">${esc(check.warning.source)} ↗</a></p></div>`:'';
  return input+warning;
 }

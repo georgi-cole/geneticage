@@ -39,7 +39,7 @@ export const references=[
  {id:'vascular-age',label:'Cuende and Guijarro · Vascular age reference comparison',url:'https://pubmed.ncbi.nlm.nih.gov/40753001/'},
  {id:'critical-mayo',label:'Mayo Clinic Laboratories · Critical results · October 2026',url:'https://www.mayocliniclabs.com/-/media/it-mmfiles/Special-Instructions/4/2/A/critical-values-semi-urgent-results-list.pdf'},
  {id:'critical-crouse',label:'Crouse Health · Critical value chart',url:'https://laboratory.crouse.org/healthcare-providers/laboratory-services/reporting-documents/critical-value-chart/'},
- {id:'lab-coverage',label:'BioAge · Pinned NHANES III data used for prototype coverage',url:'https://github.com/dayoonkwon/BioAge/tree/b1f9fc02f086cd4aa74185f2335ab1366082e7fe'},
+ {id:'lab-coverage',label:'BioAge · NHANES III data used to set the estimation range',url:'https://github.com/dayoonkwon/BioAge/tree/b1f9fc02f086cd4aa74185f2335ab1366082e7fe'},
  {id:'adult-intervals',label:'ABIM · Laboratory Test Reference Ranges · January 2026',url:'https://www.abim.org/media/e2wdwdqu/laboratory-reference-ranges.pdf'},
  {id:'lab-intervals',label:'MedlinePlus · Understanding laboratory reference intervals',url:'https://medlineplus.gov/lab-tests/how-to-understand-your-lab-results/'},
  {id:'phenoage',label:'Levine et al. (2018) · Clinical PhenoAge and DNAm PhenoAge',url:'https://www.aging-us.com/article/101414/text'},
