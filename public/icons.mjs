@@ -1,6 +1,9 @@
 // KoleQuant / Paired v3. Four cells, paired read tracks, an evidence folio,
 // and a membrane profile. Continuous silhouettes, with no attached DNA badges.
 export const iconPaths=Object.freeze({
+  metabolic:'<path d="m12 3 7.5 4.5v9L12 21l-7.5-4.5v-9L12 3Zm0 5v8m-4-4h8"/>',
+  kidney:'<path d="M9.5 5C6.5 2.5 2.8 6 3 11c.1 4.4 2.6 7.8 5.6 6.1 2.2-1.2.4-3.5 2-5.2m3.9-6.9C17.5 2.5 21.2 6 21 11c-.1 4.4-2.6 7.8-5.6 6.1-2.2-1.2-.4-3.5-2-5.2M10.6 11.9c.8 1.7 1.4 4.8 1.4 8.1m1.4-8.1c-.8 1.7-1.4 4.8-1.4 8.1"/>',
+  fitness:'<path d="M4 16a8 8 0 0 1 16 0M4 16h3m10 0h3M12 8v2m-5.7 1.1 1.5 1.3m9.9-1.3-1.5 1.3M12 16l3-3"/><circle cx="12" cy="16" r="1.25"/>',
   home:'<path d="M11 3H7a4 4 0 0 0-4 4v4h4a4 4 0 0 0 4-4ZM13 3h4a4 4 0 0 1 4 4v4h-4a4 4 0 0 1-4-4ZM3 13v4a4 4 0 0 0 4 4h4v-4a4 4 0 0 0-4-4ZM13 21h4a4 4 0 0 0 4-4v-4h-4a4 4 0 0 0-4 4Z"/>',
   history:'<path d="M7 3c0 6 10 12 10 18M17 3c0 6-10 12-10 18M7 3h10M7 21h10M8 6h8M10 9h4M10 15h4M8 18h8"/>',
   report:'<path d="M12 5.5C9 3.4 5.6 3.1 3 4.4v15c2.8-1.2 6.2-.8 9 1.1 2.8-1.9 6.2-2.3 9-1.1v-15c-2.6-1.3-6-1-9 1.1ZM12 5.5v15M6.5 9c1.1 0 2.1.3 3 .8M14.5 9.8c.9-.5 1.9-.8 3-.8M6.5 13c1.1 0 2.1.3 3 .8M14.5 13.8c.9-.5 1.9-.8 3-.8"/>',

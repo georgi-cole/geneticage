@@ -3,7 +3,12 @@ export {icon as uiIcon} from './icons.mjs';
 import {icon as uiIcon} from './icons.mjs';
 import {isReportableAge} from './lab-safety.mjs';
 import {HEART_ASSESSMENT, heartSavedMethod} from './heart-vascular.mjs';
+import {systemAssessment, systemAssessments} from './system-assessments.mjs';
 export const screenHeading=(eyebrow,title,subtitle='',action='')=>`<header class="screen-head" data-theme-part><div><span class="eyebrow">${eyebrow}</span><h1>${title}</h1>${subtitle?`<p>${subtitle}</p>`:''}</div>${action}</header>`;
+export const specialistHelp=()=>`<details class="specialist-help">
+  <summary>Need help finding this test?</summary>
+  <a class="text-link" href="https://kolequant.xyz/en/index.html" target="_blank" rel="noopener noreferrer">Ask KoleQuant about access ↗</a>
+</details>`;
 
 // Accessible text always contains the final value. Only the hidden visual copy counts.
 function instrumentValue(value,{signed=false,digits=0}={}){
@@ -42,18 +47,33 @@ export function reportArtwork(){return `<div class="report-artwork" aria-hidden=
 export function statusMessage({loading,error}){return `${loading?'<span class="sync-status" role="status">Connecting to your account…</span>':''}${error?`<div class="connection-note" role="status">${escapeHTML(error)} <button class="text-link" data-action="refresh-account">Retry</button></div>`:''}`;}
 export function pageSlice(items,page=0,size=2){const pages=Math.max(1,Math.ceil(items.length/size)),index=Math.max(0,Math.min(Number(page)||0,pages-1));return {items:items.slice(index*size,(index+1)*size),page:index,pages};}
 export function libraryPager(page,pages){return pages<2?'':`<nav class="compact-pager" aria-label="Saved records pages"><button class="text-btn" data-action="library-page" data-page="${page-1}" ${page===0?'disabled':''}>← Previous</button><span>${page+1} / ${pages}</span><button class="text-btn" data-action="library-page" data-page="${page+1}" ${page===pages-1?'disabled':''}>Next →</button></nav>`;}
-export const assessmentTitle=s=>s.assessmentType===HEART_ASSESSMENT?'Heart & Vascular':s.labSubmitted||s.value!==null?'Clinical PhenoAge':'Health & lifestyle';
-function historyRows(history,reports=false,page=0){const slice=pageSlice([...history].reverse(),page);return `<div class="record-list">${slice.items.map(s=>`<article class="record-row"><span class="record-icon">${uiIcon(reports?'report':s.labSubmitted||s.value!==null?'drop':'pulse')}</span><div><h3>${assessmentTitle(s)}</h3><p>${escapeHTML(s.labDate||new Date(s.saved).toLocaleDateString('en-GB'))}${s.sample?' · Sample':''}</p></div><div class="record-end"><strong>${s.assessmentType===HEART_ASSESSMENT?escapeHTML(heartSavedMethod(s.model)):isReportableAge(s.value)?Math.round(s.value)+'<small> yr</small>':s.labSubmitted||s.value!==null?'Needs review':'Profile'}</strong><button class="text-link" data-action="${reports?'open-report':'open-saved'}" data-id="${escapeHTML(s.id)}">${reports?'Read report':'Open'} ↗</button></div></article>`).join('')}</div>${libraryPager(slice.page,slice.pages)}`;}
+export const assessmentTitle=s=>systemAssessment(s.assessmentType)?.title||(s.assessmentType===HEART_ASSESSMENT?'Heart & Vascular':s.labSubmitted||s.value!==null?'Clinical PhenoAge':'Health & lifestyle');
+function recordStatus(s){
+ if(systemAssessment(s.assessmentType))return escapeHTML(s.method||'Needs review');
+ if(s.assessmentType===HEART_ASSESSMENT)return escapeHTML(heartSavedMethod(s.model));
+ if(isReportableAge(s.value))return Math.round(s.value)+'<small> yr</small>';
+ return s.labSubmitted||s.value!==null?'Needs review':'Profile';
+}
+function historyRows(history,reports=false,page=0){const slice=pageSlice([...history].reverse(),page);return `<div class="record-list">${slice.items.map(s=>`<article class="record-row"><span class="record-icon">${uiIcon(reports?'report':systemAssessment(s.assessmentType)?.icon||(s.labSubmitted||s.value!==null?'drop':'pulse'))}</span><div><h3>${assessmentTitle(s)}</h3><p>${escapeHTML(s.labDate||new Date(s.saved).toLocaleDateString('en-GB'))}${s.sample?' · Sample':''}</p></div><div class="record-end"><strong>${recordStatus(s)}</strong><button class="text-link" data-action="${reports?'open-report':'open-saved'}" data-id="${escapeHTML(s.id)}">${reports?'Read report':'Open'} ↗</button></div></article>`).join('')}</div>${libraryPager(slice.page,slice.pages)}`;}
 export function renderRecordLibrary({history=[],reports=false,page=0}){return `<div class="wrap app-screen account-subscreen"><button class="text-btn task-back" data-action="account-tab" data-tab="${reports?'reports':'history'}">← ${reports?'Reports':'My assessments'}</button>${screenHeading('YOUR PRIVATE LIBRARY',reports?'Saved reports':'Assessment history',`${history.length} dated ${history.length===1?'record':'records'}`)}${historyRows(history,reports,page)}${!reports?'<button class="text-link" data-action="account-tab" data-tab="progress">View progress over time ↗</button>':''}</div>`;}
 const recordSummary=(history,reports=false)=>`<button class="record-summary" data-action="account-tab" data-tab="${reports?'report-history':'saved'}"><span class="record-icon">${uiIcon(reports?'report':'pulse')}</span><span><strong>${history.length} saved ${reports?'reports':'assessments'}</strong><small>Open your private library</small></span>${uiIcon('arrow')}</button>`;
 
-export function renderAssessments({profile,history=[],loading=false,error='',pagesPreview=false,progress=null,heartCurrent=false,heartDraft=false,heartActive=false}){
+const systemRouteCard=(title,icon,caption,action,type='')=>`<button class="assessment-route" data-action="${action}" ${type ? `data-type="${type}"` : ''} data-theme-part><span class="route-icon">${uiIcon(icon)}</span><span><strong>${title}</strong><small>${caption}</small></span></button>`;
+
+export function renderAssessments({profile,history=[],loading=false,error='',pagesPreview=false,progress=null,heartCurrent=false,heartDraft=false,heartActive=false,systemCurrent='',systemDrafts={},systemActive=false}){
  return `<div class="wrap app-screen assessments-screen">${screenHeading('YOUR WORKSPACE','My assessments')}
-  <section class="assessment-intro" data-theme-part>${libraryMotif()}<span class="eyebrow">ASSESSMENT OPTIONS</span><h2>Choose where to begin.</h2><p>Start with your answers or measurements you already have.</p></section>
+  <section class="assessment-intro" data-theme-part>${libraryMotif()}<span class="eyebrow">ASSESSMENT OPTIONS</span><h2>Choose where to begin.</h2><p>Start with what you have.</p></section>
   ${progress?.hasData?`<section class="current-assessment"><div><strong>Continue your assessment</strong><p><span>${progress.answered} / ${progress.total}</span> <span>questions answered</span> · <span>${progress.measurements} / 9</span> <span>blood measurements</span></p></div><button class="text-btn" data-action="report">Open report ↗</button></section>`:''}
   ${heartCurrent?'<section class="current-assessment"><div><strong>Heart & Vascular</strong><p>Your report is ready</p></div><button class="text-btn" data-action="report">Open report ↗</button></section>':''}
-  <div class="assessment-routes"><button class="assessment-route" data-action="start" data-theme-part><span class="route-icon">${uiIcon('person')}</span><span><strong>Health & lifestyle</strong><small>Guided profile · One question at a time</small></span>${uiIcon('arrow')}</button><button class="assessment-route" data-action="start-labs" data-theme-part><span class="route-icon">${uiIcon('drop')}</span><span><strong>Blood-based age</strong><small>9 measurements · Guided entry</small></span>${uiIcon('arrow')}</button><button class="assessment-route" data-action="start-heart" data-theme-part><span class="route-icon">${uiIcon('pulse')}</span><span><strong>Heart & Vascular</strong><small>${heartDraft?'Continue your assessment':'Blood pressure and cholesterol'}</small></span>${uiIcon('arrow')}</button></div>
-  ${progress?.hasData||heartCurrent||heartActive&&heartDraft?'<button class="text-btn new-assessment-link" data-action="new-assessment">Start a new assessment</button>':''}
+  ${systemCurrent?`<section class="current-assessment"><div><strong>${escapeHTML(systemCurrent)}</strong><p>Your report is ready</p></div><button class="text-btn" data-action="report">Open report ↗</button></section>`:''}
+  <div class="assessment-routes"><button class="assessment-route" data-action="start" data-theme-part><span class="route-icon">${uiIcon('person')}</span><span><strong>Health & lifestyle</strong><small>Guided profile · One question at a time</small></span>${uiIcon('arrow')}</button><button class="assessment-route" data-action="start-labs" data-theme-part><span class="route-icon">${uiIcon('drop')}</span><span><strong>Blood-based age</strong><small>9 measurements · Guided entry</small></span>${uiIcon('arrow')}</button></div>
+  <section class="system-routes" aria-labelledby="system-routes-title"><div class="section-caption"><h2 id="system-routes-title">System assessments</h2></div>
+    <div class="system-route-grid">
+      ${systemRouteCard('Heart & Vascular', 'pulse', heartDraft ? 'Continue your assessment' : 'Blood pressure and cholesterol', 'start-heart')}
+      ${Object.entries(systemAssessments).map(([type, spec])=>systemRouteCard(spec.title,spec.icon,systemDrafts[type]?'Continue your assessment':spec.caption,'start-system',type)).join('')}
+    </div>
+  </section>
+  ${progress?.hasData||heartCurrent||heartActive&&heartDraft||systemActive?'<button class="text-btn new-assessment-link" data-action="new-assessment">Start a new assessment</button>':''}
   <section class="saved-records" aria-label="Saved assessments"><div class="section-caption"><h2>Your history</h2><span>${profile?'PRIVATE':'OPTIONAL TO SAVE'}</span></div>${statusMessage({loading,error})}${history.length?recordSummary(history):'<div class="quiet-empty"><span class="empty-orbit" aria-hidden="true"></span><p>'+(pagesPreview?'Cloud history is available in the hosted app.':'Your saved assessments will appear here.')+'</p></div>'}</section>
   ${pagesPreview?'<button class="account-nudge text-btn" data-action="pages-info">Cloud features ↗</button>':!profile?'<button class="account-nudge text-btn" data-action="signup">Sign in to keep your history <span aria-hidden="true">↗</span></button>':''}
  </div>`;

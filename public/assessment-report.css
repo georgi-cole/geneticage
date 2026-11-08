@@ -97,6 +97,11 @@
 .heart-result-meta span {font-size:10px;line-height:1.4;color:var(--result-muted);margin-top:4px}
 .heart-result-meta>div:last-child {text-align:right}
 .heart-reading dl {margin:0}
+.system-extras {display:grid;gap:7px}
+.system-extras .record-summary {min-height:46px;padding:8px 12px;text-align:left}
+.system-extras .record-summary strong {font-size:12px}
+.system-extras .record-summary small {line-height:1.4}
+.system-report .report-explanation dl {margin:8px 0 0}
 .heart-reading .text-btn {margin-top:6px;font-size:11px}
 .heart-measurement-row {row-gap:0}
 .heart-measurement-row .heart-measurement-review {grid-column:1/-1;text-align:left}

@@ -101,6 +101,15 @@ footer {display:none}
 .assessment-route:first-child .route-icon {color:var(--warm)}
 .assessment-route>svg {width:22px;height:22px;color:var(--muted);flex-shrink:0}
 .assessment-route:hover {border-color:var(--accent)}
+.assessments-screen .assessment-routes .assessment-route {min-height:58px;padding-block:10px}
+.system-routes {display:grid;gap:8px}
+.system-route-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.system-route-grid .assessment-route {flex-wrap:nowrap;min-height:68px;padding:10px 12px;gap:9px}
+.system-route-grid .assessment-route>span:nth-child(2) {min-width:0}
+.system-route-grid .route-icon {width:22px;color:var(--accent)}
+.system-route-grid .route-icon svg {width:22px;height:22px}
+.system-route-grid .assessment-route strong {font-size:clamp(12px,3.5vw,15px);line-height:1.2}
+.system-route-grid .assessment-route small {margin-top:3px}
 
 .heart-pulse-mark {width:clamp(58px,18vw,106px);height:auto;flex:none;color:var(--accent);opacity:.8}
 .heart-pulse-mark path {stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
@@ -133,7 +142,21 @@ footer {display:none}
 .heart-entry .heart-measurement .input-row {max-width:370px}
 .heart-measurement .input-row select {width:auto;max-width:46%}
 .heart-entry .heart-measurement .reference-bounds>label>.reference-bound-input {display:flex;margin:0}
-.heart-specialist .reference-settings-content {gap:8px}
+.system-heading {display:flex;align-items:center;justify-content:space-between;gap:14px}
+.system-heading>span {color:var(--accent)}
+.system-heading>span svg {width:38px;height:38px}
+.system-fields {display:grid;align-content:start;gap:12px}
+.system-fields h2 {font-size:20px;margin:0;font-weight:500}
+.system-fields>.hint,.system-fields .heart-measurement>.hint {margin:0 0 5px}
+.system-fields .heart-measurement>select {width:100%;max-width:370px}
+.system-alternate {align-self:flex-start;color:var(--accent);text-align:left}
+.specialist-help {font-size:11px;color:var(--muted)}
+.specialist-help summary {cursor:pointer;min-height:36px;display:list-item;align-content:center}
+.specialist-help .text-link {display:inline-flex;align-items:center}
+@media (max-width:374px) {
+ .assessments-screen .assessment-intro {--intro-art-size:70px}
+ .assessments-screen .assessment-intro p {max-width:calc(100% - var(--intro-art-size))}
+}
 @media (max-width:599px) {
  .heart-diagnoses .option:not(.heart-compact-choice) {grid-column:1/-1}
 }

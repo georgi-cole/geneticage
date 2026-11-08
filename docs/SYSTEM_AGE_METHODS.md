@@ -1,0 +1,37 @@
+# System age methods
+
+GeneticAge compares each result with an explicit reference. The studies support the underlying equations and reference values. The age displays are app comparisons and have no separate validation as predictions of biological age. The system results use different endpoints and remain separate.
+
+| Assessment | Routine path | What an additional test contributes |
+| --- | --- | --- |
+| Metabolic | The German Diabetes Risk Score estimates 10-year incident type 2 diabetes risk. The assessment uses the continuous model and asks for all of its predictors. | An exact lab HbA1c can select the published HbA1c model for the same outcome. Fasting glucose supplies additional context and can prompt review. |
+| Kidney | CKD-EPI 2021 estimates filtration from serum creatinine, age at the draw and sex. European medians calculated with that same equation give a filtration age comparison. | Cystatin C from the same draw adds the combined CKD-EPI estimate. Urine ACR can reveal possible kidney damage even when filtration is preserved. |
+| Fitness | HUNT estimates peak oxygen uptake from age, sex, waist, resting pulse and usual leisure activity. | A compatible supervised treadmill or cycle gas exchange test uses the matching FRIEND reference values. |
+
+## Metabolic
+
+The 2022 GDRS paper describes the questionnaire model and the HbA1c extension for adults aged 18–79 without diagnosed diabetes. Its main development cohort was aged 35–65. A German national cohort provided broader external validation. The app expresses the modeled risk as the age at which the same-height reference profile would have comparable risk. The app defines that profile with waist equal to half the person's height, five hours of weekly exercise, cycling or gardening, 100 g of whole grain bread or muesli and one 150 mL coffee a day, zero red meat and no reported smoking, hypertension or first-degree type 2 diabetes history. These values define the comparison and do not prescribe intake. Both equations match the same questionnaire reference curve. The reference has no local recalibration outside the German cohorts. [Development, external validation and worked example](https://doi.org/10.3238/arztebl.m2022.0268)
+
+HbA1c is entered as a lab percentage or in IFCC mmol/mol and converted with the NGSP equation. A value below 4% stays in the report while the app uses the questionnaire model. HbA1c at or above 6.5% (48 mmol/mol as reported in IFCC units), or fasting glucose at or above 126 mg/dL (7 mmol/L), prompts test review. The existing critical glucose check applies independently. Pregnancy and known diabetes use their own review steps. [NGSP conversion](https://ngsp.org/ifcc.asp) · [ADA testing criteria](https://doi.org/10.2337/dc26-S002)
+
+## Kidney
+
+The reference uses European male and female medians from Astley et al., Table S10, for ages 20–79. The app interpolates between medians and displays a bound outside the table. CKD-EPI estimates filtration from age 18, with additional clinical considerations at ages 18–25. The age reference uses creatinine alone because the table was derived using that estimator. The combined creatinine and cystatin C result uses its own published equation and is reported alongside the routine estimate. [CKD-EPI equations](https://www.niddk.nih.gov/research-funding/research-programs/kidney-clinical-research-epidemiology/laboratory/glomerular-filtration-rate-equations/adults) · [European reference data, Table S10](https://cdn-links.lww.com/permalink/cjn/c/cjn_2025_12_23_astley_2025-001021_sdc2.pdf)
+
+Pregnancy, unstable collection, dialysis and transplant history change interpretation. The age is withheld for known kidney disease, eGFR below 60 mL/min/1.73 m² or urine ACR at or above 30 mg/g or 3 mg/mmol. The report keeps the readings and points to follow-up. CKD assessment depends on whether reduced filtration or other signs of kidney damage persist. [KDIGO guideline](https://kdigo.org/wp-content/uploads/2024/03/KDIGO-2024-CKD-Guideline.pdf)
+
+## Fitness
+
+The resting model uses HUNT's published binary activity version. It uses the 150-minute moderate equivalent threshold for the usual week. The closest sex-specific HUNT treadmill mean identifies the comparison group. The displayed age is the rounded midpoint of a closed group, with the full group listed below. The open 70+ group displays a bound. The current app uses ages 20–89. Heart or lung conditions, medicines that alter heart rate, pregnancy and recent illness can move the user from the resting route to a review of a compatible measured result. [HUNT equations](https://doi.org/10.1161/JAHA.118.010293) · [NTNU reference means](https://www.ntnu.edu/cerg/fitness-numbers)
+
+The measured path uses the sex and modality-specific medians in Table 3 of the 2022 FRIEND update, with a reported peak RER of at least 1.0. The report distinguishes the measured and estimated routes because they use different reference groups. [FRIEND reference study](https://doi.org/10.1016/j.mayocp.2021.08.020)
+
+## Molecular evidence reviewed
+
+- **IgG glycans.** GlycanAge research uses patterns of glycosylation on IgG. A separate prospective study linked an IgG glycan panel to incident type 2 diabetes. Applying that result here would require the specified individual glycan measurements and a tested extension of the same diabetes risk equation. A vendor's summary glycan age does not supply those measurements. [Glycan age study](https://doi.org/10.1093/gerona/glt190) · [Prospective IgG glycan study](https://doi.org/10.2337/dc22-0833)
+- **DNA methylation.** GrimAge and GrimAge2 predict outcomes using methylation estimates of other exposures and markers. The HbA1c and CRP terms in GrimAge2 are methylation surrogates. Measured HbA1c enters this app through the directly validated GDRS extension. DunedinPACE used changes in cardiovascular, metabolic and other physiological markers to define a training target for a methylation measure of pace. [GrimAge](https://pmc.ncbi.nlm.nih.gov/articles/PMC6366976/) · [GrimAge2](https://pubmed.ncbi.nlm.nih.gov/36516495/) · [DunedinPACE](https://elifesciences.org/articles/73420)
+- **Organ proteomics.** Published models for heart, kidney, muscle and other organs use platform-specific panels of proteins. The research supports an organ-level view and provides candidates for future assay-specific reports. [SomaScan organ age study](https://doi.org/10.1038/s41586-023-06802-1) · [Olink organ age study](https://doi.org/10.1038/s41591-025-03798-1)
+
+## Form design
+
+Each step groups one question or a short set of related readings. Confirmed answers are shown together for review. Specialist test entry is available through an explicit action, with a brief benefit and access help. Skipping it takes the user back to the results they have. [GOV.UK question pages](https://design-system.service.gov.uk/patterns/question-pages/) · [W3C multi-page forms](https://www.w3.org/WAI/tutorials/forms/multi-page/) · [WCAG redundant entry](https://www.w3.org/WAI/WCAG22/Understanding/redundant-entry.html)

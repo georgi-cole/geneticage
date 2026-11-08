@@ -1,0 +1,211 @@
+# System assessments and specialist results
+Metabolic	Метаболитно здраве
+Kidney	Бъбречно здраве
+Fitness	Физическа форма
+System assessments	Анализи по системи
+APPROXIMATE METABOLIC AGE	ПРИБЛИЗИТЕЛНА МЕТАБОЛИТНА ВЪЗРАСТ
+APPROXIMATE KIDNEY FILTRATION AGE	ПРИБЛИЗИТЕЛНА ВЪЗРАСТ ПО БЪБРЕЧНА ФИЛТРАЦИЯ
+APPROXIMATE FITNESS AGE	ПРИБЛИЗИТЕЛНА ВЪЗРАСТ ПО ФИЗИЧЕСКА ФОРМА
+APPROXIMATE VASCULAR AGE	ПРИБЛИЗИТЕЛНА СЪДОВА ВЪЗРАСТ
+SPECIALIST TEST	СПЕЦИАЛИЗИРАНО ИЗСЛЕДВАНЕ
+SPECIALIST TESTS	СПЕЦИАЛИЗИРАНИ ИЗСЛЕДВАНИЯ
+Specialist test	Специализирано изследване
+Specialist results	Специализирани резултати
+Need help finding this test?	Имате нужда от помощ за достъп до изследването?
+Ask KoleQuant about access ↗	Попитайте KoleQuant за достъп ↗
+Keep current results	Запазете текущите резултати
+Continue with current results	Продължете с текущите резултати
+Continue with profile	Продължете с профила
+Continue with blood result	Продължете с кръвния резултат
+Study comparison band	Възрастова група в проучването
+Sex used by the equation	Пол за изчислението
+Has a clinician diagnosed you with diabetes?	Лекар поставял ли ви е диагноза диабет?
+Which type of diabetes was diagnosed?	Какъв тип диабет ви е диагностициран?
+Another type of diabetes	Друг тип диабет
+Are you pregnant now?	Бременна ли сте в момента?
+Has a clinician diagnosed you with high blood pressure?	Лекар поставял ли ви е диагноза високо кръвно налягане?
+Which describes your cigarette smoking?	Кое описва пушенето ви на цигари?
+Former smoker	Пушех преди
+Average cigarettes per day	Среден брой цигари на ден
+cigarettes/day	цигари/ден
+If you used to smoke, use your usual amount before you quit. Include days without cigarettes in the average.	Ако сте спрели, посочете обичайното количество преди това. Включете дните без цигари при изчисляване на средната стойност.
+Exercise, cycling and gardening	Спорт, колоездене и градинарство
+hours/week	часа/седмица
+Coffee	Кафе
+cups/day	чаши/ден
+Count cups of about 150 mL.	Бройте чаши от около 150 mL.
+Whole grain bread and muesli	Пълнозърнест хляб и мюсли
+g/day	g/ден
+Enter your average amount. A medium slice of bread is about 35 g.	Въведете средното количество. Една средна филия е около 35 g.
+Beef, pork and lamb	Телешко, свинско и агнешко
+For example, two 150 g portions a week average about 43 g per day.	Например две порции по 150 g седмично са средно около 43 g на ден.
+Parents with type 2 diabetes	Родители с диабет тип 2
+Neither parent	Нито един родител
+No known diagnosis	Няма известна диагноза
+One parent	Един родител
+Both parents	И двамата родители
+Brothers or sisters with type 2 diabetes	Братя или сестри с диабет тип 2
+Enter the result from your lab. Fasting is unnecessary for HbA1c.	Въведете лабораторния резултат. За HbA1c не е необходимо да сте на гладно.
+Use a lab result after at least 8 hours without calories.	Използвайте лабораторен резултат след поне 8 часа без прием на калории.
+Measure halfway between your lowest rib and the top of your hip bone.	Измерете по средата между най-долното ребро и горния ръб на тазовата кост.
+Which applies to your kidney health?	Кое се отнася за бъбречното ви здраве?
+No known kidney disease	Няма известно бъбречно заболяване
+Diagnosed kidney disease	Диагностицирано бъбречно заболяване
+Kidney transplant	Бъбречна трансплантация
+What applied at the time of this blood draw?	Какво е било състоянието ви при вземането на кръв?
+Stable health	Стабилно здравословно състояние
+Acute illness or kidney injury	Остро заболяване или бъбречно увреждане
+Blood creatinine	Креатинин в кръвта
+Use serum creatinine. Look for µmol/L or mg/dL on the report.	Използвайте серумния креатинин. Потърсете µmol/L или mg/dL в резултата.
+Urine albumin-to-creatinine ratio (ACR)	Съотношение албумин/креатинин в урината (ACR)
+Use the ratio printed on your report, sometimes called uACR.	Използвайте съотношението от резултата, понякога означено като uACR.
+Cystatin C	Цистатин C
+Use cystatin C from the same blood draw as your creatinine.	Използвайте цистатин C от същата кръвна проба като креатинина.
+How old were you when these readings were taken?	На колко години бяхте при измерванията?
+Do any of these affect your resting pulse or exercise?	Някое от изброените влияе ли на пулса ви в покой или на физическата ви активност?
+Heart or lung condition	Сърдечно или белодробно заболяване
+Medicine that changes heart rate	Лекарство, което влияе на пулса
+Pregnancy or recent illness	Бременност или скорошно заболяване
+Measure with the tape level, around your waist at your navel.	Дръжте метъра хоризонтално и измерете около талията на нивото на пъпа.
+Resting pulse	Пулс в покой
+beats/min	удара/мин
+Use your usual pulse after sitting quietly for a few minutes.	Използвайте обичайния си пулс след няколко минути в спокойно седнало положение.
+Moderate activity	Умерена активност
+Activity that makes you breathe faster while you can still talk.	Дишате по-учестено, но можете да разговаряте.
+Vigorous activity	Интензивна активност
+Activity that makes it hard to say more than a few words.	Трудно ви е да кажете повече от няколко думи.
+Measured VO₂peak	Измерен VO₂peak
+Use the relative value from a supervised gas exchange test.	Използвайте относителната стойност от изследване с измерване на дихателните газове под наблюдение.
+Exercise test type	Вид тест с физическо натоварване
+Treadmill test	Тест на бягаща пътека
+Cycle test	Тест на велоергометър
+Peak respiratory exchange ratio (RER)	Максимален коефициент на дихателен обмен (RER)
+ratio	коефициент
+Look for peak RER in the same test report. For example, 1.12.	Потърсете максималния RER в същия резултат, например 1,12.
+Blood pressure history	Данни за кръвното налягане
+Cigarette amount	Количество цигари
+Usual activity and coffee	Обичайна активност и прием на кафе
+Enter 0 for any amount that does not apply.	Въведете 0, когато не се отнася за вас.
+Usual food intake	Обичайно хранене
+Use a typical week to estimate daily amounts.	Оценете дневните количества по една обичайна седмица.
+Family history	Семейна история
+Diabetes history	Данни за диабет
+Health context	Здравословно състояние
+Age at collection	Възраст при вземане на пробата
+Reference group	Референтна група
+Kidney history	Бъбречно здраве
+At the time of the test	При вземането на пробата
+Routine blood test	Рутинно кръвно изследване
+Resting measurements	Измервания в покой
+Usual activity	Обичайна активност
+Think of a typical week over the past year. Include leisure time and enter 0 when needed.	Помислете за обичайна седмица през последната година. Включете активността в свободното време и въведете 0, когато е нужно.
+Glucose tests	Изследвания на кръвната захар
+HbA1c reflects blood sugar over the past few months and can refine this estimate.	HbA1c отразява кръвната захар през последните месеци и може да уточни оценката.
+Add glucose tests	Добавете изследвания на кръвната захар
+Edit glucose tests	Редактирайте изследванията на кръвната захар
+Urine albumin	Албумин в урината
+Urine ACR can reveal kidney damage even when filtration is preserved.	ACR в урината може да покаже бъбречно увреждане дори при запазена филтрация.
+Add urine ACR	Добавете ACR в урината
+Edit urine ACR	Редактирайте ACR в урината
+This blood test helps estimate kidney filtration when creatinine alone is less reliable.	Това кръвно изследване подпомага оценката на бъбречната филтрация, когато креатининът сам по себе си е по-ненадежден.
+Add cystatin C	Добавете цистатин C
+Edit cystatin C	Редактирайте цистатин C
+Refines the filtration result	Уточнява оценката на филтрацията
+Supervised fitness test	Тест с натоварване под наблюдение
+A supervised exercise test directly measures how much oxygen you can use.	Тестът с натоварване под наблюдение измерва директно колко кислород можете да използвате.
+Add supervised test	Добавете тест с натоварване
+Edit supervised test	Редактирайте теста с натоварване
+Uses a measured fitness result	Използва измерен резултат за физическа форма
+Review your details	Прегледайте данните си
+These details came from your earlier assessments. Check that they still apply.	Тези данни са от предишните ви анализи. Проверете дали са актуални.
+Choose an answer	Изберете отговор
+Choose an answer from the list.	Изберете отговор от списъка.
+Check the value and unit.	Проверете стойността и единицата.
+The activity minutes add up to more than a week.	Общият брой минути за активност надвишава времето в една седмица.
+Add this detail to continue.	Добавете тази информация, за да продължите.
+Earlier answers could not be loaded. You can enter them here.	Предишните отговори не можаха да се заредят. Можете да ги въведете тук.
+Use a supervised test result ↗	Използвайте резултат от тест с натоварване ↗
+I don’t have this result yet	Все още нямам този резултат
+Save changes	Запазете промените
+Questionnaire and body measurements	Въпросник и телесни измервания
+HbA1c included	Включен е HbA1c
+Creatinine-based filtration	Филтрация, оценена по креатинин
+Estimated oxygen uptake	Приблизителна кислородна консумация
+Measured oxygen uptake	Измерена кислородна консумация
+Your estimated filtration is matched to typical values from healthy European adults.	Изчислената ви филтрация се сравнява с типичните стойности при здрави възрастни в Европа.
+Your estimated oxygen uptake is closest to the average for this age group in the Norwegian HUNT study.	Изчислената ви кислородна консумация е най-близка до средната за тази възрастова група в норвежкото проучване HUNT.
+Your result is closest to the typical oxygen uptake for this age group and exercise test in the FRIEND registry.	Резултатът ви е най-близък до типичната кислородна консумация за тази възраст и вид тест в регистъра FRIEND.
+This diabetes risk model covers adults aged 18–79.	Моделът за риск от диабет обхваща възрастни между 18 и 79 години.
+The model estimates the chance of developing type 2 diabetes. If you already have diabetes, ask your care team which HbA1c target fits your situation.	Моделът оценява вероятността за развитие на диабет тип 2. При поставена диагноза обсъдете с лекаря си подходящата за вас целева стойност на HbA1c.
+Review diabetes history	Прегледайте данните за диабет
+Pregnancy changes how blood sugar is assessed. Ask your care team about the glucose testing that applies during pregnancy.	Оценката на кръвната захар по време на бременност е различна. Попитайте лекаря си кои изследвания са подходящи.
+Review health context	Прегледайте здравословното състояние
+A reading reaches a diabetes testing threshold. Check the units and ask your clinician whether to repeat the test before using a risk age.	Стойност достига праг за изследване за диабет. Проверете единиците и попитайте лекаря си дали да повторите теста, преди да ползвате оценката на риска.
+Review glucose tests	Прегледайте изследванията на кръвната захар
+This fasting glucose result needs attention before an age comparison.	Този резултат за глюкоза на гладно трябва да се прегледа преди сравнение на възрастта.
+Pregnancy or a recent illness or kidney injury can make creatinine-based estimates unreliable. A result from a stable time may be more informative.	Бременност, скорошно заболяване или бъбречно увреждане могат да повлияят на оценката по креатинин. Резултат от период със стабилно здраве може да е по-информативен.
+Review collection details	Прегледайте данните за пробата
+Dialysis and transplant care need a separate interpretation of kidney function. Review your lab results with your kidney care team.	При диализа или трансплантация бъбречната функция се оценява по различен начин. Обсъдете лабораторните резултати с лекуващия ви екип.
+Review kidney history	Прегледайте данните за бъбречното здраве
+Review kidney results	Прегледайте бъбречните резултати
+A filtration age can hide the significance of known kidney disease. Repeat filtration and urine albumin results help your clinician assess changes over time.	Възрастта по филтрация може да прикрие значението на известно бъбречно заболяване. Повторните изследвания на филтрацията и албумина в урината помагат да се проследи промяната.
+The adult fitness references used here cover ages 20–89. A clinician can interpret fitness measurements with an age-appropriate reference.	Тук използваните норми за физическа форма обхващат възраст от 20 до 89 години. Лекар може да тълкува резултата с подходящи за възрастта норми.
+A health condition or medicine can change resting pulse and the estimate. A compatible supervised test can provide a comparison if you have one.	Заболяване или лекарство може да повлияе на пулса в покой и на оценката. Ако имате подходящ тест с натоварване под наблюдение, той може да даде сравнение.
+The estimated oxygen uptake is outside the comparison range. Check the resting pulse, waist and units you entered.	Изчислената кислородна консумация е извън обхвата за сравнение. Проверете въведения пулс, обиколката на талията и мерните единици.
+Review resting measurements	Прегледайте измерванията в покой
+eGFR from creatinine	eGFR по креатинин
+eGFR from creatinine and cystatin C	eGFR по креатинин и цистатин C
+Estimated VO₂peak	Изчислен VO₂peak
+HbA1c used	Използван HbA1c
+Finish your age estimate	Завършете оценката на възрастта
+Add the remaining details to see your comparison.	Добавете оставащата информация, за да видите сравнението.
+HbA1c is below the app’s calculation range. The age uses your questionnaire and body measurements.	HbA1c е под обхвата на изчислението. Оценката използва въпросника и телесните измервания.
+For a measured comparison, check the test type and peak RER on your report.	За сравнение по измерен резултат проверете вида на теста и максималния RER в документа.
+Readings to review	Резултати за преглед
+Update from this report ↗	Обновете по този отчет ↗
+Your answers and measurements	Вашите отговори и измервания
+How this comparison works	Как се прави сравнението
+Open your report to see your readings and next steps.	Отворете отчета за резултатите и следващите стъпки.
+ApoB and Lp(a)	ApoB и Lp(a)
+These blood tests add context to your report.	Тези кръвни изследвания допълват отчета ви.
+ApoB reflects the number of particles that can contribute to plaque.	ApoB отразява броя на частиците, които могат да допринесат за образуване на плака.
+Lp(a) is largely inherited and can raise cardiovascular risk.	Нивото на Lp(a) до голяма степен се определя наследствено и може да повиши сърдечносъдовия риск.
+Edit ApoB and Lp(a)	Редактирайте ApoB и Lp(a)
+Specialist test · Pulse-wave measurement	Специализирано изследване · Пулсова вълна
+This age comparison matches your risk factors for coronary plaque to the study’s reference profile.	Това сравнение на възрастта съпоставя рисковите ви фактори за коронарна плака с референтния профил от проучването.
+The study scales one point to about one year of modeled plaque risk. The app shifts your five-year age band by the risk-factor points and shows the midpoint when the whole band fits within ages 15–34.	Една точка в проучването отговаря на около една година според модела за риск от плака. Приложението измества петгодишната ви възрастова група според точките и показва средата, когато цялата група е в рамките на 15–34 години.
+Glycan and protein clocks	Гликанови и протеинови часовници
+GlycanAge uses IgG glycans. Organ proteomic clocks use panels of blood proteins. Each needs the measurements and reference from its own study.	GlycanAge използва IgG гликани. Органните протеомни часовници използват групи кръвни протеини. Всеки метод изисква измерванията и референтните данни от собственото си проучване.
+This assessment includes its report.	Отчетът е включен в този анализ.
+The German Diabetes Risk Score estimates the 10-year chance of developing type 2 diabetes in adults aged 18–79. The published HbA1c equation uses the same outcome. Blood sugar readings at diabetes testing thresholds prompt review.	Германският модел оценява 10-годишната вероятност за развитие на диабет тип 2 при възрастни между 18 и 79 години. Публикуваният вариант с HbA1c оценява същия риск. Стойности на кръвната захар, достигащи прагове за изследване за диабет, изискват преглед.
+The app matches the predicted risk to the same lower-risk reference at different ages. The reference uses your height, waist equal to half that height, no known hypertension or family history, no smoking, five hours of activity per week, 100 g of whole grain bread or muesli, one coffee and no red meat per day.	Приложението сравнява прогнозния риск с един и същ профил с по-нисък риск на различна възраст. Профилът използва вашия ръст, талия, равна на половината от него, без известно високо кръвно налягане, семейна история или пушене, пет часа активност седмично и дневно 100 g пълнозърнест хляб или мюсли, едно кафе и без червено месо.
+The equations come from German cohorts. The age is a comparison using that reference. A laboratory HbA1c can change the estimate. Fasting glucose adds context, and recent blood loss, transfusion or some blood conditions can affect HbA1c.	Формулите са разработени с данни от германски групи. Възрастта е сравнение с този профил. Лабораторният HbA1c може да промени оценката. Глюкозата на гладно допълва картината, а скорошна кръвозагуба, кръвопреливане или някои кръвни състояния могат да повлияят на HbA1c.
+CKD-EPI 2021 uses blood creatinine, age at the draw and sex to estimate filtration (eGFR). The app matches it to same-sex European reference medians from ages 20–79 using the same equation.	CKD-EPI 2021 изчислява филтрацията (eGFR) по кръвен креатинин, възраст при вземане на пробата и пол. Приложението сравнява резултата с европейските медиани за същия пол между 20 и 79 години, изчислени със същата формула.
+This age describes a filtration comparison. A single result cannot establish whether a change is persistent. Estimated filtration is less precise at higher values, and a clinician may use more than one equation for ages 18–25.	Възрастта описва сравнение на филтрацията. Един резултат не показва дали промяната е трайна. Изчислението е по-неточно при високи стойности и лекар може да използва повече от една формула на възраст между 18 и 25 години.
+Cystatin C from the same draw adds a combined CKD-EPI estimate. The age comparison stays on the creatinine reference. Urine ACR helps check for kidney damage and can prompt review at any eGFR.	Цистатин C от същата проба позволява комбинирана оценка по CKD-EPI. Възрастта се сравнява по нормите за креатинин. ACR в урината помага за установяване на бъбречно увреждане и може да изисква преглед при всяка стойност на eGFR.
+HUNT estimates peak oxygen uptake from age, sex, waist, resting pulse and usual activity. The app compares it with the closest HUNT age group and displays the midpoint when the group has an upper age limit.	HUNT оценява максималната кислородна консумация по възраст, пол, талия, пулс в покой и обичайна активност. Приложението я сравнява с най-близката възрастова група и показва средата, когато групата има горна граница.
+A supervised treadmill or cycle gas exchange test can use the corresponding FRIEND reference for ages 20–89. The comparison uses the typical value for that test and sex, with peak RER of at least 1.0.	Тест на пътека или велоергометър с измерване на дихателните газове под наблюдение може да използва съответните норми на FRIEND за 20–89 години. Сравнението използва типичната стойност за този вид тест и пол при максимален RER поне 1,0.
+The age describes aerobic fitness. Estimated and measured oxygen uptake use different reference groups, so adding a test can move the comparison.	Възрастта описва аеробната форма. Изчислената и измерената кислородна консумация използват различни референтни групи и добавянето на тест може да промени сравнението.
+Schiborn et al. (2022) · German Diabetes Risk Score	Schiborn и съавт. (2022) · Германски модел за риск от диабет
+German Diabetes Risk Score · Published equations and example	Германски модел за риск от диабет · Формули и пример
+American Diabetes Association (2026) · Diabetes testing	Американска диабетна асоциация (2026) · Изследвания за диабет
+NIDDK · CKD-EPI 2021 filtration equations	NIDDK · Формули за филтрация CKD-EPI 2021
+Astley et al. (2026) · European and US filtration references	Astley и съавт. (2026) · Референтни стойности за филтрация в Европа и САЩ
+Astley et al. · CKD-EPI 2021 reference medians, Table S10	Astley и съавт. · Референтни медиани за CKD-EPI 2021, таблица S10
+KDIGO (2024) · Kidney function and urine albumin	KDIGO (2024) · Бъбречна функция и албумин в урината
+Nes et al. (2011) · HUNT fitness estimate	Nes и съавт. (2011) · Оценка на физическата форма HUNT
+Shigdel et al. (2019) · HUNT equations and activity inputs	Shigdel и съавт. (2019) · Формули HUNT и данни за активност
+NTNU · Measured HUNT fitness reference values	NTNU · Измерени референтни стойности за физическа форма HUNT
+Kaminsky et al. (2022) · FRIEND treadmill and cycle references	Kaminsky и съавт. (2022) · Норми FRIEND за пътека и велоергометър
+Krištić et al. (2014) · IgG glycans and biological age	Krištić и съавт. (2014) · IgG гликани и биологична възраст
+Birukov et al. (2022) · IgG glycans and incident diabetes	Birukov и съавт. (2022) · IgG гликани и развитие на диабет
+Lu et al. (2022) · GrimAge version 2	Lu и съавт. (2022) · GrimAge, версия 2
+Oh et al. (2023) · Organ aging from the plasma proteome	Oh и съавт. (2023) · Стареене на органите по плазмения протеом
+Start with what you have.	Започнете с това, с което разполагате.
+Diabetes risk age	Възраст по риск от диабет
+Filtration and urine albumin	Филтрация и албумин в урината
+Aerobic fitness	Аеробна форма
+This is the age at which the reference profile has a similar modeled 10-year risk of type 2 diabetes.	Това е възрастта, на която референтният профил има сходен изчислен 10-годишен риск от диабет тип 2.
+The filtration estimate is below 60. Ask your clinician about repeat eGFR and urine ACR to understand what is causing the change.	Изчислената филтрация е под 60. Попитайте лекаря си за повторно изследване на eGFR и ACR в урината, за да се изясни причината.
+The urine ACR reaches the threshold for raised urine albumin. Ask your clinician whether to repeat it.	ACR в урината достига прага за повишен албумин. Попитайте лекаря си дали да повторите изследването.
+Review urine ACR	Прегледайте ACR в урината

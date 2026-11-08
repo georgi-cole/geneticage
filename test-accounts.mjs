@@ -136,6 +136,23 @@ assert.deepEqual(savedTeen.heart.result.ageBand,{from:17,to:21});
 assert.equal(savedTeen.heart.result.risk,undefined);
 assert.equal((await call(a,'assessments/'+teenEntry.id,'DELETE',{confirm:true})).response.status,200);
 assert.equal((await call(a,'assessments/'+heartId,'DELETE',{confirm:true})).response.status,200);
+const kidneyId=randomUUID();
+const kidneyEntry={id:kidneyId,assessmentType:'kidney',system:{
+  age:{value:'33',unit:'years'},sex:'Male',kidneyHistory:'No known kidney disease',kidneyContext:'Stable health',
+  creatinine:{value:'1',unit:'mg/dL'},cystatin:{value:'0.8',unit:'mg/L'},result:{age:19},
+}};
+assert.equal((await call(a,'assessments','POST',kidneyEntry)).response.status,201);
+const savedKidney=(await call(a,'assessments/'+kidneyId+'/report')).data.report;
+assert.equal(savedKidney.full,true);
+assert.equal(savedKidney.system.result.version,'ckd-epi-2021-europe-age-v1');
+assert.equal(savedKidney.system.result.age,41);
+assert.ok(savedKidney.system.review.egfrCombined>savedKidney.system.review.egfr);
+assert.equal((await call(b,'assessments/'+kidneyId+'/report')).response.status,404);
+kidneyEntry.system.creatinine.value='0.8';
+assert.equal((await call(a,'assessments','POST',kidneyEntry)).response.status,201);
+assert.deepEqual((await call(a,'assessments/'+kidneyId+'/report')).data.report,savedKidney);
+assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:kidneyId})).response.status,400);
+assert.equal((await call(a,'assessments/'+kidneyId,'DELETE',{confirm:true})).response.status,200);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
 sqlite.prepare('UPDATE assessments SET payload=? WHERE id=?').run(stored.payload,withheldId);
 assert.equal((await call(a,'assessments/'+withheldId)).response.status,503);

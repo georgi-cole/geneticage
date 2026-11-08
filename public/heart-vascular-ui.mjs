@@ -9,7 +9,7 @@ import {arterialMeasurement, heartDecimal, heartMeasurements, reviewHeartMeasure
 import {pday, heartPdayAge} from './heart-pday.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
 import {measurementFeedbackMarkup, safetyMarkup} from './lab-feedback.mjs';
-import {escapeHTML as esc, reportArtwork, screenHeading, uiIcon} from './ui-components.mjs';
+import {escapeHTML as esc, reportArtwork, screenHeading, specialistHelp, uiIcon} from './ui-components.mjs';
 
 const arrow = uiIcon('forward');
 const [country, sex, smoking, conditions, treatment] = heartQuestions;
@@ -33,7 +33,8 @@ const routineAgeFields = [
 ];
 const measurementSteps = [
   {id:'blood-pressure', phase:2, fields:pressures},
-  {id:'measurements', phase:2, fields:[...routine, ...specialist]},
+  {id:'measurements', phase:2, fields:routine},
+  {id:'specialist', phase:2, fields:specialist},
 ];
 
 export function heartRoutineAgeStep(missing) {
@@ -72,7 +73,7 @@ function hasAnswer(value) {
   return answer != null && answer !== '';
 }
 export function heartRoute(inputs, prefilled = []) {
-  const steps = heartSteps(inputs);
+  const steps = heartSteps(inputs).filter(step => step.id !== 'specialist');
   if (!prefilled.length) return steps;
   const reused = field => prefilled.includes(field.id) && hasAnswer(inputs[field.id]);
   if (!steps.some(step => step.fields.some(reused))) return steps;
@@ -223,12 +224,14 @@ function measurementField(field, inputs, errors, review, touched, placeholder = 
 export function renderHeartArterialForm(inputs, errors = {}, editing = !!inputs.cfpwv) {
   const {review} = reviewHeartMeasurements(inputs, inputs, {includeArterial:true});
   return `<form id="heart-arterial-form" novalidate>
+    <p class="eyebrow">SPECIALIST TEST</p>
     <p>Use a clinic measurement of pulse wave velocity from the neck to the groin. The report may call it cfPWV.</p>
     ${measurementField(arterialMeasurement, inputs, errors, review, {}, '8.3')}
     <label class="checkline"><input name="cfpwvMethod" type="checkbox" value="${arterialReference.method}"${inputs.cfpwv?.method === arterialReference.method ? ' checked' : ''}${invalid('cfpwvMethod', errors)}>
       <span>My report confirms 80% of the direct carotid–femoral distance.</span></label>
     ${fieldError('cfpwvMethod', errors)}
     ${fieldError('arterial', errors)}
+    ${specialistHelp()}
     <div class="actions">
       <button class="btn" type="submit">Compare arterial stiffness ${arrow}</button>
       ${editing ? '<button class="text-btn" type="submit" value="remove">Remove result</button>' : ''}
@@ -246,7 +249,7 @@ function pressureFeedback(review, touched = {}) {
   return safetyMarkup({status:'ok', warning:review.pressureWarning});
 }
 
-function measurementStep(step, inputs, errors, showOptional, touched) {
+function measurementStep(step, inputs, errors, touched) {
   const {review} = reviewHeartMeasurements(inputs, inputs, {includeDiabetes:heartUsesDiabetesLabs(inputs), includePday:heartPdayAge(inputs.age)});
   const field = (definition, placeholder) => measurementField(definition, inputs, errors, review, touched, placeholder);
   if (step === 'pday-body' || step === 'pday-glucose') {
@@ -288,20 +291,26 @@ function measurementStep(step, inputs, errors, showOptional, touched) {
       </fieldset>
     </div>`;
   }
-  const open = showOptional || specialist.some(({id}) => errors[id] || errors[id+'Reference'] || inputs[id]?.value);
+  if (step === 'specialist') return `<div class="lab-fields heart-measurements">
+    <fieldset class="question" data-theme-part>
+      <legend>ApoB and Lp(a)</legend>
+      <p class="hint">These blood tests add context to your report.</p>
+      <div class="heart-measurement-list">
+        ${field(specialist[0])}
+        <p class="hint">ApoB reflects the number of particles that can contribute to plaque.</p>
+        ${field(specialist[1])}
+        <p class="hint">Lp(a) is largely inherited and can raise cardiovascular risk.</p>
+      </div>
+    </fieldset>
+    ${specialistHelp()}
+  </div>`;
   return `<div class="lab-fields heart-measurements">
     <fieldset class="question" data-theme-part>
       <legend>Cholesterol</legend>
       <p class="hint">Use total and HDL cholesterol from the same lipid panel.</p>
       <div class="heart-measurement-list">${routine.map(definition => field(definition)).join('')}</div>
     </fieldset>
-    <details class="reference-settings heart-specialist"${open ? ' open' : ''}>
-      <summary><span>Add ApoB or Lp(a)</span><span>Optional</span></summary>
-      <div class="reference-settings-content">
-        <p class="hint">These results add context to your report. The estimate uses the routine measurements above.</p>
-        <div class="heart-measurement-list">${specialist.map(definition => field(definition)).join('')}</div>
-      </div>
-    </details>
+    <button class="text-btn system-alternate" type="button" data-action="heart-edit" data-part="specialist">Add ApoB or Lp(a) ↗</button>
   </div>`;
 }
 
@@ -333,7 +342,7 @@ function arterialSummary({inputs, result, review}, secondary) {
   if (!heartOffersArterialAge(inputs, result)) return '';
   const comparison = review?.arterialAge;
   if (secondary) return `<details class="report-answer-group"${comparison ? ' open' : ''}>
-    <summary>Optional pulse-wave comparison</summary>
+    <summary>Specialist test · Pulse-wave measurement</summary>
     ${comparison ? arterialAgeReading(comparison) : `<p>A clinic pulse-wave measurement can give you a separate arterial stiffness age.</p>
       <button class="text-btn no-print" data-action="heart-arterial">Add pulse-wave result ${arrow}</button>`}
   </details>`;
@@ -379,25 +388,26 @@ export function changeHeartUnit(control, entry = {}) {
   editor.open = true;
 }
 
-export function renderHeartForm({inputs = {}, errors = {}, step = 'country', showOptional = false, prefilled = [], touched = {}, prefillUnavailable = false}) {
+export function renderHeartForm({inputs = {}, errors = {}, step = 'country', specialistInFlow = false, prefilled = [], touched = {}, prefillUnavailable = false}) {
   const steps = heartSteps(inputs);
   const {phase, fields} = step === 'review' ? {phase:0} : steps.find(item => item.id === step) || steps[0];
   const phases = ['About you', 'Health history', 'Your measurements'];
   const measures = phase === 2;
-  const last = heartRoute(inputs, prefilled).at(-1).id === step;
+  const extra = step === 'specialist';
+  const last = extra ? !specialistInFlow : heartRoute(inputs, prefilled).at(-1).id === step;
   return `<div class="wrap app-screen task-screen question-screen heart-entry${measures ? ' lab-screen' : ''}">
-    ${screenHeading('CARDIOVASCULAR ASSESSMENT', 'Heart & Vascular', '', pulseMark())}
-    <div class="task-caption"><span>${phases[phase]}</span><span>${phase + 1} / ${phases.length}</span></div>
+    ${screenHeading(extra ? 'SPECIALIST TESTS' : 'CARDIOVASCULAR ASSESSMENT', 'Heart & Vascular', '', pulseMark())}
+    ${extra ? '' : `<div class="task-caption"><span>${phases[phase]}</span><span>${phase + 1} / ${phases.length}</span></div>
     <div class="heart-progress" role="progressbar" aria-label="Assessment progress" aria-valuemin="0" aria-valuemax="${phases.length}" aria-valuenow="${phase + 1}">
       ${phases.map((_, index) => `<i class="${index === phase ? 'current' : index < phase ? 'complete' : ''}"></i>`).join('')}
-    </div>
+    </div>`}
     <form id="heart-form" novalidate>
       ${step === 'country' && prefillUnavailable ? '<p class="hint" role="status">Saved answers were unavailable. Enter your current answers.</p>' : ''}
-      ${measures ? measurementStep(step, inputs, errors, showOptional, touched)
+      ${measures ? measurementStep(step, inputs, errors, touched)
         : step === 'review' ? prefillReview(inputs, errors, prefilled)
         : step === 'smoking-history' ? smokingHistory(fields, inputs, errors) : promptField(fields[0], inputs, errors)}
       <div class="form-nav">
-        <button class="text-btn" type="button" data-action="heart-back">← Back</button>
+        <button class="text-btn" type="button" data-action="heart-back">${extra ? 'Continue with current results' : '← Back'}</button>
         <button class="btn" type="submit">${last ? 'View report' : 'Continue'} ${arrow}</button>
       </div>
     </form>
@@ -420,22 +430,24 @@ function riskSummary({inputs, result, review}) {
   }
   const model = heartModelForReport(result);
   const band = result.ageBand;
+  const midpoint = band && band.from !== null && band.to !== null ? Math.round((band.from + band.to) / 2) : null;
   const age = result.ageRange === 'above' ? `<span>Above</span> ${model.maxAge}`
     : result.ageRange === 'below' ? `<span>Below</span> ${model.minAge}`
     : band ? (band.from === null ? `<span>Up to</span> ${esc(band.to)}`
-      : band.to === null ? `<span>At least</span> ${esc(band.from)}` : `${esc(band.from)}–${esc(band.to)}`)
+      : band.to === null ? `<span>At least</span> ${esc(band.from)}` : esc(midpoint))
     : esc(result.age);
   const isPday = result.method === pday.name;
   const isFramingham = result.method === FRAMINGHAM;
   const ageOnly = isPday || isFramingham;
-  const ageStyle = band && band.from !== null && band.to !== null ? ' heart-age-band' : result.ageRange || band ? ' heart-age-bound' : '';
+  const ageStyle = result.ageRange || band && midpoint === null ? ' heart-age-bound' : '';
   const risk = ageOnly ? '' : result.risk < 0.1 ? '&lt;0.1%' : `${result.risk.toFixed(1)}%`;
   return `<section class="report-estimate result-surface heart-estimate" data-theme-part>
     <div class="heart-result-main">
       ${reportArtwork()}
-      <span class="eyebrow">${isPday ? 'EARLY VASCULAR AGE' : isFramingham ? 'VASCULAR AGE' : 'VASCULAR RISK AGE'}</span>
+      <span class="eyebrow">${isPday ? 'APPROXIMATE VASCULAR AGE' : isFramingham ? 'VASCULAR AGE' : 'VASCULAR RISK AGE'}</span>
       <div class="report-age-line${ageStyle}"><strong>${age}</strong>${result.ageRange ? '' : '<span>years</span>'}</div>
       <p>${isPday ? 'PDAY · Coronary plaque risk comparison' : isFramingham ? 'Framingham reference · U.S. study' : 'Approximate age comparison'}</p>
+      ${midpoint !== null ? `<p><span>Study comparison band</span> <span>${band.from}–${band.to}</span></p>` : ''}
     </div>
     ${ageOnly ? '' : `<div class="heart-result-meta">
       <div><strong>${risk}</strong><span>${model.name === SCORE2_DIABETES ? '10-year SCORE2-Diabetes risk' : model.name === 'SCORE2-OP' ? '10-year SCORE2-OP risk' : '10-year SCORE2 risk'}</span></div>
@@ -477,9 +489,9 @@ function measurementsPanel(inputs, review) {
       ${offerDiabetesLabs(inputs) ? `<button class="text-btn" data-action="heart-edit" data-part="diabetes-labs">Edit diabetes measurements ${arrow}</button>` : ''}</section>` : ''}
     ${inputs.cfpwv ? `<section class="heart-reading"><h3>Arterial stiffness</h3><dl>${measurementRow(arterialMeasurement, inputs, review)}</dl>
       <button class="text-btn" data-action="heart-arterial">Edit pulse-wave result ${arrow}</button></section>` : ''}
-    <section class="heart-reading"><h3>Optional results</h3>
+    <section class="heart-reading"><h3>Specialist results</h3>
       ${optional.length ? `<dl>${optional.map(field => measurementRow(field, inputs, review)).join('')}</dl>` : '<p class="report-intro">You can add ApoB or Lp(a) if you have the results.</p>'}
-      <button class="text-btn" data-action="heart-edit" data-part="specialist">${optional.length ? 'Edit optional results' : 'Add optional results'} ${arrow}</button>
+      <button class="text-btn" data-action="heart-edit" data-part="specialist">${optional.length ? 'Edit ApoB and Lp(a)' : 'Add ApoB or Lp(a)'} ${arrow}</button>
     </section>`;
 }
 
@@ -515,7 +527,7 @@ function methodsPanel(inputs, result, review, sourceLinks) {
     </details>` : ''}
     ${isPday ? `<details class="report-answer-group"><summary>The reference age</summary>
       <p>PDAY used U.S. coronary artery data from ages 15–34. CARDIA followed young adults from age 18 and linked the score with later coronary artery calcium and coronary events.</p>
-      <p>The study scales one point to about one year of modeled plaque risk. The app shifts your five-year age band by the risk-factor points and shows the part supported by the study's ages 15–34.</p>
+      <p>The study scales one point to about one year of modeled plaque risk. The app shifts your five-year age band by the risk-factor points and shows the midpoint when the whole band fits within ages 15–34.</p>
       <p>For this score, the pressure cutoffs are 130 systolic or 85 diastolic. The glucose cutoff is 126 mg/dL or 7 mmol/L. Treatment for either condition also counts in the corresponding factor.</p>
     </details>` : isFramingham ? `<details class="report-answer-group"><summary>The reference age</summary>
       <p>The comparison matches your modeled risk to a nonsmoker of the same sex with no diabetes, untreated systolic pressure of 125 mmHg, total cholesterol of 180 mg/dL and HDL cholesterol of 45 mg/dL. Reference ages span 30–74.</p>
@@ -605,7 +617,7 @@ export function renderHeartReport({heart, saved, pagesPreview, sourceLinks, tab 
       : result.issue === 'diabetes-data' ? next + summary : arterial + summary + next)
       : `${summary}<section class="report-explanation">
         <h2>What this tells you</h2>
-        <p>${isPday ? 'This range compares your risk factors for coronary plaque with the study’s reference profile.'
+        <p>${isPday ? 'This age comparison matches your risk factors for coronary plaque to the study’s reference profile.'
           : isFramingham ? 'Your answers and readings match the modeled risk of someone this age with the study’s reference readings.'
           : 'The percentage estimates the chance of a first heart attack, stroke, or cardiovascular death over 10 years. Vascular risk age expresses that risk as a comparison with a reference profile.'}</p>
       </section>${(isFramingham || isPday) && review?.pressureFollowUp ? `<section class="heart-reading"><dl>${pressureRow(inputs, review)}</dl></section>` : ''}${arterial}`,
