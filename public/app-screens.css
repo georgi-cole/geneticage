@@ -101,6 +101,26 @@ footer {display:none}
 .assessment-route:first-child .route-icon {color:var(--warm)}
 .assessment-route>svg {width:22px;height:22px;color:var(--muted);flex-shrink:0}
 .assessment-route:hover {border-color:var(--accent)}
+
+.heart-assessment-screen {max-width:680px;gap:14px}
+.heart-assessment-screen .card {padding:18px;margin:0}
+.heart-assessment-screen .card h2 {font-size:18px;margin:0 0 8px}
+.heart-form {display:grid;gap:14px}
+.heart-fields,.heart-estimates {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.heart-field {min-width:0}
+.heart-field label {display:block;margin-bottom:6px;font-weight:500}
+.heart-field p {margin:5px 0 0}
+.heart-field .input-row {margin:0;max-width:100%}
+.heart-field .input-row input {min-width:0}
+.heart-field select {width:100%}
+.heart-field .input-row select {width:auto;max-width:50%}
+.heart-estimates strong {display:block;font-size:clamp(24px,6vw,40px);line-height:1.15;margin-top:4px}
+.heart-estimate p {margin:10px 0 0}
+@media (max-width:480px) {.heart-fields {grid-template-columns:minmax(0,1fr);gap:12px}}
+@media print {
+ .heart-report-screen .no-print {display:none!important}
+ .heart-report-screen .card {margin:12px 0;break-inside:avoid}
+}
 .saved-records {min-height:0}
 .section-caption {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .section-caption h2 {font-size:12px;margin:0;font-weight:500}

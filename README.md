@@ -36,6 +36,14 @@ Content version `2026-11-06-lab-safety-v4` adds feedback after leaving a measure
 
 The hosted Sites app and static Pages preview are separate publications. Both now include the 3-second KoleQuant launch signature on every full opening, with one additional second of brand hold and the original code-to-clock handoff speed. Empty instruments use the paired-form emblem with a clear unmeasured status.
 
+## Heart & Vascular
+
+This separate assessment estimates the 10-year risk of a first heart attack, stroke or cardiovascular death using the continuous SCORE2 equations for ages 40–69. The selected country of residence chooses the ESC region. The form collects smoking, the model’s sex input, systolic blood pressure, total and HDL cholesterol and eligibility answers. It withholds the estimate outside the supported scope. The app uses a conservative collection range of 100 to under 180 mmHg systolic, 2.5–8 mmol/L total cholesterol and 0.5–3 mmol/L HDL cholesterol. [SCORE2 study](https://doi.org/10.1093/eurheartj/ehab309), [coefficients](https://doi.org/10.1093/eurheartj/ehab761), [regional assignments](https://www.heartscore.org/en_GB/faq), [ESC/EAS scope](https://doi.org/10.1093/eurheartj/ehaf190).
+
+The approximate vascular risk age uses the same SCORE2 model with a fixed reference profile for the same sex and region. The profile uses no current smoking, systolic pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. The app uses the continuous model to match the estimated risk within ages 40–69 and shows the comparison limit when risk falls outside the reference range. [Published reference-profile approach](https://pubmed.ncbi.nlm.nih.gov/40753001/).
+
+ApoB and Lp(a) are optional report details and retain their reported units. The browser and server use the same versioned SCORE2 calculation. The server calculates and encrypts saved inputs and results as a separate snapshot. The assessment includes its report and uses its own entry flow in both the hosted app and the static preview.
+
 ## Phone preview on GitHub Pages
 
 The public [phone preview](https://georgi-cole.github.io/geneticage/) uses the same interface, themes, English/Bulgarian copy, questionnaire and clinical calculator as the hosted app. It starts without a profile or invented personal result. Reports can be explored locally without creating a purchase. Answers remain in page memory and disappear on reload; only theme/language preferences are stored on the device. The Account tab explains the distinction and links to the separately hosted app for cloud features.
@@ -50,6 +58,7 @@ The **App checks** workflow builds both editions. A maintainer can run it manual
 
 - A 31-question, six-section questionnaire with conditional questions, optional answers and validation.
 - A health profile, manual blood-entry route, and demo clinical PhenoAge calculation with unit conversions and explicit withholding states.
+- A separate Heart & Vascular assessment with regional SCORE2, a reference-age comparison and optional ApoB and Lp(a) results.
 - Report preview, Stripe hosted Checkout integration, verified purchased-report access and browser print/save-PDF layout. Charging stays disabled until merchant configuration and webhook delivery are ready.
 - Consultation enquiry preview with selectable sharing categories. No enquiry is transmitted.
 - Real sign-in via ChatGPT; separate adult account registration and versioned health-storage consent. The application stores a site-specific user ID and nickname, without persisting a sign-in email or full name.
@@ -89,7 +98,7 @@ Purchases shows payment state, paid report links and Stripe receipts. Account re
 
 References: https://docs.stripe.com/checkout/fulfillment, https://docs.stripe.com/webhooks, https://docs.stripe.com/api/checkout/sessions/create, https://docs.stripe.com/api/disputes/list.
 
-The clinical calculation uses the published clinical PhenoAge formula with a stable log-space transformation. The current age scope (20–84) and collection-review rules are described above and require clinical approval; they are not proof of universal model applicability. No questionnaire age, molecular clock, mortality probability, organ age or causal marker-contribution values are generated.
+The blood-based age calculation uses the published clinical PhenoAge formula with a stable log-space transformation. The current age scope (20–84) and collection-review rules are described above and require clinical approval. The health profile supplies educational guidance. Heart & Vascular reports its own defined cardiovascular endpoint and reference comparison.
 
 Before a public health service, review the privacy notice, provider agreements, retention/backups, applicable consent and regulatory scope, payment verification, clinical method approval and a staffed consultation workflow. Account deletion removes live profile, assessment, report and rate-limit rows; provider backups and downloads have separate lifecycles. Preserve the existing private Site audience unless explicitly authorized to change it. This release is not an independent security audit or clinical validation.
 

@@ -70,6 +70,26 @@ assert.equal(criticalStored.assessment.value,null);assert.equal(criticalStored.r
 assert.equal((await call(a,'assessments','POST',{...entry,id:criticalId})).response.status,201);
 assert.deepEqual((await call(a,'assessments/'+criticalId)).data.report.clinical,criticalStored.report.clinical,'An existing snapshot cannot be silently replaced.');
 assert.equal((await call(a,'assessments/'+criticalId,'DELETE',{confirm:true})).response.status,200);
+// A Heart & Vascular snapshot is recomputed and uses the same ownership rules.
+const heartId=randomUUID(),heartEntry={id:heartId,assessmentType:'heart-vascular',value:42,heart:{
+  age:50,country:'Germany',sex:'Male',smoking:'Yes',conditions:'No',treatment:'No',
+  systolic:{value:'140',unit:'mmHg'},total:{value:'5.5',unit:'mmol/L'},hdl:{value:'1.3',unit:'mmol/L'},
+  apob:{value:'95',unit:'mg/dL'},lpa:{value:'<12',unit:'nmol/L'},result:{risk:0},
+}};
+assert.equal((await call(a,'assessments','POST',heartEntry)).response.status,201);
+const savedHeart=(await call(a,'assessments/'+heartId)).data;
+assert.equal(savedHeart.assessment.value,null);
+assert.equal(savedHeart.report.heart.result.risk.toFixed(1),'7.6');
+assert.equal(savedHeart.report.heart.result.region,'moderate');
+assert.deepEqual(savedHeart.report.heart.inputs.lpa,heartEntry.heart.lpa);
+assert.equal(savedHeart.report.full,true);
+assert.equal(savedHeart.report.access.purchased,false);
+assert.equal((await call(a,'assessments')).data.assessments.find(x=>x.id===heartId).assessmentType,'heart-vascular');
+assert.equal((await call(b,'assessments/'+heartId)).response.status,404);
+assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:heartId})).response.status,400);
+assert.equal((await call(a,'assessments','POST',{...heartEntry,heart:{...heartEntry.heart,country:'Bulgaria'}})).response.status,201);
+assert.deepEqual((await call(a,'assessments/'+heartId+'/report')).data.report,savedHeart.report);
+assert.equal((await call(a,'assessments/'+heartId,'DELETE',{confirm:true})).response.status,200);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
 sqlite.prepare('UPDATE assessments SET payload=? WHERE id=?').run(stored.payload,withheldId);
 assert.equal((await call(a,'assessments/'+withheldId)).response.status,503);

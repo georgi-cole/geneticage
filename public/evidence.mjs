@@ -1,5 +1,10 @@
 export const CONTENT_VERSION='2026-11-07-assessment-v5';
 export const references=[
+ {id:'score2',label:'SCORE2 Working Group (2021) · 10-year cardiovascular risk',url:'https://doi.org/10.1093/eurheartj/ehab309'},
+ {id:'score2-coefficients',label:'SCORE2 · Published model coefficients and calibration',url:'https://doi.org/10.1093/eurheartj/ehab761'},
+ {id:'score2-regions',label:'ESC HeartScore · Country assignments',url:'https://www.heartscore.org/en_GB/faq'},
+ {id:'score2-scope',label:'ESC/EAS (2025) · Cardiovascular risk assessment',url:'https://doi.org/10.1093/eurheartj/ehaf190'},
+ {id:'vascular-age',label:'Cuende and Guijarro · Vascular age reference comparison',url:'https://pubmed.ncbi.nlm.nih.gov/40753001/'},
  {id:'critical-mayo',label:'Mayo Clinic Laboratories · Critical results · October 2026',url:'https://www.mayocliniclabs.com/-/media/it-mmfiles/Special-Instructions/4/2/A/critical-values-semi-urgent-results-list.pdf'},
  {id:'critical-crouse',label:'Crouse Health · Critical value chart',url:'https://laboratory.crouse.org/healthcare-providers/laboratory-services/reporting-documents/critical-value-chart/'},
  {id:'lab-coverage',label:'BioAge · Pinned NHANES III data used for prototype coverage',url:'https://github.com/dayoonkwon/BioAge/tree/b1f9fc02f086cd4aa74185f2335ab1366082e7fe'},
