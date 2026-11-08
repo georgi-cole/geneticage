@@ -20,6 +20,17 @@ assert.equal(saved.value,42);assert.equal(saved.gap,'-3');assert.equal(saved.act
 assert.equal(frozen.clinical.value,41.99,'Presentation must not mutate or recalculate a stored estimate.');
 const sample=renderThemeHome(overviewPresentation({...frozen,sample:true}));
 assert.match(sample,/>SAMPLE</);assert.match(sample,/Not your result/);
+const fitness={assessmentType:'fitness',system:{inputs:{age:{value:'33',unit:'years'}},result:{status:'ready',method:'HUNT',age:25,ageBand:{from:20,to:29}}}};
+const fitnessHome=renderThemeHome(overviewPresentation(fitness));
+assert.match(fitnessHome,/home-workspace.*result-instrument.*APPROXIMATE FITNESS AGE/s);
+assert.match(fitnessHome,/Study age group.*20–29.*Open your report/s);
+assert.doesNotMatch(fitnessHome,/Simple difference/);
+const bound=renderThemeHome(overviewPresentation({...fitness,system:{...fitness.system,result:{status:'ready',method:'HUNT',ageRange:'at-least',boundary:70}}}));
+assert.match(bound,/age-bound-label">At least<\/small>70/);
+assert.doesNotMatch(bound,/ESTIMATE UNAVAILABLE/);
+const vascular=overviewPresentation({assessmentType:'heart-vascular',heart:{inputs:{age:19},result:{method:'PDAY',ageBand:{from:24,to:28}}}});
+assert.equal(vascular.value,26);
+assert.equal(vascular.comparison.value,'24–28');
 assert.ok(!libraryMotif().includes('<span'),'The unlabelled decorative dot is removed.');
 assert.match(resultInstrument({value:50}),/class="sr-only">50<\/span><span aria-hidden="true" data-count-to="50"/);
 

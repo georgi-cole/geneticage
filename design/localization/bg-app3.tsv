@@ -123,3 +123,27 @@ Year	Година
 Delete	Изтрийте
 Edit	Редактирайте
 View	Вижте
+
+# Overview and assay-specific comparisons
+Your laboratory limits always take precedence. Published intervals provide context for your readings.	Използваме първо границите на вашата лаборатория. Публикуваните интервали дават контекст на стойностите.
+Creatinine reference group	Референтна група за креатинин
+From your health profile. Check it against your lab report.	Попълнено от здравния ви профил. Сверете с лабораторния резултат.
+Choose the group your lab uses, or enter its interval below.	Изберете групата, която използва лабораторията ви, или въведете нейния интервал по-долу.
+CRP test type	Вид изследване за CRP
+Choose the test name on your lab report.	Изберете вида, посочен в лабораторния резултат.
+Choose a reference group beside creatinine, or enter the interval from your lab.	Изберете референтна група до креатинина или въведете интервала на вашата лаборатория.
+Reference group needed	Нужна е референтна група
+Use your laboratory’s hs-CRP interval with this reference guide.	За това сравнение използвайте интервала за hs-CRP на вашата лаборатория.
+Lab interval needed	Нужен е лабораторен интервал
+Select Standard CRP or hs-CRP beside the reading, or enter the interval from your lab.	Изберете стандартен CRP или hs-CRP до стойността или въведете интервала на вашата лаборатория.
+CRP test type needed	Нужен е видът на CRP изследването
+At or above the hs-CRP threshold	На или над прага за hs-CRP
+Below the hs-CRP threshold	Под прага за hs-CRP
+Mayo Clinic Laboratories · hs-CRP	Лаборатории Mayo Clinic · hs-CRP
+Published adult comparisons	Публикувани сравнения за възрастни
+Cardiovascular threshold	Праг за сърдечносъдов риск
+Review comparison ↗	Прегледайте сравнението ↗
+Published intervals may differ from your laboratory. Reference colours show direction only. Separate critical-result alerts use their own published thresholds. The hs-CRP threshold provides cardiovascular context.	Публикуваните интервали може да се различават от тези на вашата лаборатория. Цветовете показват посоката на сравнението. Сигналите за критични резултати използват отделни публикувани прагове. Прагът за hs-CRP дава сърдечносъдов контекст.
+Study age group	Възрастова група в проучването
+Age at measurement	Възраст при измерването
+STUDY REFERENCE	РЕФЕРЕНТНИ ДАННИ ОТ ПРОУЧВАНЕ

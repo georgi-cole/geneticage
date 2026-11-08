@@ -1,5 +1,5 @@
 import {labs} from './lab-definitions.mjs';
-import {referenceCatalog,REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
+import {hsCrpGuide,referenceCatalog,referenceVersions,REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 
 const entered=value=>value!==undefined&&value!==null&&(typeof value!=='string'||value.trim()!=='');
 export function validateReferenceLimits({referenceLow:low,referenceHigh:high}={}){
@@ -46,29 +46,40 @@ export function compareLabReference(entry){
  return {status:'within',label:'Within your lab interval',low,high};
 }
 
+export function labReferenceGroup({labReferenceGroup:chosen,answers}={}){
+ return chosen??(answers?.sex==='Female'?'female':answers?.sex==='Male'?'male':'unspecified');
+}
+
 export function reviewLabReference(id,entry={},context={}){
  const lab=labs.find(item=>item.id===id),unit=entry.unit||lab?.units[0];
- if(!lab||!lab.units.includes(unit))return {status:'invalid',label:'Check the unit'};
  const own=entered(entry.referenceLow)||entered(entry.referenceHigh);
  const basic=compareLabReference(entry);
  if(own||['missing','invalid'].includes(basic.status))return {...basic,sourceKind:own?'lab':null,unit,comparisonValue:Number(entry.value),lowExclusive:entry.referenceLowExclusive===true,highExclusive:entry.referenceHighExclusive===true};
- const unknown=reason=>({status:'unknown',label:'No reference comparison',reason,unit,sourceKind:null});
+ const unknown=(reason,label='No reference comparison')=>({status:'unknown',label,reason,unit,sourceKind:null});
  if(!lab||!lab.units.includes(unit))return {status:'invalid',label:'Check the unit'};
  // Missing metadata on earlier saved records intentionally leaves them lab-only.
  if(context.labReferenceMode!=='published')return unknown('Add the interval from your lab report.');
- if(context.labReferenceVersion!==REFERENCE_CATALOG_VERSION)return unknown('The reference guide version is unavailable. Add your laboratory interval.');
+ if(!referenceVersions.includes(context.labReferenceVersion))return unknown('The reference guide version is unavailable. Add your laboratory interval.');
  if(!Number.isInteger(Number(context.labAge))||Number(context.labAge)<18)return unknown('The published guide is for adults. Confirm your age at the blood draw.');
  if(context.labContext!==true)return unknown('The collection context needs individual review. Add your laboratory interval.');
- const guide=referenceCatalog.intervals[id];
+ const highSensitivity=id==='crp'&&entry.assay==='hs-crp'&&context.labReferenceVersion===REFERENCE_CATALOG_VERSION;
+ const guide=highSensitivity?hsCrpGuide:referenceCatalog.intervals[id];
+ const source=highSensitivity?hsCrpGuide:referenceCatalog;
+ const group=labReferenceGroup(context);
  if(guide.fasting&&context.labFasting!=='Yes')return unknown('The published glucose interval requires confirmed fasting.');
- if(id==='creatinine'&&!['female','male'].includes(context.labReferenceGroup))return unknown('Choose the reference group printed on your report, or enter your laboratory interval.');
- if(guide.assay&&entry.assay!==guide.assay)return unknown('The published CRP interval is for standard CRP. Identify the test type or enter your laboratory interval.');
- const interval=id==='creatinine'?guide[context.labReferenceGroup]:guide;
+ if(id==='creatinine'&&!['female','male'].includes(group))return unknown('Choose a reference group beside creatinine, or enter the interval from your lab.','Reference group needed');
+ if(guide.assay&&entry.assay!==guide.assay)return unknown(entry.assay==='hs-crp'
+  ? 'Use your laboratory’s hs-CRP interval with this reference guide.'
+  : 'Select Standard CRP or hs-CRP beside the reading, or enter the interval from your lab.',entry.assay==='hs-crp'?'Lab interval needed':'CRP test type needed');
+ const interval=id==='creatinine'?guide[group]:guide;
  // Compare in the source's original units so rounded converted limits cannot
  // misclassify a value at a boundary. The original entry is never rewritten.
  const comparisonValue=Number((Number(entry.value)*lab.factor(unit)/lab.factor(guide.unit)).toPrecision(12));
- const comparison=compareLabReference({value:comparisonValue,referenceLow:interval.low,referenceHigh:interval.high});
- return {...comparison,label:comparison.label.replace('your lab interval','published guide'),sourceKind:'published',sourceLabel:referenceCatalog.label,sourceUrl:referenceCatalog.url+'#page='+guide.page,sourceVersion:referenceCatalog.version,unit:guide.unit,comparisonValue,lowExclusive:false,highExclusive:false};
+ const highExclusive=interval.highExclusive===true;
+ const comparison=compareLabReference({value:comparisonValue,referenceLow:interval.low,referenceHigh:interval.high,referenceHighExclusive:highExclusive});
+ const label=highSensitivity?(comparison.status==='above'?'At or above the hs-CRP threshold':'Below the hs-CRP threshold')
+  :comparison.label.replace('your lab interval','published guide');
+ return {...comparison,label,sourceKind:'published',sourceLabel:source.label,sourceUrl:guide.page?source.url+'#page='+guide.page:source.url,sourceVersion:source.version,unit:guide.unit,comparisonValue,lowExclusive:false,highExclusive,threshold:highSensitivity};
 }
 export const labDescriptions={
  albumin:'A protein in the blood, made by the liver.',

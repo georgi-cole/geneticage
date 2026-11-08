@@ -304,10 +304,3 @@ export function renderSystemReport({type, system, saved, pagesPreview, sourceLin
     <p class="report-footnote">Educational estimates · Not clinically reviewed.</p>
   </div>`;
 }
-
-export function renderSystemOverview(type, {result}, recordId) {
-  return `<div class="wrap app-screen heart-overview">${screenHeading('YOUR ASSESSMENT', systemAssessment(type).title)}
-    ${result.status === 'ready' ? ageReadout(type, result) : '<p class="muted">Open your report to see your readings and next steps.</p>'}
-    <div class="actions"><button class="btn" ${recordId ? `data-action="open-report" data-id="${esc(recordId)}"` : 'data-action="report"'}>Open your report ${arrow}</button></div>
-  </div>`;
-}

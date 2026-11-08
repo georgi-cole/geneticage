@@ -1,6 +1,6 @@
 import {
   heartQuestions, heartRegionLabels, heartDiagnosisQuestion, heartDiagnosisActive, heartSmokingFields, heartLegacySmoking,
-  heartStartIssue, heartLimitations, heartModelForReport, heartSources, HEART_UNSPECIFIED_CVD, SCORE2_DIABETES, FRAMINGHAM,
+  heartStartIssue, heartLimitations, heartModelForReport, heartAgeReadout, heartSources, HEART_UNSPECIFIED_CVD, SCORE2_DIABETES, FRAMINGHAM,
   heartDiabetesTypeQuestion, heartDiabetesDamageQuestion, heartNeedsDiabetesType, heartNeedsDiabetesDamage, heartUsesDiabetesLabs,
   heartOffersArterialAge, heartCanCompareArterialAge, arterialReference, heartRoutineAge, heartNeedsBpTreatment, heartBpTreatmentQuestion, heartRoutineAgeMissing,
   heartDiabetesMedicineQuestion, heartNeedsPdayMedicine, heartNeedsPdayBody, heartUsesPdayGlucose,
@@ -431,17 +431,13 @@ function riskSummary({inputs, result, review}) {
     </section>`;
   }
   const model = heartModelForReport(result);
-  const band = result.ageBand;
-  const midpoint = band && band.from !== null && band.to !== null ? Math.round((band.from + band.to) / 2) : null;
-  const age = result.ageRange === 'above' ? `<span>Above</span> ${model.maxAge}`
-    : result.ageRange === 'below' ? `<span>Below</span> ${model.minAge}`
-    : band ? (band.from === null ? `<span>Up to</span> ${esc(band.to)}`
-      : band.to === null ? `<span>At least</span> ${esc(band.from)}` : esc(midpoint))
-    : esc(result.age);
+  const readout = heartAgeReadout(result);
+  const boundLabel = {above:'Above',below:'Below','up-to':'Up to','at-least':'At least'}[readout.direction];
+  const age = boundLabel ? `<span>${boundLabel}</span> ${esc(readout.boundary)}` : esc(readout.age);
   const isPday = result.method === pday.name;
   const isFramingham = result.method === FRAMINGHAM;
   const ageOnly = isPday || isFramingham;
-  const ageStyle = result.ageRange || band && midpoint === null ? ' heart-age-bound' : '';
+  const ageStyle = boundLabel ? ' heart-age-bound' : '';
   const risk = ageOnly ? '' : result.risk < 0.1 ? '&lt;0.1%' : `${result.risk.toFixed(1)}%`;
   return `<section class="report-estimate result-surface heart-estimate" data-theme-part>
     <div class="heart-result-main">
@@ -449,7 +445,7 @@ function riskSummary({inputs, result, review}) {
       <span class="eyebrow">${isPday ? 'APPROXIMATE VASCULAR AGE' : isFramingham ? 'VASCULAR AGE' : 'VASCULAR RISK AGE'}</span>
       <div class="report-age-line${ageStyle}"><strong>${age}</strong>${result.ageRange ? '' : '<span>years</span>'}</div>
       <p>${isPday ? 'PDAY · Coronary plaque risk comparison' : isFramingham ? 'Framingham reference · U.S. study' : 'Approximate age comparison'}</p>
-      ${midpoint !== null ? `<p><span>Study comparison band</span> <span>${band.from}–${band.to}</span></p>` : ''}
+      ${readout.band ? `<p><span>Study comparison band</span> <span>${esc(readout.band.from)}–${esc(readout.band.to)}</span></p>` : ''}
     </div>
     ${ageOnly ? '' : `<div class="heart-result-meta">
       <div><strong>${risk}</strong><span>${model.name === SCORE2_DIABETES ? '10-year SCORE2-Diabetes risk' : model.name === 'SCORE2-OP' ? '10-year SCORE2-OP risk' : '10-year SCORE2 risk'}</span></div>
@@ -636,12 +632,5 @@ export function renderHeartReport({heart, saved, pagesPreview, sourceLinks, tab 
       <p class="print-only report-footnote">Educational report. Prepared automatically.</p>
     </article>
     <p class="report-footnote">Educational estimates · Not clinically reviewed.</p>
-  </div>`;
-}
-
-export function renderHeartOverview(heart, recordId) {
-  return `<div class="wrap app-screen heart-overview">${screenHeading('YOUR ASSESSMENT', 'Heart & Vascular')}
-    ${riskSummary(heart)}
-    <div class="actions"><button class="btn" ${recordId ? `data-action="open-report" data-id="${esc(recordId)}"` : 'data-action="report"'}>Open your report ${arrow}</button></div>
   </div>`;
 }

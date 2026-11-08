@@ -51,11 +51,13 @@ footer {display:none}
 .instrument-number .readout-label {display:block;font:8px var(--font-mono);letter-spacing:1.6px;color:var(--result-accent);line-height:1.5}
 .instrument-number .age-value {display:block;font-size:84px;font-weight:300;line-height:1;letter-spacing:-5px;margin:7px 0 3px;color:var(--result-ink);font-variant-numeric:tabular-nums}
 .instrument-number .age-value>[data-count-to] {font:inherit;letter-spacing:inherit;color:inherit;margin:0}
+.instrument-number .age-bound-label {display:block;text-align:center;font:11px var(--font-mono);letter-spacing:0;margin-bottom:3px}
 .instrument-unit {font-size:11px;color:var(--result-muted)}
 .dial-caption {position:absolute;bottom:8%;font:6.5px var(--font-mono);letter-spacing:1.1px;color:var(--result-muted)}
 .instrument-comparison {display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;gap:18px;max-width:390px;width:100%;margin:0 auto 16px;text-align:center;position:relative;z-index:2}
 .instrument-comparison>div>span {display:block;font-size:10px;color:var(--result-muted);margin-bottom:4px}
 .instrument-comparison strong {display:block;font-size:26px;font-weight:400;line-height:1.15;letter-spacing:-.7px}
+.instrument-comparison .comparison-method {font-size:clamp(13px,4.5vw,22px);overflow-wrap:anywhere;letter-spacing:0}
 .instrument-comparison small {font-size:10px;font-weight:400;letter-spacing:0;margin-left:5px;color:var(--result-muted)}
 .comparison-line {height:1px;background:linear-gradient(90deg,transparent,var(--result-accent),transparent);opacity:.5}
 .instrument-footer {display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--result-accent) 18%,transparent);position:relative;z-index:2}

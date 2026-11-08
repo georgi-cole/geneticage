@@ -12,14 +12,14 @@ import {APP_NAME} from './brand.mjs';
 import {CONSENT_VERSION} from './account-consent.mjs';
 import {accountEntry} from './account-entry.mjs';
 import {freshAssessment,continueAssessment,assessmentProgress} from './assessment-flow.mjs';
-import {validateLabReferences,setLabEntryUnit} from './lab-review.mjs';
+import {labReferenceGroup,validateLabReferences,setLabEntryUnit} from './lab-review.mjs';
 import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 import {renderAssessmentReport} from './report-ui.mjs';
 import {assessHeartVascular, HEART_ASSESSMENT, heartOffersArterialAge} from './heart-vascular.mjs';
-import {heartSteps, heartRoute, readHeartForm, refreshHeartFeedback, changeHeartUnit, renderHeartForm, renderHeartOverview, renderHeartReport, renderHeartArterialForm, readHeartArterialForm, heartRoutineAgeStep} from './heart-vascular-ui.mjs';
+import {heartSteps, heartRoute, readHeartForm, refreshHeartFeedback, changeHeartUnit, renderHeartForm, renderHeartReport, renderHeartArterialForm, readHeartArterialForm, heartRoutineAgeStep} from './heart-vascular-ui.mjs';
 import {heartPrefill} from './heart-prefill.mjs';
 import {assessSystem, systemAssessment, systemAssessments, systemField, systemPrefill} from './system-assessments.mjs';
-import {readSystemForm, refreshSystemFeedback, renderSystemForm, renderSystemOverview, renderSystemReport, systemMethods, systemRoute, systemStepFor} from './system-assessment-ui.mjs';
+import {readSystemForm, refreshSystemFeedback, renderSystemForm, renderSystemReport, systemMethods, systemRoute, systemStepFor} from './system-assessment-ui.mjs';
 import {resultInstrument,screenHeading,uiIcon,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,assessmentTitle,statusMessage,unmeasuredMark} from './ui-components.mjs';
 import {questionContext,questionChoices,questionDestination,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
 import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,insights,sampleAnswers,sampleLabs} from './model.mjs';
@@ -87,9 +87,6 @@ function privacy(){if(PAGES_PREVIEW){modal('Privacy & data','<p>Your answers sta
 
 function home(){
  const saved=auth.profile&&auth.history.some(item=>item.id===auth.overview?.assessment?.id)?auth.overview:null;
- const active=state.assessment?state:saved?.assessment, id=state.assessment?null:saved?.assessment.id;
- if(active&&isHeartAssessment(active)&&active.heart.result)return renderHeartOverview(active.heart,id);
- if(active&&isSystemAssessment(active)&&active.system.result)return renderSystemOverview(active.assessmentType,active.system,id);
  const record=state.assessment?{...state,clinical:clinical()}:saved?{...saved.assessment,clinical:saved.report.clinical,overviewSaved:true}:null;
  return renderThemeHome(overviewPresentation(record,{hasProfile:!!auth.profile}));
 }
@@ -198,7 +195,7 @@ function snapshot(){
  state.saveId??=crypto.randomUUID();
  if(isHeartAssessment(state))return {id:state.saveId,assessmentType:HEART_ASSESSMENT,heart:structuredClone(state.heart.inputs)};
  if(isSystemAssessment(state))return {id:state.saveId,assessmentType:state.assessmentType,system:structuredClone(state.system.inputs)};
- return {id:state.saveId,answers:structuredClone(state.answers),lab:structuredClone(state.lab),labAge:state.labAge,labDate:state.labDate,labSubmitted:!!state.labSubmitted,labContext:!!state.labContext,labFasting:state.labFasting||'Not recorded',labReferenceMode:state.labReferenceMode,labReferenceGroup:state.labReferenceGroup,labReferenceVersion:state.labReferenceVersion,sample:state.sample,unlocked:state.unlocked};
+ return {id:state.saveId,answers:structuredClone(state.answers),lab:structuredClone(state.lab),labAge:state.labAge,labDate:state.labDate,labSubmitted:!!state.labSubmitted,labContext:!!state.labContext,labFasting:state.labFasting||'Not recorded',labReferenceMode:state.labReferenceMode,labReferenceGroup:labReferenceGroup(state),labReferenceVersion:state.labReferenceVersion,sample:state.sample,unlocked:state.unlocked};
 }
 function save(){if(PAGES_PREVIEW){pagesInfo();return;}if(!state.assessment){goto('home');return;}if(!account()){state.pendingSave=true;signup();return;}modal('Save this assessment?',`<p>Store this questionnaire, blood entries, result and educational report in <strong data-no-translate>${esc(account().name)}</strong>. They will be available when you sign in on another device.</p><p>Saving does not share information with the consultation team or enrol you in research.</p><div class="notice">This creates a dated snapshot. Later assessments are saved separately so your history stays intact. The saved copy keeps the answers and result from this assessment.</div><button class="btn" data-action="confirm-save">Save to my account →</button><button class="text-btn" data-action="close" style="margin-left:15px">Cancel</button>`);}
 
@@ -575,6 +572,9 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
   return;
  }
  if(act==='report-tab'){state.reportTab=b.dataset.tab;goto('report');return;}
+ if(act==='lab-reference-edit'&&['creatinine','crp'].includes(b.dataset.id)){
+  dirty();state.labReferenceVersion=REFERENCE_CATALOG_VERSION;state.labStep=labErrorStep({[b.dataset.id]:true});goto('labs');return;
+ }
  if(act==='heart-arterial'&&state.heart){
   const form=$('#heart-form');
   if(form)captureHeart(form);

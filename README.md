@@ -28,7 +28,7 @@ Editorial standard: use concrete headings, ordinary English and defined terms; a
 
 Content version `2026-11-06-report-v3` retains questionnaire answers and blood entries when switching routes. Reports opens the current draft, with Summary, Findings, Blood results and Details instead of a long chapter dropdown. Sample exploration keeps a temporary copy of the current draft so the user can return to it. Only explicit reset/new-assessment actions clear entries; reloading still clears unsaved data.
 
-Users can enter their own reference limits in the measurement’s selected unit, including one-sided and exclusive limits. These take precedence. New assessments can use a source-pinned ABIM adult guide for missing intervals, or leave comparisons unassigned. The fallback requires known adult collection context; creatinine needs the report’s reference group, fasting glucose needs confirmed fasting, and CRP needs an identified standard assay. hs-CRP risk bands are not used as laboratory intervals. Earlier saved records without guide metadata remain lab-only. Reference settings never alter PhenoAge or overwrite saved results. [Reference policy and sources](docs/LAB_REFERENCE_POLICY.md).
+Users can enter their own reference limits in the measurement’s selected unit, including one-sided and exclusive limits. These take precedence. Published comparisons require adult collection context. The creatinine group and CRP test type appear beside their readings. Standard CRP uses the ABIM guide. High-sensitivity CRP uses the Mayo Clinic Laboratories cardiovascular threshold when selected. The encrypted record stores the guide version used. [Reference policy and sources](docs/LAB_REFERENCE_POLICY.md).
 
 ## Laboratory entry safeguards: 6 November 2026
 

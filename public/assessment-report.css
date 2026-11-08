@@ -40,6 +40,9 @@
 .reference-editor>summary>span {margin-left:auto}
 .reference-settings-content {border-top:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:8px}
 .reference-settings-content label,.assay-label {font-size:11px}.reference-settings-content select,#crp-assay {min-height:40px!important;font-size:12px!important;padding:8px 10px}
+.lab-reference-choice {display:grid;gap:6px;margin-top:12px}
+.lab-reference-choice select {min-height:40px!important;font-size:12px!important;padding:8px 10px}
+.lab-reference-choice .hint {margin:0}
 .reference-settings-content .hint {font-size:10px;margin:0 0 6px}.reference-settings-content .text-link {font-size:10px}
 .reference-editor .assay-label {display:block;margin:12px 0 6px}.reference-editor .assay-hint {font-size:10px;margin:8px 0 14px}
 .current-assessment {display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
@@ -83,7 +86,6 @@
 .report-estimate h2 {color:var(--result-ink);margin:7px 0 13px}
 .report-estimate .text-btn {font-size:12px;color:var(--result-ink);margin-top:14px}
 .heart-report-tabs {grid-template-columns:repeat(3,minmax(0,1fr))}
-.heart-overview {max-width:720px}
 .heart-estimate {--cover-art-size:clamp(86px,26vw,172px)}
 .heart-estimate .heart-result-main {position:relative;min-height:clamp(130px,23vw,184px);display:flex;flex-direction:column;justify-content:center;padding-inline-end:calc(var(--cover-art-size) + 10px)}
 .heart-estimate .report-artwork {right:0;top:50%;transform:translateY(-50%)}

@@ -46,7 +46,10 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('.mobile-nav [data-route="history"]');await click('[data-action="start-labs"]');
  assert.ok($('#lab-age'),'Switching routes does not start a new consent flow.');assert.equal($('#lab-age').value,'52');
  await enter('#lab-date','2026-11-01');await click('[name="lab-fasting"][value="Yes"]');await click('#lab-context');
- await enter('#lab-reference-group','female','change');await submit('#labs-form');
+ await submit('#labs-form');
+ assert.equal($('#lab-reference-group').value,'male');
+ assert.equal($('#lab-reference-group').closest('details'),null);
+ await enter('#lab-reference-group','female','change');
  const measurement=$('[data-lab="albumin"]'),measurementForm=$('#labs-form');
  assert.equal(measurement.getAttribute('aria-describedby'),'albumin-lab-feedback');
  assert.equal($('#albumin-lab-feedback').textContent,'','An untouched field has no verdict.');
@@ -67,7 +70,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  for(let step=1;step<=3;step++){
   for(const input of document.querySelectorAll('input[data-lab]'))await enter(`[data-lab="${input.dataset.lab}"]`,fictional[input.dataset.lab].value);
   if(step===1){await enter('[data-lab-reference="albumin"][data-reference-key="referenceLow"]','35');await enter('[data-lab-reference="albumin"][data-reference-key="referenceHigh"]','50');}
-  if(step===2)await enter('#crp-assay','standard-crp','change');
+  if(step===2){assert.equal($('#crp-assay').closest('details'),null);await enter('#crp-assay','hs-crp','change');}
   await submit('#labs-form');
  }
  $('#lab-valid').checked=true;$('#lab-context').checked=true;await submit('#labs-form');
@@ -77,6 +80,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.match($('[data-report-panel="details"]').textContent,/Fictional test country/);assert.match($('[data-report-panel="details"]').textContent,/52 years/);
  await click('[data-action="report-tab"][data-tab="blood"]');
  assert.equal(document.querySelectorAll('[data-reference-source="lab"]').length,1);assert.equal(document.querySelectorAll('[data-reference-source="published"]').length,8);
+ assert.ok([...$('[data-report-panel="blood"]').querySelectorAll('a')].some(a=>a.href==='https://www.mayocliniclabs.com/test-catalog/Overview/800024'));
  let printed=0;const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(el=>el.open);
  window.print=()=>{printed++;assert.ok(details.every(el=>el.open),'Print includes every disclosure in all four report sections.');};
  await click('[data-action="print"]');assert.equal(printed,1);window.dispatchEvent(new window.Event('afterprint'));assert.deepEqual(details.map(el=>el.open),previous);
@@ -251,6 +255,9 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.match($('[data-report-panel="methods"]').textContent,/Astley.*Table S10/s);
  await click('[data-action="report-tab"][data-tab="measurements"]');
  assert.ok([...$('[data-report-panel="measurements"]').querySelectorAll('a')].some(a=>a.href==='https://www.mayocliniclabs.com/test-catalog/Overview/617062'));
+ await click('.mobile-nav [data-route="home"]');
+ assert.ok($('.home-workspace .result-instrument'));
+ assert.match($('.readout-label').textContent,/APPROXIMATE KIDNEY AGE/);
  assert.equal(requests,0);
  assert.ok(Object.keys(localStorage).every(key=>['kq-theme-v2','kq-language-v1'].includes(key)));
 });

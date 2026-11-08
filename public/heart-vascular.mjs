@@ -213,6 +213,15 @@ export function heartModelForReport(result) {
     : result.method === SCORE2_DIABETES ? score2Diabetes : result.method === SCORE2_OP ? score2Op : score2;
   return {name, minAge, maxAge};
 }
+export function heartAgeReadout(result) {
+  const model = heartModelForReport(result), band = result.ageBand;
+  if (!model) return {age:null};
+  if (result.ageRange) return {age:null, direction:result.ageRange, boundary:result.ageRange==='above'?model.maxAge:model.minAge};
+  if (!band) return {age:result.age};
+  if (band.from===null) return {age:null, direction:'up-to', boundary:band.to};
+  if (band.to===null) return {age:null, direction:'at-least', boundary:band.from};
+  return {age:Math.round((band.from+band.to)/2), band};
+}
 export const heartSavedMethod = version => [...models, score2Diabetes, framingham, pday].find(model => model.version === version)?.name || 'Needs review';
 
 function scoreLogHazard({age, sex, region, smoking, systolic, total, hdl, diabetes}, {center, scale, coefficients}) {

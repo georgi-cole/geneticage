@@ -35,7 +35,7 @@ export function measurementFeedbackMarkup(lab,entry,{check,comparison,direction,
   const limits=low!==null&&high!==null&&!comparison.lowExclusive&&!comparison.highExclusive?`${low}–${high}`:[low===null?'':`${comparison.lowExclusive?'>':'≥'} ${low}`,high===null?'':`${comparison.highExclusive?'<':'≤'} ${high}`].filter(Boolean).join(' · ');
   const interval=(converted?'≈ ':'')+limits+' '+unit;
   const source=showSource&&compared&&comparison.sourceUrl?` <a href="${esc(comparison.sourceUrl)}" target="_blank" rel="noopener noreferrer">${esc(comparison.sourceLabel)} ↗</a>`:'';
-  markup=`<p class="lab-comparison" data-comparison="${compared?direction:'unknown'}"><span aria-hidden="true">${symbols[direction]||'·'}</span><span>${esc(compared?comparison.label:'No reference comparison')}<small ${converted?'title="Approximate converted interval. Status uses the unrounded source interval."':''}>${esc(compared?interval:comparison.reason||'Add the interval from your lab report.')}</small>${source}</span></p>`;
+  markup=`<p class="lab-comparison" data-comparison="${compared?direction:'unknown'}"><span aria-hidden="true">${symbols[direction]||'·'}</span><span>${esc(comparison.label)}<small ${converted?'title="Approximate converted interval. Status uses the unrounded source interval."':''}>${esc(compared?interval:comparison.reason||'Add the interval from your lab report.')}</small>${source}</span></p>`;
  }
  return markup+safetyMarkup(check,{reviewTitle,reviewText});
 }
@@ -73,6 +73,10 @@ export function initializeLabFeedback({root=document,getState}){
  root.addEventListener('change',event=>{
   const t=event.target;
   if(!t.dataset?.labUnit&&!t.dataset?.labReferenceRule&&!['lab-reference-mode','lab-reference-group','crp-assay','lab-context'].includes(t.id)&&t.name!=='lab-fasting')return;
-  queueMicrotask(()=>{const state=getState();for(const [id,touched]of Object.entries(state.labTouched||{}))if(touched)refreshLabFeedback(root,state,id);});
+  queueMicrotask(()=>{
+   const state=getState(),choice=t.id==='lab-reference-group'?'creatinine':t.id==='crp-assay'?'crp':null;
+   if(choice&&state.lab[choice]?.value){state.labTouched??={};state.labTouched[choice]=true;}
+   for(const [id,touched]of Object.entries(state.labTouched||{}))if(touched)refreshLabFeedback(root,state,id);
+  });
  });
 }
