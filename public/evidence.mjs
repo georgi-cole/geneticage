@@ -2,6 +2,11 @@ export const CONTENT_VERSION='2026-11-07-assessment-v5';
 export const references=[
  {id:'score2',label:'SCORE2 Working Group (2021) · 10-year cardiovascular risk',url:'https://doi.org/10.1093/eurheartj/ehab309'},
  {id:'score2-coefficients',label:'SCORE2 · Published model coefficients and calibration',url:'https://doi.org/10.1093/eurheartj/ehab761'},
+ {id:'score2-op',label:'SCORE2-OP Working Group (2021) · 10-year risk in older adults',url:'https://doi.org/10.1093/eurheartj/ehab312'},
+ {id:'score2-calculators',label:'ESC · SCORE2 and SCORE2-OP calculators',url:'https://www.escardio.org/guidelines/practice-tools/cvd-prevention-toolbox/score2-and-score2-op-calculators/'},
+ {id:'score2-diabetes',label:'SCORE2-Diabetes Working Group (2023) · Risk in type 2 diabetes',url:'https://doi.org/10.1093/eurheartj/ehad260'},
+ {id:'life-cvd2',label:'Hageman et al. (2024) · LIFE-CVD2 lifetime risk model',url:'https://doi.org/10.1093/eurjpc/zwae174'},
+ {id:'esc-blood-pressure',label:'ESC (2024) · Blood pressure assessment',url:'https://doi.org/10.1093/eurheartj/ehae178'},
  {id:'score2-regions',label:'ESC HeartScore · Country assignments',url:'https://www.heartscore.org/en_GB/faq'},
  {id:'score2-scope',label:'ESC/EAS (2025) · Cardiovascular risk assessment',url:'https://doi.org/10.1093/eurheartj/ehaf190'},
  {id:'vascular-age',label:'Cuende and Guijarro · Vascular age reference comparison',url:'https://pubmed.ncbi.nlm.nih.gov/40753001/'},

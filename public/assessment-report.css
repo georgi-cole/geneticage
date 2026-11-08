@@ -97,6 +97,7 @@
 .heart-result-meta>div:last-child {text-align:right}
 .heart-reading dl {margin:0}
 .heart-reading .text-btn {margin-top:6px;font-size:11px}
+.heart-entered-age {font-size:12px;font-weight:500}
 @media (max-width:480px) {
  .heart-estimate .report-age-line {gap:6px}
  .heart-estimate .report-age-line>strong {letter-spacing:-2px}

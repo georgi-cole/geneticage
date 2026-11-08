@@ -107,3 +107,97 @@ SCORE2 estimates the chance of a first heart attack, stroke, or cardiovascular d
 Choose where to begin.	Изберете откъде да започнете.
 Start with your answers or measurements you already have.	Започнете с отговори или с измервания, с които вече разполагате.
 Blood pressure and cholesterol	Кръвно налягане и холестерол
+
+# Guided intake and model-specific results
+Your country of residence determines which regional estimate applies.	Държавата, в която живеете, определя кой регионален модел се използва.
+Sex used for the risk estimate	Пол за изчисляване на риска
+The models use separate equations for female and male participants.	Моделите използват отделни формули за жени и мъже.
+Used to smoke	Пушил/а съм преди
+Never smoked	Никога не съм пушил/а
+Current smoker	Пуша в момента
+Not currently smoking	Не пуша в момента
+Does any of this health history apply to you?	Отнася ли се някое от следните за вас?
+Heart or blood vessel disease, diabetes, chronic kidney disease, an inherited or rare cholesterol or blood pressure disorder, or current pregnancy.	Заболяване на сърцето или кръвоносните съдове, диабет, хронично бъбречно заболяване, наследствено или рядко нарушение на холестерола или кръвното налягане, или настояща бременност.
+Which apply to you?	Кои от изброените се отнасят за вас?
+Select all that apply.	Изберете всички приложими отговори.
+Heart attack or coronary heart disease	Инфаркт или исхемична болест на сърцето
+Stroke or mini-stroke (TIA)	Инсулт или преходна исхемична атака (ТИА)
+Other heart or blood vessel disease	Друго заболяване на сърцето или кръвоносните съдове
+Chronic kidney disease	Хронично бъбречно заболяване
+Inherited or rare cholesterol or blood pressure disorder	Наследствено или рядко нарушение на холестерола или кръвното налягане
+Currently pregnant	Бременна съм в момента
+Not sure which	Не знам точно кое
+Select the conditions that apply or choose Not sure which.	Изберете състоянията, които се отнасят за вас, или „Не знам точно кое“.
+Choose Not sure which on its own.	Изберете „Не знам точно кое“ като единствен отговор.
+Smoking history	История на пушенето
+Add any details you know. These details appear in your report.	Въведете данните, които знаете. Те ще бъдат показани в доклада.
+Days you smoked in the past 30 days	Дни с пушене през последните 30 дни
+Cigarettes on a day you smoke	Цигари в ден, в който пушите
+Cigarettes on a day you smoked	Цигари в ден, в който сте пушили
+Years you smoked cigarettes	Години, през които сте пушили цигари
+Check the smoking history value.	Проверете въведената стойност за пушенето.
+Your age	Вашата възраст
+You can still record the measurements you have.	Можете да запишете измерванията, с които разполагате.
+Blood pressure	Кръвно налягане
+For 150/90, enter 150 in the first box and 90 in the second. The estimate uses the top number.	При 150/90 въведете 150 в първото поле и 90 във второто. Оценката използва горната стойност.
+Top number (systolic)	Горна стойност (систолична)
+Bottom number (optional)	Долна стойност (по избор)
+Enter the top number for this blood pressure reading.	Въведете горната стойност на кръвното налягане.
+The bottom number must be lower than the top number.	Долната стойност трябва да е по-ниска от горната.
+These results add context to your report.	Тези резултати допълват доклада.
+These results add context to your report. The estimate uses the routine measurements above.	Тези резултати допълват доклада. Оценката използва рутинните измервания по-горе.
+View report	Вижте доклада
+Your report is ready	Докладът ви е готов
+VASCULAR RISK	СЪДОВ РИСК
+Above	Над
+Below	Под
+10-year SCORE2-OP risk	10-годишен риск по SCORE2-OP
+SCORE2 estimates 10-year risk for eligible adults aged 40–69.	SCORE2 оценява 10-годишния риск при хора на възраст 40–69 години, които отговарят на условията.
+SCORE2-OP estimates 10-year risk for eligible adults aged 70–89.	SCORE2-OP оценява 10-годишния риск при хора на възраст 70–89 години, които отговарят на условията.
+The assessment uses SCORE2 for ages 40–69 and SCORE2-OP for ages 70–89, when eligible.	При изпълнени условия се използва SCORE2 за възраст 40–69 години и SCORE2-OP за възраст 70–89 години.
+The risk models use age, sex, current cigarette smoking, systolic blood pressure, total cholesterol and HDL cholesterol. The country of residence selects the regional calibration.	Моделите използват възраст, пол, текущо пушене на цигари, систолично кръвно налягане, общ и HDL холестерол. Държавата на пребиваване определя настройката за региона.
+Health history helps determine eligibility. Smoking frequency and history, diastolic blood pressure, ApoB and Lp(a) appear in the report for context.	Здравната история помага да се определи дали моделът е приложим. Честотата и историята на пушенето, диастоличното кръвно налягане, ApoB и Lp(a) допълват доклада.
+Calculation coverage is systolic blood pressure from 100 to under 180 mmHg, total cholesterol 2.5–8 mmol/L and HDL cholesterol 0.5–3 mmol/L.	Изчислението обхваща систолично налягане от 100 до под 180 mmHg, общ холестерол 2,5–8 mmol/L и HDL холестерол 0,5–3 mmol/L.
+Vascular risk age is an app comparison. It matches your risk to a nonsmoker of the same sex and region with systolic blood pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. Reference ages stay within the model’s age range.	Еквивалентната съдова възраст сравнява вашия риск с риска при непушач от същия пол и регион със систолично налягане 110 mmHg, общ холестерол 4,75 mmol/L и HDL холестерол 1,3 mmol/L. Сравнението е в рамките на възрастовия обхват на модела.
+The percentage estimates the chance of a first heart attack, stroke, or cardiovascular death over 10 years. Vascular risk age expresses that risk as a comparison with a reference profile.	Процентът оценява вероятността за първи инфаркт, инсулт или сърдечносъдова смърт през следващите 10 години. Еквивалентната съдова възраст сравнява този риск с референтен профил.
+Reported health history	Посочена здравна история
+What you can do next	Какво можете да направите
+Review measurements	Прегледайте измерванията
+Edit measurements	Редактирайте измерванията
+Edit age	Променете възрастта
+Review your measurements and health history with a clinician.	Обсъдете измерванията и здравната си история с лекар.
+The European 10-year risk estimates in this assessment start at age 40.	Европейските модели за 10-годишен риск в този анализ започват от 40-годишна възраст.
+The European 10-year risk estimates in this assessment cover ages 40–89.	Европейските модели за 10-годишен риск в този анализ обхващат възраст от 40 до 89 години.
+Review your blood pressure, cholesterol and family history with a clinician to discuss risk at your age.	Обсъдете кръвното налягане, холестерола и фамилната си история с лекар за оценка на риска на вашата възраст.
+Ask a clinician whether a longer-term risk assessment such as LIFE-CVD2 is appropriate for you.	Попитайте лекар дали оценка на по-дългосрочния риск като LIFE-CVD2 е подходяща за вас.
+Review your blood pressure and cholesterol with a clinician to find the assessment that fits your situation.	Обсъдете кръвното налягане и холестерола си с лекар, за да намерите подходящата оценка.
+Check your country of residence or ask a clinician which risk assessment is used where you live.	Проверете държавата на пребиваване или попитайте лекар кой метод за оценка се използва там.
+These models estimate the risk of a first event. Your answers include a history of cardiovascular disease.	Тези модели оценяват риска от първо сърдечносъдово събитие. Посочили сте сърдечносъдово заболяване.
+Ask the clinician who manages your heart or blood vessel condition about a follow-up risk assessment.	Попитайте лекуващия си лекар за оценка на риска при проследяване на заболяването.
+Your answers include a diabetes diagnosis. Cardiovascular risk in diabetes uses a separate assessment.	Посочили сте диагноза диабет. При диабет се използва отделна оценка на сърдечносъдовия риск.
+Ask your clinician about a diabetes-specific cardiovascular risk assessment.	Попитайте лекар за оценка на сърдечносъдовия риск, съобразена с диабета.
+If you have type 2 diabetes, ask a clinician whether SCORE2-Diabetes fits your history. It uses HbA1c, kidney function and age at diagnosis.	Ако имате диабет тип 2, попитайте лекар дали SCORE2-Diabetes е подходящ за вас. Той използва HbA1c, бъбречната функция и възрастта при поставяне на диагнозата.
+Your answers include chronic kidney disease. Kidney function changes how cardiovascular risk is assessed.	Посочили сте хронично бъбречно заболяване. Бъбречната функция влияе върху начина, по който се оценява сърдечносъдовият риск.
+Your answers include an inherited or rare cholesterol or blood pressure disorder. This requires a different approach to risk assessment.	Посочили сте наследствено или рядко нарушение на холестерола или кръвното налягане. То изисква отделен подход към оценката на риска.
+Current pregnancy requires a separate approach to cardiovascular assessment.	При бременност сърдечносъдовата оценка изисква отделен подход.
+Share your measurements with your maternity care team.	Покажете измерванията на медицинския екип, който проследява бременността ви.
+Your diagnosis history needs clarification before using this estimate.	За тази оценка са нужни уточнения относно здравната ви история.
+Check which diagnoses apply to you, or discuss your history and measurements with a clinician.	Проверете кои диагнози се отнасят за вас или обсъдете историята и измерванията си с лекар.
+Discuss your results and treatment history with the clinician who manages your cholesterol.	Обсъдете резултатите и лечението си с лекаря, който проследява холестерола ви.
+Your cholesterol medication history needs clarification before using this estimate.	За тази оценка е нужно да уточните дали приемате лекарства за холестерол.
+Check your medication list, or review it with a clinician.	Проверете списъка си с лекарства или го обсъдете с лекар.
+The estimate uses a sex-specific equation.	Оценката използва формула според пола.
+Review the sex input or view your measurements on their own.	Прегледайте отговора за пол или вижте измерванията си отделно.
+The estimate needs your current smoking status.	За оценката е нужен отговор дали пушите в момента.
+Review your smoking answer or view your measurements on their own.	Прегледайте отговора за пушене или вижте измерванията си отделно.
+This blood pressure is outside the range for the risk estimate.	Това кръвно налягане е извън обхвата на оценката на риска.
+Check the numbers against your reading. If this is a recent, confirmed reading, seek prompt medical advice.	Сверете числата с измерването. Ако стойностите са скорошни и потвърдени, потърсете медицински съвет възможно най-скоро.
+A blood pressure or cholesterol value falls outside this assessment’s calculation range.	Стойност на кръвното налягане или холестерола е извън обхвата на този анализ.
+Check the values and units. If they match your measurements, discuss them with a clinician.	Проверете стойностите и мерните единици. Ако съвпадат с измерванията, обсъдете ги с лекар.
+SCORE2 and SCORE2-OP estimate 10-year cardiovascular risk for eligible adults aged 40–69 and 70–89, respectively. The report uses the region for your country of residence, compares your risk with a reference age, and lists any optional results.	SCORE2 и SCORE2-OP оценяват 10-годишния сърдечносъдов риск при хора на възраст съответно 40–69 и 70–89 години, които отговарят на условията. Докладът използва региона на държавата, в която живеете, сравнява риска с референтна възраст и показва въведените допълнителни резултати.
+SCORE2-OP Working Group (2021) · 10-year risk in older adults	Работна група SCORE2-OP (2021) · 10-годишен риск при по-възрастни хора
+ESC · SCORE2 and SCORE2-OP calculators	ESC · Калкулатори за SCORE2 и SCORE2-OP
+SCORE2-Diabetes Working Group (2023) · Risk in type 2 diabetes	Работна група SCORE2-Diabetes (2023) · Риск при диабет тип 2
+Hageman et al. (2024) · LIFE-CVD2 lifetime risk model	Hageman и съавт. (2024) · Модел LIFE-CVD2 за риск през живота
+ESC (2024) · Blood pressure assessment	ESC (2024) · Оценка на кръвното налягане
+Educational report. Prepared automatically.	Образователен доклад. Изготвен автоматично.

@@ -38,11 +38,11 @@ The hosted Sites app and static Pages preview are separate publications. Both no
 
 ## Heart & Vascular
 
-This separate assessment estimates the 10-year risk of a first heart attack, stroke or cardiovascular death using the continuous SCORE2 equations for ages 40–69. The selected country of residence chooses the ESC region. The form collects smoking, the model’s sex input, systolic blood pressure, total and HDL cholesterol and eligibility answers. It withholds the estimate outside the supported scope. The app uses a conservative collection range of 100 to under 180 mmHg systolic, 2.5–8 mmol/L total cholesterol and 0.5–3 mmol/L HDL cholesterol. [SCORE2 study](https://doi.org/10.1093/eurheartj/ehab309), [coefficients](https://doi.org/10.1093/eurheartj/ehab761), [regional assignments](https://www.heartscore.org/en_GB/faq), [ESC/EAS scope](https://doi.org/10.1093/eurheartj/ehaf190).
+This separate assessment estimates the 10-year risk of a first heart attack, stroke or cardiovascular death for eligible adults using SCORE2 at ages 40–69 and SCORE2-OP at ages 70–89. The country of residence selects the ESC region. The models use current cigarette smoking, age, sex, systolic blood pressure, and total and HDL cholesterol. Health history determines eligibility. The app’s calculation range is 100 to under 180 mmHg systolic, 2.5–8 mmol/L total cholesterol and 0.5–3 mmol/L HDL cholesterol. Outside the supported scope, the report shows the reason, the entered measurements and a next step. [SCORE2 study](https://doi.org/10.1093/eurheartj/ehab309), [SCORE2-OP study](https://doi.org/10.1093/eurheartj/ehab312), [regional assignments](https://www.heartscore.org/en_GB/faq), [ESC/EAS scope](https://doi.org/10.1093/eurheartj/ehaf190).
 
-The approximate vascular risk age uses the same SCORE2 model with a fixed reference profile for the same sex and region. The profile uses no current smoking, systolic pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. The app uses the continuous model to match the estimated risk within ages 40–69 and shows the comparison limit when risk falls outside the reference range. [Published reference-profile approach](https://pubmed.ncbi.nlm.nih.gov/40753001/).
+The approximate vascular risk age uses the selected model and compares the estimated risk with that of a nonsmoker of the same sex and region with systolic pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. The comparison stays within the model’s age range and shows the relevant bound when the risk falls outside that range. [Published reference-profile approach](https://pubmed.ncbi.nlm.nih.gov/40753001/).
 
-ApoB and Lp(a) are optional report details and retain their reported units. The browser and server use the same versioned SCORE2 calculation. The server calculates and encrypts saved inputs and results as a separate snapshot. The assessment includes its report and uses its own entry flow in both the hosted app and the static preview.
+The report includes optional smoking history, diastolic blood pressure, ApoB and Lp(a) when entered. The browser and server share the versioned calculation. The server calculates and encrypts saved inputs and results as a separate snapshot. The assessment includes its report and uses its own entry flow in both the hosted app and the static preview.
 
 ## Phone preview on GitHub Pages
 
@@ -58,7 +58,7 @@ The **App checks** workflow builds both editions. A maintainer can run it manual
 
 - A 31-question, six-section questionnaire with conditional questions, optional answers and validation.
 - A health profile, manual blood-entry route, and demo clinical PhenoAge calculation with unit conversions and explicit withholding states.
-- A separate Heart & Vascular assessment with regional SCORE2, a reference-age comparison and optional ApoB and Lp(a) results.
+- A separate Heart & Vascular assessment with regional SCORE2 and SCORE2-OP, a reference-age comparison and optional ApoB and Lp(a) results.
 - Report preview, Stripe hosted Checkout integration, verified purchased-report access and browser print/save-PDF layout. Charging stays disabled until merchant configuration and webhook delivery are ready.
 - Consultation enquiry preview with selectable sharing categories. No enquiry is transmitted.
 - Real sign-in via ChatGPT; separate adult account registration and versioned health-storage consent. The application stores a site-specific user ID and nickname, without persisting a sign-in email or full name.

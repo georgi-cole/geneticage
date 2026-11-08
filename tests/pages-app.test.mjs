@@ -103,26 +103,44 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('#language-toggle');await submit('#heart-form');
  await enter('#heart-age','50');await click('[data-action="heart-back"]');assert.equal($('#heart-country').value,'Germany');
  await submit('#heart-form');assert.equal($('#heart-age').value,'50');await submit('#heart-form');
- for(const [name,value] of [['sex','Male'],['smoking','Yes'],['conditions','No'],['treatment','No']]){
+ for(const [name,value] of [['sex','Male'],['smoking','Some days']]){
   await click(`#heart-form [name="${name}"][value="${value}"]`);await submit('#heart-form');
  }
- await enter('#heart-systolic','140');await enter('#heart-total','5.5');await enter('#heart-hdl','1.3');
+ await enter('#heart-smokingDays30','8');await enter('#heart-cigarettes','3');await enter('#heart-smokingYears','12');
+ await submit('#heart-form');
+ for(const [name,value] of [['conditions','No'],['treatment','No']]){
+  await click(`#heart-form [name="${name}"][value="${value}"]`);await submit('#heart-form');
+ }
+ assert.match($('#heart-bp-hint').textContent,/150\/90/);
+ await enter('#heart-systolic','140');await enter('#heart-diastolic','90');await enter('#heart-total','5.5');await enter('#heart-hdl','1.3');
  assert.equal($('.heart-specialist').open,false);await click('.heart-specialist summary');
  await enter('#heart-apob','0.95');await enter('#heart-lpa','<12');
  await submit('#heart-form');
  assert.match($('.heart-estimate').textContent,/7\.6%/);assert.match($('.heart-estimate').textContent,/Germany.*Moderate-risk region/s);
  assert.equal($('[data-report-panel="measurements"]').hidden,true);
  await click('[data-action="report-tab"][data-tab="measurements"]');assert.equal($('[data-report-panel="summary"]').hidden,true);
+ assert.match($('[data-report-panel="measurements"]').textContent,/140\/90 mmHg/);
  assert.match($('[data-report-panel="measurements"]').textContent,/0\.95 g\/L/);assert.match($('[data-report-panel="measurements"]').textContent,/<12 nmol\/L/);assert.equal($('#main [data-action="save"]'),null);
  await click('[data-action="heart-edit"][data-part="specialist"]');assert.equal($('.heart-specialist').open,true);assert.equal(document.activeElement.id,'heart-apob');
  await submit('#heart-form');assert.equal($('[data-report-panel="measurements"]').hidden,false);
  await click('.mobile-nav [data-route="history"]');await click('[data-action="start-labs"]');assert.equal($('#lab-age').value,'52');
  await click('.mobile-nav [data-route="history"]');await click('[data-action="start-heart"]');assert.equal($('#heart-systolic').value,'140');
- for(let i=0;i<6;i++)await click('[data-action="heart-back"]');assert.equal($('#heart-country').value,'Germany');
- await enter('#heart-country','Bulgaria','change');for(let i=0;i<6;i++)await submit('#heart-form');
+ for(let i=0;i<7;i++)await click('[data-action="heart-back"]');assert.equal($('#heart-country').value,'Germany');
+ await enter('#heart-country','Bulgaria','change');for(let i=0;i<7;i++)await submit('#heart-form');
  await enter('#heart-apob','');await enter('#heart-lpa','');await submit('#heart-form');
  assert.match($('.heart-estimate').textContent,/14\.0%/);
  await click('[data-action="report-tab"][data-tab="measurements"]');assert.match($('[data-report-panel="measurements"]').textContent,/Add optional results/);
+ await click('[data-action="report-tab"][data-tab="methods"]');
+ assert.match($('[data-report-panel="methods"]').textContent,/Days you smoked in the past 30 days\s*8/);
+ await click('[data-action="heart-edit"][data-part="answers"]');
+ await submit('#heart-form');await enter('#heart-age','33');await submit('#heart-form');
+ assert.match($('.heart-scope-note').textContent,/Your age\s*33\s*years.*start at age 40/s);
+ assert.equal($('#heart-systolic').value,'140');
+ await submit('#heart-form');
+ assert.match($('.heart-estimate').textContent,/Estimate unavailable.*Your age\s*33\s*years/s);
+ assert.match($('[data-report-panel="summary"]').textContent,/What you can do next/);
+ await click('[data-report-panel="summary"] [data-tab="measurements"]');
+ assert.match($('[data-report-panel="measurements"]').textContent,/140\/90 mmHg/);
  assert.equal(requests,0);
  assert.ok(Object.keys(localStorage).every(key=>['kq-theme-v2','kq-language-v1'].includes(key)));
 });
