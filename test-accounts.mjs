@@ -74,7 +74,7 @@ assert.equal((await call(a,'assessments/'+criticalId,'DELETE',{confirm:true})).r
 const heartId=randomUUID(),heartEntry={id:heartId,assessmentType:'heart-vascular',value:42,heart:{
   age:50,country:'Germany',sex:'Male',smoking:'Yes',conditions:'No',treatment:'No',
   systolic:{value:'140',unit:'mmHg'},total:{value:'5.5',unit:'mmol/L'},hdl:{value:'1.3',unit:'mmol/L'},
-  apob:{value:'95',unit:'mg/dL'},lpa:{value:'<12',unit:'nmol/L'},result:{risk:0},
+  apob:{value:'95',unit:'mg/dL',referenceHigh:'100'},lpa:{value:'<12',unit:'nmol/L'},result:{risk:0},review:{version:'client-supplied'},
 }};
 assert.equal((await call(a,'assessments','POST',heartEntry)).response.status,201);
 const savedHeart=(await call(a,'assessments/'+heartId)).data;
@@ -82,10 +82,14 @@ assert.equal(savedHeart.assessment.value,null);
 assert.equal(savedHeart.report.heart.result.method,'SCORE2');
 assert.equal(savedHeart.report.heart.result.risk.toFixed(1),'7.6');
 assert.equal(savedHeart.report.heart.result.region,'moderate');
+assert.equal(savedHeart.report.heart.review.version,'heart-measurement-review-v1');
+assert.equal(savedHeart.report.heart.review.fields.apob.comparison.label,'Within your lab interval');
+assert.equal(savedHeart.report.heart.review.fields.lpa.direction,'unknown');
 assert.deepEqual(savedHeart.report.heart.inputs.lpa,heartEntry.heart.lpa);
 assert.equal(savedHeart.report.full,true);
 assert.equal(savedHeart.report.access.purchased,false);
 assert.equal((await call(a,'assessments')).data.assessments.find(x=>x.id===heartId).assessmentType,'heart-vascular');
+assert.equal((await call(a,'assessments')).data.assessments.find(x=>x.id===entry.id).hasProfile,true);
 assert.equal((await call(b,'assessments/'+heartId)).response.status,404);
 assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:heartId})).response.status,400);
 const olderHeart={...heartEntry,heart:{...heartEntry.heart,age:75,country:'Bulgaria',smoking:'Some days',smokingDays30:8,cigarettes:3}};

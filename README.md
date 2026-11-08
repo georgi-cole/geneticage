@@ -42,7 +42,11 @@ This separate assessment estimates the 10-year risk of a first heart attack, str
 
 The approximate vascular risk age uses the selected model and compares the estimated risk with that of a nonsmoker of the same sex and region with systolic pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. The comparison stays within the model’s age range and shows the relevant bound when the risk falls outside that range. [Published reference-profile approach](https://pubmed.ncbi.nlm.nih.gov/40753001/).
 
-The report includes optional smoking history, diastolic blood pressure, ApoB and Lp(a) when entered. The browser and server share the versioned calculation. The server calculates and encrypts saved inputs and results as a separate snapshot. The assessment includes its report and uses its own entry flow in both the hosted app and the static preview.
+Adults can review health history and measurements at any supported entry age. A new Heart & Vascular draft offers to review matching answers from the current Health & lifestyle draft, or the latest personal saved profile when there is no current draft with answers. The user confirms or edits those answers and fills in the remaining questions.
+
+Blood pressure and the lipid panel have separate steps. Leaving a field reveals an input check or a comparison with the user's lab interval, with a clearly labeled adult lipid guide where applicable. Lp(a) comparisons use the reported unit. A reading of at least 180 mmHg systolic or 110 mmHg diastolic gets a separate alert and withholds the risk estimate. [ABIM adult lipid guide](https://www.abim.org/media/e2wdwdqu/laboratory-reference-ranges.pdf) · [ESC blood-pressure guidance](https://doi.org/10.1093/eurheartj/ehae178) · [EAS Lp(a) consensus](https://doi.org/10.1093/eurheartj/ehac361)
+
+The report includes optional smoking history, diastolic blood pressure, ApoB and Lp(a) when entered. The browser and server share the versioned calculation and checks. The server calculates and encrypts the inputs, results and measurement review in a separate saved snapshot.
 
 ## Phone preview on GitHub Pages
 

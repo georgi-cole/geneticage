@@ -1,16 +1,20 @@
+import {heartMeasurements, heartDecimal as decimal, heartPressureMessage, reviewHeartMeasurements} from './heart-measurements.mjs';
+
 export const HEART_ASSESSMENT = 'heart-vascular';
 const SCORE2 = 'SCORE2';
 const SCORE2_OP = 'SCORE2-OP';
 const coverageSources = ['score2-regions', 'score2-scope'];
 
-export function heartSources(result) {
+export function heartSources(result, review) {
+  const labs = Object.values(review?.fields || {}).some(field => field.comparison?.sourceKind === 'published') ? ['adult-intervals'] : [];
   if (result.issue) {
-    const extra = {pressure:'esc-blood-pressure', diabetes:'score2-diabetes', young:'life-cvd2'}[result.issue];
-    return ['score2', 'score2-op', ...coverageSources, ...(extra ? [extra] : [])];
+    const extras = [result.issue === 'pressure' && 'esc-blood-pressure', result.issue === 'young' && 'life-cvd2',
+      (result.issue === 'diabetes' || result.historyIssue === 'diabetes') && 'score2-diabetes'].filter(Boolean);
+    return ['score2', 'score2-op', ...coverageSources, ...extras, ...labs];
   }
   return result.method === SCORE2_OP
-    ? ['score2-op', 'score2-calculators', ...coverageSources, 'vascular-age']
-    : ['score2', 'score2-coefficients', ...coverageSources, 'vascular-age'];
+    ? ['score2-op', 'score2-calculators', ...coverageSources, 'vascular-age', ...labs]
+    : ['score2', 'score2-coefficients', ...coverageSources, 'vascular-age', ...labs];
 }
 
 // ESC HeartScore's assignment of countries to the four SCORE2 calibrations.
@@ -29,15 +33,17 @@ const currentSmoking = ['Yes', 'Every day', 'Some days'];
 export const heartQuestions = [
   {id:'country', label:'Country of residence', options:[...countries, 'Other country'], hint:'Your country of residence determines which regional estimate applies.'},
   {id:'sex', label:'Sex used for the risk estimate', options:['Female', 'Male', 'Prefer not to say'], hint:'The models use separate equations for female and male participants.'},
-  {id:'smoking', label:'Which best describes your cigarette smoking?', options:['Every day', 'Some days', 'Used to smoke', 'Never smoked', 'Not sure']},
+  {id:'smoking', label:'Which best describes your cigarette smoking?', options:['Every day', 'Some days', 'Used to smoke', 'Never smoked', 'Not sure', 'Prefer not to say']},
   {id:'conditions', label:'Does any of this health history apply to you?', options:yesNo, hint:'Heart or blood vessel disease, diabetes, chronic kidney disease, an inherited or rare cholesterol or blood pressure disorder, or current pregnancy.'},
   {id:'treatment', label:'Are you taking cholesterol-lowering medicine?', options:yesNo},
 ];
 
+export const HEART_UNSPECIFIED_CVD = 'Heart or blood vessel disease (type unsure)';
 const diagnosesByIssue = {
   'Heart attack or coronary heart disease':'cvd',
   'Stroke or mini-stroke (TIA)':'cvd',
   'Other heart or blood vessel disease':'cvd',
+  [HEART_UNSPECIFIED_CVD]:'cvd',
   Diabetes:'diabetes',
   'Chronic kidney disease':'kidney',
   'Inherited or rare cholesterol or blood pressure disorder':'inherited',
@@ -58,15 +64,6 @@ export function heartSmokingFields(inputs) {
 }
 
 export const heartLegacySmoking = {Yes:'Current smoker', No:'Not currently smoking'};
-
-export const heartMeasurements = [
-  {id:'systolic', label:'Systolic blood pressure', units:['mmHg'], group:'pressure'},
-  {id:'diastolic', label:'Diastolic blood pressure', units:['mmHg'], group:'pressure', optional:true},
-  {id:'total', label:'Total cholesterol', units:['mmol/L', 'mg/dL']},
-  {id:'hdl', label:'HDL cholesterol', units:['mmol/L', 'mg/dL']},
-  {id:'apob', label:'ApoB (apolipoprotein B)', units:['g/L', 'mg/dL'], group:'specialist', optional:true},
-  {id:'lpa', label:'Lp(a) (lipoprotein(a))', units:['nmol/L', 'mg/dL'], group:'specialist', optional:true},
-];
 
 // SCORE2 authors' four-decimal coefficients (ehab761, Table 1).
 const score2Coefficients = {
@@ -130,30 +127,22 @@ function riskEquivalentAge(logHazard, sex, region, model) {
   return {age:Math.round(minAge + (maxAge - minAge) * (logHazard - first) / (last - first)), ageRange:null};
 }
 
-function decimal(value, allowQualifier = false) {
-  if (!['number', 'string'].includes(typeof value) || String(value).length > 24) return null;
-  const text = String(value).trim().replace(',', '.');
-  const match = /^([<>≤≥])?\s*(\d+(?:\.\d+)?|\.\d+)$/.exec(text);
-  if (!match || (match[1] && !allowQualifier) || !Number.isFinite(Number(match[2]))) return null;
-  return (match[1] || '') + match[2];
-}
-
 const reviewMeasurements = 'Review your blood pressure and cholesterol with a clinician to find the assessment that fits your situation.';
 export const heartLimitations = {
   young:{reason:'The European 10-year risk estimates in this assessment start at age 40.', next:'Review your blood pressure, cholesterol and family history with a clinician to discuss risk at your age.', edit:'age'},
   older:{reason:'The European 10-year risk estimates in this assessment cover ages 40–89.', next:reviewMeasurements, edit:'age'},
   region:{reason:'The country selected is outside the SCORE2 regions covered here.', next:'Check your country of residence or ask a clinician which risk assessment is used where you live.', edit:'country'},
-  cvd:{reason:'These models estimate the risk of a first event. Your answers include a history of cardiovascular disease.', next:'Ask the clinician who manages your heart or blood vessel condition about a follow-up risk assessment.'},
-  diabetes:{reason:'Your answers include a diabetes diagnosis. Cardiovascular risk in diabetes uses a separate assessment.', next:'Ask your clinician about a diabetes-specific cardiovascular risk assessment.'},
-  kidney:{reason:'Your answers include chronic kidney disease. Kidney function changes how cardiovascular risk is assessed.', next:reviewMeasurements},
-  inherited:{reason:'Your answers include an inherited or rare cholesterol or blood pressure disorder. This requires a different approach to risk assessment.', next:reviewMeasurements},
-  pregnancy:{reason:'Current pregnancy requires a separate approach to cardiovascular assessment.', next:'Share your measurements with your maternity care team.'},
+  cvd:{reason:'These equations estimate the chance of a first cardiovascular event. Risk with established disease uses a separate assessment.', next:'Ask the clinician who manages your heart or blood vessel condition about a follow-up risk assessment.'},
+  diabetes:{reason:'A diabetes-specific assessment can account for blood sugar control, kidney function and how long you have had diabetes.', next:'Bring your latest HbA1c and kidney function results if available. Ask which cardiovascular assessment fits your age and medical history.'},
+  kidney:{reason:'Kidney function can change the way cardiovascular risk is assessed.', next:'Ask how your kidney function results factor into your cardiovascular risk.'},
+  inherited:{reason:'Inherited lipid or blood pressure disorders can affect risk beyond the measurements these equations use.', next:reviewMeasurements},
+  pregnancy:{reason:'Pregnancy changes how blood pressure and cholesterol are interpreted.', next:'Share your measurements with your maternity care team.'},
   conditions:{reason:'Your diagnosis history needs clarification before using this estimate.', next:'Check which diagnoses apply to you, or discuss your history and measurements with a clinician.', edit:'conditions'},
   treatment:{reason:'This assessment uses cholesterol measurements from people who are not taking cholesterol-lowering medicine.', next:'Discuss your results and treatment history with the clinician who manages your cholesterol.'},
   treatmentUnknown:{reason:'Your cholesterol medication history needs clarification before using this estimate.', next:'Check your medication list, or review it with a clinician.', edit:'treatment'},
   sex:{reason:'The estimate uses a sex-specific equation.', next:'Review the sex input or view your measurements on their own.', edit:'sex'},
   smoking:{reason:'The estimate needs your current smoking status.', next:'Review your smoking answer or view your measurements on their own.', edit:'smoking'},
-  pressure:{reason:'This blood pressure is outside the range for the risk estimate.', next:'Check the numbers against your reading. If this is a recent, confirmed reading, seek prompt medical advice.', edit:'measurements'},
+  pressure:{reason:'A very high blood pressure reading needs attention before a long-term risk estimate.', next:heartPressureMessage, edit:'blood-pressure'},
   measurements:{reason:'A blood pressure or cholesterol value falls outside this assessment’s calculation range.', next:'Check the values and units. If they match your measurements, discuss them with a clinician.', edit:'measurements'},
 };
 
@@ -165,25 +154,31 @@ export function heartStartIssue(inputs) {
   return null;
 }
 
-function scopeIssue(inputs, region) {
-  const startIssue = heartStartIssue(inputs);
-  if (startIssue) return startIssue;
-  if (!region) return 'region';
+function historyIssue(inputs) {
   if (inputs.conditions !== 'No') {
     const issues = (inputs.diagnoses || []).map(diagnosis => diagnosesByIssue[diagnosis]);
-    return ['pregnancy', 'cvd', 'diabetes', 'kidney', 'inherited'].find(issue => issues.includes(issue)) || 'conditions';
+    const known = ['pregnancy', 'cvd', 'diabetes', 'kidney', 'inherited'].find(issue => issues.includes(issue));
+    if (known) return known;
   }
   if (inputs.treatment === 'Yes') return 'treatment';
-  if (inputs.treatment === 'Not sure') return 'treatmentUnknown';
-  if (inputs.sex === 'Prefer not to say') return 'sex';
-  if (inputs.smoking === 'Not sure') return 'smoking';
   return null;
 }
 
-const mmol = entry => Number(entry.value) / (entry.unit === 'mg/dL' ? 38.67 : 1);
+function scopeIssue(inputs, region, history) {
+  const startIssue = heartStartIssue(inputs);
+  if (startIssue) return startIssue;
+  if (!region) return 'region';
+  if (history) return history;
+  if (inputs.conditions !== 'No') return 'conditions';
+  if (inputs.treatment === 'Not sure') return 'treatmentUnknown';
+  if (inputs.sex === 'Prefer not to say') return 'sex';
+  if (['Not sure', 'Prefer not to say'].includes(inputs.smoking)) return 'smoking';
+  return null;
+}
+
 const unavailable = issue => ({issue, reason:heartLimitations[issue].reason});
 
-export function assessHeartVascular(raw = {}) {
+export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   const inputs = {};
   const errors = {};
   const age = decimal(raw?.age);
@@ -193,13 +188,14 @@ export function assessHeartVascular(raw = {}) {
 
   const startIssue = heartStartIssue({age:inputs.age, country:raw?.country});
   for (const {id, options} of heartQuestions) {
-    if (startIssue && id !== 'country') continue;
     const value = raw?.[id];
+    // Earlier clients could send only age, country and measurements outside model coverage.
+    if (startIssue && !requireHistory && id !== 'country' && value === undefined) continue;
     if (options.includes(value) || (id === 'smoking' && typeof value === 'string' && Object.hasOwn(heartLegacySmoking, value))) inputs[id] = value;
     else errors[id] = 'Choose an answer.';
   }
 
-  if (heartDiagnosisActive(inputs) && raw.diagnoses !== undefined) {
+  if (heartDiagnosisActive(inputs) && (requireHistory || raw.diagnoses !== undefined)) {
     const choices = Array.isArray(raw.diagnoses) ? [...new Set(raw.diagnoses)] : [];
     if (!choices.length || choices.some(choice => !heartDiagnosisQuestion.options.includes(choice))) errors.diagnoses = 'Select the conditions that apply or choose Not sure which.';
     else if (choices.includes('Not sure which') && choices.length > 1) errors.diagnoses = 'Choose Not sure which on its own.';
@@ -217,39 +213,23 @@ export function assessHeartVascular(raw = {}) {
   }
 
   const region = regionsByCountry.get(inputs.country);
-  const issue = scopeIssue(inputs, region);
-  const missing = [];
-  for (const {id, units, optional, group} of heartMeasurements) {
-    const entry = raw?.[id];
-    if (entry == null || (typeof entry === 'object' && (entry.value == null || typeof entry.value === 'string' && !entry.value.trim()))) {
-      if (!optional) missing.push(id);
-      continue;
+  const history = historyIssue(inputs), issue = scopeIssue(inputs, region, history);
+  const measurements = reviewHeartMeasurements(raw, inputs);
+  Object.assign(inputs, measurements.inputs);
+  Object.assign(errors, measurements.errors);
+  const {review, highPressure, outsideCoverage, values:{systolic, total, hdl}} = measurements;
+  if (!issue && !highPressure) {
+    for (const {id, optional} of heartMeasurements) {
+      if (!optional && !inputs[id] && !errors[id]) errors[id] = 'Enter the measured value.';
     }
-    const value = decimal(entry.value, group === 'specialist');
-    if (value === null || (group !== 'specialist' && Number(value) <= 0) || !units.includes(entry.unit)) {
-      errors[id] = 'Check the measured value and unit.';
-    } else inputs[id] = {value, unit:entry.unit};
   }
-
-  const total = inputs.total ? mmol(inputs.total) : null;
-  const hdl = inputs.hdl ? mmol(inputs.hdl) : null;
-  const systolic = Number(inputs.systolic?.value);
-  const diastolic = Number(inputs.diastolic?.value);
-  const highPressure = systolic >= 180 || diastolic >= 110;
-  if (!issue && !highPressure) for (const id of missing) errors[id] = 'Enter the measured value.';
-  if (total !== null && hdl !== null && hdl >= total) errors.hdl = 'HDL cholesterol must be lower than total cholesterol. Check both values and units.';
-  if (inputs.diastolic && !inputs.systolic && !errors.systolic) errors.systolic = 'Enter the top number for this blood pressure reading.';
-  if (diastolic >= systolic) errors.diastolic = 'The bottom number must be lower than the top number.';
-  if (Object.keys(errors).length) return {inputs, errors, result:null};
-  if (highPressure) return {inputs, errors, result:unavailable('pressure')};
-  if (issue) return {inputs, errors, result:unavailable(issue)};
-
-  if (systolic < 100 || total < 2.5 || total > 8 || hdl < 0.5 || hdl > 3) {
-    return {inputs, errors, result:unavailable('measurements')};
-  }
+  if (Object.keys(errors).length) return {inputs, errors, review, result:null};
+  if (highPressure) return {inputs, errors, review, result:unavailable('pressure')};
+  if (issue) return {inputs, errors, review, result:{...unavailable(issue), ...(startIssue && history ? {historyIssue:history} : {})}};
+  if (outsideCoverage) return {inputs, errors, review, result:unavailable('measurements')};
 
   const model = modelForAge(inputs.age);
   const logHazard = scoreLogHazard({age:inputs.age, sex:inputs.sex, region, smoking:Number(currentSmoking.includes(inputs.smoking)), systolic, total, hdl}, model);
   const risk = -100 * Math.expm1(-Math.exp(logHazard));
-  return {inputs, errors, result:{method:model.name, version:model.version, risk, region, ...riskEquivalentAge(logHazard, inputs.sex, region, model)}};
+  return {inputs, errors, review, result:{method:model.name, version:model.version, risk, region, ...riskEquivalentAge(logHazard, inputs.sex, region, model)}};
 }

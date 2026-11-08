@@ -2,22 +2,35 @@ import {labs} from './lab-definitions.mjs';
 import {referenceCatalog,REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 
 const entered=value=>value!==undefined&&value!==null&&(typeof value!=='string'||value.trim()!=='');
+export function validateReferenceLimits({referenceLow:low,referenceHigh:high}={}){
+ if([low,high].some(value=>entered(value)&&(!['string','number'].includes(typeof value)||String(value).length>32||!Number.isFinite(Number(value))||Number(value)<0)))return 'Reference limits must be numbers at or above zero.';
+ if(entered(low)&&entered(high)&&Number(low)>=Number(high))return 'The lower reference limit must be below the upper limit.';
+ return null;
+}
+
 export function validateLabReferences(data){
  const errors={};
  for(const lab of labs){
-  const entry=data?.[lab.id]||{},low=entry.referenceLow,high=entry.referenceHigh;
-  if([low,high].some(value=>entered(value)&&(!['string','number'].includes(typeof value)||String(value).length>32||!Number.isFinite(Number(value))||Number(value)<0)))errors[lab.id]='Reference limits must be numbers at or above zero.';
-  else if(entered(low)&&entered(high)&&Number(low)>=Number(high))errors[lab.id]='The lower reference limit must be below the upper limit.';
+  const error=validateReferenceLimits(data?.[lab.id]||{});
+  if(error)errors[lab.id]=error;
  }
  return errors;
 }
 // The unit selector identifies the measurement as printed. Keep any previously
 // entered reference bounds in the same physical units when that selector changes.
 export function setLabEntryUnit(id,entry,unit){
- const lab=labs.find(item=>item.id===id),previous=entry.unit||lab?.units[0];
+ return setMeasurementUnit(labs.find(item=>item.id===id),entry,unit);
+}
+
+export function setMeasurementUnit(lab,entry,unit){
+ const previous=entry.unit||lab?.units[0];
  if(!lab||!lab.units.includes(unit)||!lab.units.includes(previous))return entry;
  const next={...entry,unit};
- for(const key of ['referenceLow','referenceHigh'])if(previous!==unit&&entered(entry[key])&&Number.isFinite(Number(entry[key])))next[key]=String(Number((Number(entry[key])*lab.factor(previous)/lab.factor(unit)).toPrecision(12)));
+ if(previous===unit)return next;
+ for(const key of ['referenceLow','referenceHigh']){
+  if(!lab.factor){delete next[key];delete next[key+'Exclusive'];}
+  else if(entered(entry[key])&&Number.isFinite(Number(entry[key])))next[key]=String(Number((Number(entry[key])*lab.factor(previous)/lab.factor(unit)).toPrecision(12)));
+ }
  return next;
 }
 export function compareLabReference(entry){

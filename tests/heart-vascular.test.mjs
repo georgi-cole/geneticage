@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {assessHeartVascular, heartQuestions} from '../public/heart-vascular.mjs';
+import {heartPrefill} from '../public/heart-prefill.mjs';
+import {heartRoute} from '../public/heart-vascular-ui.mjs';
 import {BG} from '../public/locales/bg.mjs';
 
 const example = {
@@ -84,7 +86,7 @@ test('eligibility, incomplete data and out-of-range measurements cannot yield a 
   assert.ok(assessHeartVascular({...example, smoking:['Yes']}).errors.smoking);
 });
 
-test('early scope can produce a measurement-only report without unrelated answers', () => {
+test('earlier measurement-only submissions stay supported and new younger drafts keep health history', () => {
   const systolic = {value:'150', unit:'mmHg'};
   const diastolic = {value:'90', unit:'mmHg'};
   for (const [country, age, issue] of [['Germany', 33, 'young'], ['Bulgaria', 91, 'older'], ['Other country', 50, 'region']]) {
@@ -94,6 +96,53 @@ test('early scope can produce a measurement-only report without unrelated answer
     assert.equal(result.issue, issue);
     assert.equal(result.risk, undefined);
   }
+  assert.ok(assessHeartVascular({country:'Germany',age:33}, {requireHistory:true}).errors.smoking);
+  const younger = assessHeartVascular({...example, age:33, conditions:'Yes', diagnoses:['Diabetes']}, {requireHistory:true});
+  assert.deepEqual(younger.errors, {});
+  assert.equal(younger.result.issue, 'young');
+  assert.equal(younger.result.historyIssue, 'diabetes');
+  assert.deepEqual(younger.inputs.diagnoses, ['Diabetes']);
+  assert.ok(heartRoute(younger.inputs).some(step => step.id === 'diagnoses'));
+});
+
+test('lifestyle prefill carries matching facts forward and leaves narrower heart questions open', () => {
+  const overlap = heartPrefill({age:'33', country:' Германия ', smoking:'Some days', smokingDays30:'8', cigarettes:'3,5',
+    conditions:['Diabetes', 'Kidney disease', 'Heart or blood-vessel disease'], context:['None'], medicines:['None'],
+  });
+  assert.deepEqual(overlap, {age:33, country:'Germany', smoking:'Some days', cigarettes:3.5, smokingDays30:8,
+    conditions:'Yes', diagnoses:['Diabetes','Heart or blood vessel disease (type unsure)'], treatment:'No'});
+  assert.deepEqual(heartRoute(overlap,Object.keys(overlap)).map(step=>step.id),
+    ['review','sex','smoking-history','diagnoses','blood-pressure','measurements']);
+  assert.deepEqual(heartPrefill({country:'Unrecognized country', smoking:'Not at all', smokingEver100:'No',
+    conditions:['None'], medicines:['Another regular prescription']}), {smoking:'No'});
+  assert.deepEqual(heartPrefill({smoking:'Not at all', smokingRegular:'Yes', context:['Pregnant']}), {
+    smoking:'Used to smoke', conditions:'Yes', diagnoses:['Currently pregnant'],
+  });
+});
+
+test('lipid reviews separate own intervals, educational guides and calculation coverage', () => {
+  const lab = {...example, total:{value:'200',unit:'mg/dL'}, hdl:{value:'40',unit:'mg/dL'},
+    apob:{value:'0.90',unit:'g/L'}, lpa:{value:'125',unit:'nmol/L'},
+  };
+  const fields = assessHeartVascular(lab).review.fields;
+  assert.equal(fields.total.direction, 'above');
+  assert.equal(fields.hdl.direction, 'within');
+  assert.equal(fields.apob.direction, 'above');
+  assert.equal(fields.lpa.direction, 'unknown');
+  assert.equal(fields.total.comparison.sourceKind, 'published');
+  assert.equal(fields.total.comparison.unit, 'mg/dL');
+  const own = assessHeartVascular({...lab, total:{...lab.total, referenceHigh:'220'}, lpa:{...lab.lpa, referenceHigh:'125', referenceHighExclusive:true}});
+  assert.equal(own.review.fields.total.comparison.label, 'Within your lab interval');
+  assert.equal(own.review.fields.lpa.comparison.label, 'Above your lab interval');
+  assert.deepEqual(own.result, assessHeartVascular(lab).result);
+  assert.equal(assessHeartVascular({...lab, lpa:{value:'30',unit:'mg/dL'}}).review.fields.lpa.direction, 'above');
+  assert.equal(assessHeartVascular({...lab, lpa:{value:'<30',unit:'mg/dL'}}).review.fields.lpa.direction, 'unknown');
+  assert.equal(assessHeartVascular({...lab, conditions:'Yes', diagnoses:['Currently pregnant']}).review.fields.total.direction, 'unknown');
+  assert.ok(assessHeartVascular({...lab, total:{...lab.total, referenceLow:'220',referenceHigh:'200'}}).errors.totalReference);
+  const outside = assessHeartVascular({...example, total:{value:'8.1',unit:'mmol/L',referenceHigh:'9'}});
+  assert.equal(outside.review.fields.total.direction, 'within');
+  assert.equal(outside.review.fields.total.check.status, 'review');
+  assert.equal(outside.result.issue, 'measurements');
 });
 
 test('smoking history adds context while current status determines the published smoking input', () => {
@@ -124,6 +173,10 @@ test('health history and blood pressure can withhold the estimate for specific r
   assert.deepEqual(high.errors, {});
   assert.equal(high.result.issue, 'pressure');
   assert.equal(high.result.risk, undefined);
+  assert.deepEqual(high.review.pressureWarning.fields, ['diastolic']);
+  const highYounger = assessHeartVascular({...example, age:33, systolic:{value:'180',unit:'mmHg'}});
+  assert.equal(highYounger.result.issue, 'pressure');
+  assert.deepEqual(highYounger.review.pressureWarning.fields, ['systolic']);
   assert.ok(assessHeartVascular({...example, diastolic:{value:'141', unit:'mmHg'}}).errors.diastolic);
 });
 

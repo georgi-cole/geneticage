@@ -116,24 +116,26 @@ footer {display:none}
 .heart-entry .question .heart-choices {grid-template-columns:minmax(0,1fr);max-width:370px}
 .heart-entry .heart-choices .option {min-height:46px}
 .heart-entry .heart-choices .option>input {width:100%;height:100%;margin:0}
-.heart-entry .question .heart-diagnoses {max-width:unset}
+.heart-entry .question .heart-diagnoses {max-width:unset;grid-template-columns:repeat(2,minmax(0,1fr))}
+.heart-entry .heart-prompt:has(.heart-diagnoses)>legend {padding-top:14px}
+.heart-entry .heart-diagnoses .option {min-height:40px}
+.heart-prefill-list {max-width:520px}
+.heart-prefill-row {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.heart-prefill-row .text-btn {min-height:36px;font-size:11px}
 .heart-entry .heart-measurements {gap:16px;padding-top:8px}
 .heart-entry .heart-measurements .question>legend {font-size:20px;margin:0 0 7px}
 .heart-measurement-list {display:grid;gap:12px}
-.heart-pressure-inputs,.heart-lipid-inputs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
-.heart-pressure .hint,.heart-measurements .heart-lipid-inputs {margin-top:0}
+.heart-pressure-inputs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
 .heart-scope-note {border-left:2px solid var(--accent);padding:3px 0 3px 12px}
 .heart-scope-note p {color:var(--muted);font-size:12px;line-height:1.5;margin:4px 0 0}
 .heart-measurement {min-width:0}
 .heart-measurement label {display:block;font-size:12px;font-weight:500;margin:0 0 5px}
 .heart-entry .heart-measurement .input-row {max-width:370px}
 .heart-measurement .input-row select {width:auto;max-width:46%}
+.heart-entry .heart-measurement .reference-bounds>label>.reference-bound-input {display:flex;margin:0}
 .heart-specialist .reference-settings-content {gap:8px}
-@media (min-width:600px) {
- .heart-entry .question .heart-diagnoses {grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media (max-width:480px) {
- .heart-lipid-inputs {grid-template-columns:minmax(0,1fr)}
+@media (max-width:599px) {
+ .heart-diagnoses .option:not(.heart-compact-choice) {grid-column:1/-1}
 }
 .saved-records {min-height:0}
 .section-caption {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}

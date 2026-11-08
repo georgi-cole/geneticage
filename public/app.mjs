@@ -14,7 +14,8 @@ import {validateLabReferences,setLabEntryUnit} from './lab-review.mjs';
 import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 import {renderAssessmentReport} from './report-ui.mjs';
 import {assessHeartVascular, HEART_ASSESSMENT} from './heart-vascular.mjs';
-import {heartSteps, readHeartForm, renderHeartForm, renderHeartOverview, renderHeartReport} from './heart-vascular-ui.mjs';
+import {heartSteps, heartRoute, readHeartForm, refreshHeartFeedback, changeHeartUnit, renderHeartForm, renderHeartOverview, renderHeartReport} from './heart-vascular-ui.mjs';
+import {heartPrefill} from './heart-prefill.mjs';
 import {resultInstrument,screenHeading,uiIcon,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,assessmentTitle,statusMessage,unmeasuredMark} from './ui-components.mjs';
 import {questionContext,questionChoices,questionDestination,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
 import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,insights,sampleAnswers,sampleLabs} from './model.mjs';
@@ -220,13 +221,28 @@ function captureLabs(){
  if($('#lab-context'))state.labContext=$('#lab-context').checked;
  const fasting=form.querySelector('[name=lab-fasting]:checked');if(fasting)state.labFasting=fasting.value;
 }
-function heartForm(){return renderHeartForm({inputs:state.heart.inputs,errors:state.errors,step:state.heartStep,showOptional:state.heartOptional});}
+function heartForm(){return renderHeartForm({inputs:state.heart.inputs,errors:state.errors,step:state.heartStep,showOptional:state.heartOptional,prefilled:state.heartPrefilled,touched:state.heartTouched,prefillUnavailable:state.heartPrefillUnavailable});}
 function captureHeart(form){
- const inputs=readHeartForm(form,state.heart.inputs,state.heartStep);
- if(JSON.stringify(inputs)===JSON.stringify(state.heart.inputs))return;
+ const previous=state.heart.inputs,inputs=readHeartForm(form,previous,state.heartStep);
+ if(inputs.smoking!==previous.smoking)for(const id of ['smokingDays30','cigarettes','smokingYears'])delete inputs[id];
+ if(inputs.conditions!==previous.conditions)delete inputs.diagnoses;
+ if(JSON.stringify(inputs)===JSON.stringify(previous))return;
  dirty();
  state.heart={inputs};
  state.assessment=false;
+}
+function reviewHeartField(target,editing=false){
+ const id=target.dataset.heartValue||target.dataset.heartReference||target.dataset.heartUnit;
+ if(!id)return;
+ state.heartTouched??={};
+ state.heartTouched[id]=!editing;
+ if(editing||target.tagName==='SELECT'){
+  const errorKey=id+(target.dataset.heartReference?'Reference':'');
+  delete state.errors[errorKey];
+  target.form.querySelector('#heart-'+errorKey+'-error')?.remove();
+  if(target.dataset.heartReference)target.removeAttribute('aria-invalid');
+ }
+ refreshHeartFeedback(target.form,state.heart.inputs,state.heartTouched);
 }
 function render(){state.choiceCapacity=undefined;nav();document.body.dataset.view=state.view;const views={home,consent,questionnaire,review,labs:labForm,heart:heartForm,results:result,report,consult:consultation,account:dashboard,enquiry:()=>enquiryDone(state.enquiry)};$('#main').innerHTML=(views[state.view]||home)();if(state.view==='questionnaire'){language.refresh();fitQuestionChoices();}if(state.view==='consult')organizeConsultation();if(state.view==='review')$('#main>.wrap')?.classList.add('app-screen','task-screen','review-screen');if(state.view==='consent')$('#main>.wrap')?.classList.add('app-screen','task-screen','consent-screen');decorateDirectionalSymbols($('#main'));document.title=({home:'Your health workspace',account:state.accountTab==='reports'?'Reports':state.accountTab==='history'?'My assessments':'Your account',results:'Your assessment',heart:'Heart & Vascular',report:'Your report',consult:'Consultation'}[state.view]||'Your assessment')+' — '+APP_NAME;language.refresh();resultMotion.refresh();}
 function reset(goal=assessmentType(state)){draftBackup=null;state=freshAssessment(goal);goto('consent');}
@@ -238,10 +254,42 @@ function selectAssessment(type){
  state=parkedAssessments.get(type)||freshAssessment(type);
  parkedAssessments.delete(type);
 }
+async function enterHeart(){
+ const draft=state,view=state.view,accountTab=state.accountTab;
+ if(!draft.heart.result){
+  const profile=parkedAssessments.get('profile');
+  let answers=!profile?.sample&&Object.keys(profile?.answers||{}).length?profile.answers:null;
+  if(!answers&&!PAGES_PREVIEW){
+   if(accountRefresh)await accountRefresh;
+   const saved=auth.profile&&auth.history.findLast(record=>!record.sample&&record.hasProfile&&!isHeartAssessment(record));
+   if(saved){
+    try{answers=(await api('assessments/'+saved.id)).assessment.answers;}
+    catch{draft.heartPrefillUnavailable=true;}
+   }
+  }
+  if(state!==draft||state.view!==view||state.accountTab!==accountTab)return;
+  const previous=draft.heart.inputs,prefill=heartPrefill(answers||{});
+  if(previous.smoking&&previous.smoking!==prefill.smoking){delete prefill.smokingDays30;delete prefill.cigarettes;}
+  if(previous.conditions&&previous.conditions!==prefill.conditions)delete prefill.diagnoses;
+  const additions=Object.entries(prefill).filter(([id])=>!Object.hasOwn(previous,id));
+  if(additions.length){
+   Object.assign(draft.heart.inputs,Object.fromEntries(additions));
+   draft.heartPrefilled=[...new Set([...(draft.heartPrefilled||[]),...additions.map(([id])=>id)])];
+   draft.heartStep='review';draft.heartReviewEdit=false;
+  }
+ }
+ goto('heart');
+}
+function returnToHeartReview(){
+ state.heartReviewEdit=false;state.heartStep=heartRoute(state.heart.inputs,state.heartPrefilled)[0].id;goto('heart');
+}
 function beginAssessment(goal){
  if(state.view==='review')state.profileCompleted=true;
  selectAssessment(goal===HEART_ASSESSMENT?HEART_ASSESSMENT:'profile');
- if(goal===HEART_ASSESSMENT)state.reportTab='summary';
+ if(goal===HEART_ASSESSMENT){
+  state.reportTab='summary';
+  if(state.consent)return enterHeart();
+ }
  state=continueAssessment(state,goal);goto(state.view);
 }
 function loadSample(){if(!state.sample&&assessmentProgress(state).hasData)draftBackup=structuredClone(state);state={...freshAssessment(),resultTab:'summary',answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labReferenceGroup:'male',labFasting:'Yes',labDate:'2026-11-01',labValid:true,labContext:true,sample:true,labSubmitted:true,consent:true,assessment:true,profileCompleted:true};state.lab.crp.assay='standard-crp';goto('results');}
@@ -250,17 +298,22 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
  if(act==='pages-info'){pagesInfo();return;}
  if(act==='report-tab'){state.reportTab=b.dataset.tab;goto('report');return;}
  if(act==='heart-back'){
-  const steps=heartSteps(state.heart.inputs);
+  if(state.heartReviewEdit){returnToHeartReview();return;}
+  const steps=heartRoute(state.heart.inputs,state.heartPrefilled);
   const index=steps.findIndex(step=>step.id===state.heartStep);
   if(index>0){state.heartStep=steps[index-1].id;goto('heart');}
   else{state.accountTab='history';goto('account');}
   return;
  }
+ if(act==='heart-review-edit'){
+  state.heartStep=b.dataset.part;state.heartReviewEdit=true;goto('heart');return;
+ }
  if(act==='heart-edit'){
   const part=b.dataset.part;
-  state.heartStep=part==='answers'?'country':part==='specialist'?'measurements':part;
+  state.heartStep=part==='answers'?(state.heartPrefilled?.length?'review':'country'):part==='specialist'?'measurements':part;
+  state.heartReviewEdit=!heartRoute(state.heart.inputs,state.heartPrefilled).some(step=>step.id===state.heartStep);
   state.heartOptional=part==='specialist';
-  state.reportTab=state.heartStep==='measurements'?'measurements':'summary';
+  state.reportTab=['measurements','blood-pressure'].includes(state.heartStep)?'measurements':'summary';
   goto('heart');
   if(state.heartOptional)$('#heart-apob')?.focus();
   return;
@@ -274,7 +327,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
  if(act==='library-page'){state.libraryPage=Number(b.dataset.page);goto('account');return;}
  if(act==='lab-back'){if((state.labStep||0)>0){state.labStep--;goto('labs');}else goto('consent');return;}
  if(act==='consult-step'){advanceContactPage($('#consult-form'),Number(b.dataset.direction));return;}
- if(act==='account-area'||act==='assessments'){state.accountTab=b.dataset.tab||'history';state.libraryPage=0;goto('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='home'){goto('home');void hydrateOverview();return;}if(act==='method'){method();return;}if(act==='privacy'){privacy();return;}if(act==='close'){close();return;}if(act==='start'){beginAssessment('profile');return;}if(act==='start-labs'){beginAssessment('labs');return;}if(act==='start-heart'){beginAssessment(HEART_ASSESSMENT);return;}if(act==='sample'){loadSample();return;}if(act==='consent-next'){state.consent=$('#consent').checked;if(!state.consent){state.errors={consent:'Confirm your age and that you have read the assessment note.'};render();return;}goto(state.goal===HEART_ASSESSMENT?'heart':state.goal==='labs'?'labs':'questionnaire');return;}
+ if(act==='account-area'||act==='assessments'){state.accountTab=b.dataset.tab||'history';state.libraryPage=0;goto('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='home'){goto('home');void hydrateOverview();return;}if(act==='method'){method();return;}if(act==='privacy'){privacy();return;}if(act==='close'){close();return;}if(act==='start'){beginAssessment('profile');return;}if(act==='start-labs'){beginAssessment('labs');return;}if(act==='start-heart'){await action(b,()=>beginAssessment(HEART_ASSESSMENT));return;}if(act==='sample'){loadSample();return;}if(act==='consent-next'){state.consent=$('#consent').checked;if(!state.consent){state.errors={consent:'Confirm your age and that you have read the assessment note.'};render();return;}if(state.goal===HEART_ASSESSMENT){await action(b,enterHeart);return;}goto(state.goal==='labs'?'labs':'questionnaire');return;}
  if(act==='question-back'){if(questionChoices(state).page>0){state.optionPage--;render();return;}Object.assign(state,questionDestination(state,-1));goto(state.view);return;}if(act==='skip'){dirty();delete state.answers[b.dataset.id];Object.assign(state,questionDestination(state));goto(state.view);return;}if(act==='edit-section'){state.step=Number(b.dataset.index);state.questionIndex=0;state.optionPage=0;goto('questionnaire');return;}if(act==='add-drink'){editDrink();return;}if(act==='edit-drink'){editDrink(Number(b.dataset.index));return;}if(act==='remove-drink'){dirty();state.answers.drinks.splice(Number(b.dataset.index),1);render();return;}
  if(act==='without-labs'){state.profileCompleted=true;dirty();state.labSubmitted=false;state.assessment=true;goto('results');return;}if(act==='labs'){beginAssessment('labs');return;}if(act==='sample-labs'){loadSample();state.labStep=0;goto('labs');return;}if(act==='results'){if(state.view==='review')state.profileCompleted=true;state.assessment=true;state.resultTab='summary';goto('results');return;}if(act==='review'){goto('review');return;}if(act==='report'){state.reportTab='summary';goto('report');return;}if(act==='checkout'){checkout();return;}if(act==='print'){if(isHeartAssessment(state)||auth.reportReview||state.savedReport?.full===true){const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(d=>d.open);details.forEach(d=>d.open=true);window.addEventListener('afterprint',()=>details.forEach((d,i)=>d.open=previous[i]),{once:true});window.print();}else checkout();return;}
  if(act==='save-before-checkout'){await action(b,async()=>{await api('assessments','POST',snapshot());await openSaved(state.saveId,'report');checkout();});return;}
@@ -306,28 +359,30 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
 
 
 });
-document.addEventListener('input',e=>{const t=e.target;if(t.form?.id==='heart-form'){captureHeart(t.form);return;}if(t.dataset.labReference){dirty();state.lab[t.dataset.labReference]??={};state.lab[t.dataset.labReference][t.dataset.referenceKey]=t.value;delete state.errors[t.dataset.labReference+'Reference'];t.closest('details')?.querySelector('.error')?.remove();}});
-document.addEventListener('change',e=>{const t=e.target;if(t.form?.id==='heart-form'){captureHeart(t.form);return;}if(['lab-reference-mode','lab-reference-group','crp-assay'].includes(t.id)){dirty();if(t.id==='crp-assay'){state.lab.crp??={};state.lab.crp.assay=t.value;}else{state[t.id==='lab-reference-mode'?'labReferenceMode':'labReferenceGroup']=t.value;state.labReferenceVersion=REFERENCE_CATALOG_VERSION;}}if(t.dataset.labReferenceRule){dirty();state.lab[t.dataset.labReferenceRule]??={};state.lab[t.dataset.labReferenceRule][t.dataset.referenceKey]=t.value==='exclusive';}});
+document.addEventListener('input',e=>{const t=e.target;if(t.form?.id==='heart-form'){if(!t.dataset.heartUnit)captureHeart(t.form);if(t.dataset.heartValue||t.dataset.heartReference&&t.type==='text')reviewHeartField(t,true);return;}if(t.dataset.labReference){dirty();state.lab[t.dataset.labReference]??={};state.lab[t.dataset.labReference][t.dataset.referenceKey]=t.value;delete state.errors[t.dataset.labReference+'Reference'];t.closest('details')?.querySelector('.error')?.remove();}});
+document.addEventListener('change',e=>{const t=e.target;if(t.form?.id==='heart-form'){if(t.dataset.heartUnit)changeHeartUnit(t,state.heart.inputs[t.dataset.heartUnit]);captureHeart(t.form);if(t.dataset.heartUnit||t.dataset.heartReference&&t.tagName==='SELECT')reviewHeartField(t);return;}if(['lab-reference-mode','lab-reference-group','crp-assay'].includes(t.id)){dirty();if(t.id==='crp-assay'){state.lab.crp??={};state.lab.crp.assay=t.value;}else{state[t.id==='lab-reference-mode'?'labReferenceMode':'labReferenceGroup']=t.value;state.labReferenceVersion=REFERENCE_CATALOG_VERSION;}}if(t.dataset.labReferenceRule){dirty();state.lab[t.dataset.labReferenceRule]??={};state.lab[t.dataset.labReferenceRule][t.dataset.referenceKey]=t.value==='exclusive';}});
 document.addEventListener('toggle',e=>{if(e.target.matches?.('.reference-editor[open]'))document.querySelectorAll('.reference-editor[open]').forEach(editor=>{if(editor!==e.target)editor.open=false;});},true);
+document.addEventListener('focusout',e=>{const t=e.target;if(t.form?.id==='heart-form'&&(t.dataset.heartValue||t.dataset.heartReference&&t.type==='text'))reviewHeartField(t);});
 document.addEventListener('input',e=>{const t=e.target;clearContactFeedback(t);if(t.dataset.answer!==undefined||t.dataset.lab||t.dataset.drink!==undefined||['lab-age','lab-date'].includes(t.id))dirty();if(t.dataset.answer!==undefined&&!['radio','checkbox'].includes(t.type)){state.answers[t.dataset.answer]=t.value;if(['weight','weightYearAgo'].includes(t.dataset.answer))delete state.answers.weightChangeIntent;}if(t.dataset.lab){state.lab[t.dataset.lab]??={unit:labs.find(l=>l.id===t.dataset.lab).units[0]};state.lab[t.dataset.lab].value=t.value;}if(t.dataset.drink!==undefined)state.answers.drinks[Number(t.dataset.drink)][t.dataset.key]=t.value;if(t.id==='lab-age')state.labAge=t.value;if(t.id==='lab-date')state.labDate=t.value;});
 document.addEventListener('change',e=>{const t=e.target;clearContactFeedback(t);if(t.dataset.answer!==undefined||t.dataset.unit||t.dataset.labUnit||['lab-valid','lab-context'].includes(t.id))dirty();if(t.dataset.answer!==undefined&&['radio','checkbox'].includes(t.type)){const id=t.dataset.answer;if(t.type==='checkbox'){const exclusive=['None','Prefer not to say','Not sure'];let v=Array.isArray(state.answers[id])?[...state.answers[id]]:[];if(t.checked){v=exclusive.includes(t.value)?[t.value]:[...v.filter(x=>!exclusive.includes(x)),t.value];}else v=v.filter(x=>x!==t.value);state.answers[id]=v;}else{state.answers[id]=t.value;if(['smoking','smokingEver100','smokingRegular'].includes(id))pruneSmokingAnswers();if(id==='alcohol'&&t.value!=='Yes'){delete state.answers.alcoholDays;delete state.answers.drinks;}}syncChoiceInputs(id,t);}
  if(t.dataset.unit){state.answers[t.dataset.unit+'Unit']=t.value;if(['weight','weightYearAgo'].includes(t.dataset.unit))delete state.answers.weightChangeIntent;}if(t.dataset.labUnit){const id=t.dataset.labUnit,previous=state.lab[id]||{value:''},changed=previous.unit!==t.value&&['referenceLow','referenceHigh'].some(key=>previous[key]!==undefined&&previous[key]!=='');state.lab[id]=setLabEntryUnit(id,previous,t.value);for(const input of t.closest('fieldset').querySelectorAll('[data-lab-reference]'))input.value=state.lab[id][input.dataset.referenceKey]??'';if(changed){let note=t.closest('fieldset').querySelector('.reference-unit-note');if(!note){note=document.createElement('p');note.className='hint reference-unit-note';note.setAttribute('role','status');t.closest('.input-row').after(note);}note.textContent='Reference limits were converted to the selected unit. Check them against your report.';language.refresh();}}if(t.id==='lab-valid')state.labValid=t.checked;if(t.name==='lab-fasting'){dirty();state.labFasting=t.value;}if(t.id==='lab-context')state.labContext=t.checked;if(t.id==='share-assessment')$('#share-options').hidden=!t.checked;});
 document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target;if(f.id==='questions'){captureQuestion();const choices=questionChoices(state);if(choices.page<choices.pages-1){state.optionPage=choices.page+1;render();return;}const q=questionContext(state).question,errors=validateQuestionnaire(state.answers);state.errors=errors[q.id]?{[q.id]:errors[q.id]}:{};if(Object.keys(state.errors).length){render();return;}Object.assign(state,questionDestination(state));goto(state.view);}
  if(f.id==='heart-form'){
   captureHeart(f);
-  const steps=heartSteps(state.heart.inputs);
+  const steps=state.heartReviewEdit?heartSteps(state.heart.inputs).filter(step=>step.id===state.heartStep):heartRoute(state.heart.inputs,state.heartPrefilled);
   const index=steps.findIndex(step=>step.id===state.heartStep);
-  const {inputs,errors,result}=assessHeartVascular(state.heart.inputs);
-  const errorIndex=steps.findIndex(step=>step.fields.some(field=>errors[field.id]));
+  const {inputs,errors,result,review}=assessHeartVascular(state.heart.inputs,{requireHistory:!state.saved});
+  const errorIndex=steps.findIndex(step=>step.fields.some(field=>errors[field.id]||errors[field.id+'Reference']));
   if(errorIndex>=0&&errorIndex<=index){
    state.heartStep=steps[errorIndex].id;state.errors=errors;render();
    $('#heart-form [aria-invalid="true"]')?.focus();
    return;
   }
+  if(state.heartReviewEdit){returnToHeartReview();return;}
   if(index<steps.length-1){
    state.heartStep=steps[index+1].id;goto('heart');return;
   }
-  if(!state.saved){dirty();state.heart={inputs,result};}
+  if(!state.saved){dirty();state.heart={inputs,result,review};}
   state.assessment=true;state.heartOptional=false;goto('report');return;
  }
  if(f.id==='drink-form'){if(!f.reportValidity())return;const draft={type:$('#drink-type').value,count:$('#drink-count').value,ml:$('#drink-ml').value,abv:$('#drink-abv').value},index=Number(f.dataset.index);state.answers.drinks??=[];if(index<0)state.answers.drinks.push(draft);else state.answers.drinks[index]=draft;dirty();close();render();return;}
