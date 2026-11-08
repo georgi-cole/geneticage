@@ -1,4 +1,4 @@
-import {assessmentTitle,escapeHTML,resultInstrument,screenHeading,uiIcon} from './ui-components.mjs';
+import {assessmentTitle,escapeHTML,instrumentFooterNote,resultInstrument,screenHeading,uiIcon} from './ui-components.mjs';
 import {clinicalForDisplay} from './lab-safety.mjs';
 import {HEART_ASSESSMENT,heartAgeReadout} from './heart-vascular.mjs';
 import {systemAssessment} from './system-assessments.mjs';
@@ -58,17 +58,16 @@ export function renderOverviewPicker(choices,selected){
 export function renderThemeHome({age=45,sample=true,...presentation},{choices=[],selected,loadStatus='',loadingTitle,loadingSample=false}={}){
  const {empty=false,profileOnly=false,withheld=false,hasProfile=false}=presentation;
  const welcome=empty&&!loadStatus;
- const title=choices.find(choice=>choice.type===selected)?.title??presentation.title??(empty?'Your first assessment':withheld?'Review your assessment':profileOnly?'Your health profile':'A look at the result');
- const picker=choices.length>1?`<button id="overview-switch" class="overview-switch" type="button" data-action="choose-overview-result" aria-haspopup="dialog"><span>${escapeHTML(title)}</span><span class="overview-switch-icon">${uiIcon('down')}</span><span class="sr-only">Switch result</span></button>`:'';
- const subtitle=welcome
-  ? hasProfile?'Your workspace is ready. Start your first assessment.':'Start an assessment. No profile needed.'
-  : picker?'Tap the result name to switch.':choices.length?'Complete a different age assessment to switch results.':'A personal perspective, grounded in science.';
+ const switchable=choices.length>1;
+ const title=choices.find(choice=>choice.type===selected)?.title??loadingTitle??presentation.title??(empty?'Your first assessment':withheld?'Review your assessment':profileOnly?'Your health profile':'A look at the result');
+ const subtitle=welcome?(hasProfile?'Your workspace is ready. Start your first assessment.':'Start an assessment. No profile needed.'):'';
  const instrument=loadStatus
-  ? `<section class="result-instrument result-surface personal-result" aria-labelledby="result-instrument-title" data-theme-part>
-      <div class="instrument-heading"><h2 id="result-instrument-title" ${picker?'class="sr-only"':''}>${escapeHTML(loadingTitle)}</h2>${picker}<span class="instrument-tag">${loadingSample?'SAMPLE':'YOUR RESULT'}</span></div>
+  ? `<section class="result-instrument result-surface personal-result" aria-labelledby="result-instrument-title" data-theme-part ${switchable?'data-overview-swipe':''}>
+      <div class="instrument-heading"><h2 id="result-instrument-title">${escapeHTML(title)}</h2><span class="instrument-tag">${loadingSample?'SAMPLE':'YOUR RESULT'}</span></div>
       <div class="instrument-stage"><div class="overview-load-state"><p role="status">${loadStatus==='error'?'Could not load your saved result.':'Loading your saved result…'}</p>${loadStatus==='error'?'<button class="text-link" data-action="retry-overview">Try again</button>':''}</div></div>
+      ${switchable?`<div class="instrument-footer">${instrumentFooterNote(loadingSample?'Illustrative data · Not your result':'',true)}</div>`:''}
     </section>`
-  : resultInstrument({age,sample,...presentation,title,headingControl:picker});
+  : resultInstrument({age,sample,...presentation,title,switchable});
  return `<div class="wrap home-workspace app-screen">
   ${screenHeading('YOUR HEALTH',profileOnly?'Your health, in context.':'Your age, in context.',subtitle)}
   ${instrument}

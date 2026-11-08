@@ -12,6 +12,14 @@ export function assessmentProgress(state){
  const measurements=labs.filter(lab=>provided(state.lab?.[lab.id]?.value)).length;
  return {answered,total:questions.length,measurements,hasData:answered>0||measurements>0||provided(state.labAge)||provided(state.labDate)};
 }
+export function previousAssessment(history,goal){
+ const matches=record=>{
+  if(goal==='labs')return record.labSubmitted||typeof record.value==='number';
+  if(goal==='profile')return record.hasProfile&&(!record.sample||!record.labSubmitted);
+  return record.assessmentType===goal;
+ };
+ return history.findLast(record=>!record.sample&&matches(record))||history.findLast(matches);
+}
 export function freshAssessment(goal='profile'){
  return {view:'consent',step:0,questionIndex:0,optionPage:0,labStep:0,resultTab:'summary',reportTab:'summary',libraryPage:0,answers:{},lab:{},labAge:'',labDate:'',labReferenceMode:'published',labReferenceVersion:REFERENCE_CATALOG_VERSION,consent:false,goal,sample:false,errors:{},unlocked:false,assessment:false,profileCompleted:false,accountTab:'history',...(goal===HEART_ASSESSMENT?{assessmentType:HEART_ASSESSMENT,heartStep:'country',heart:{inputs:{}}}:systemAssessment(goal)?{assessmentType:goal,system:{inputs:{}},systemStep:'age',systemPrefilled:[],systemTouched:{}}:{})};
 }

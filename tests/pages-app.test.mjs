@@ -19,6 +19,13 @@ async function pickOverview(type){
  await click('#overview-switch');
  await click(`.overview-option[data-type="${type}"]`);
 }
+async function swipeOverview(dx,dy){
+ const card=$('.home-workspace [data-overview-swipe]');
+ for(const [type,clientX,clientY] of [['pointerdown',160,180],['pointerup',160+dx,180+dy]]){
+  card.dispatchEvent(Object.assign(new window.Event(type,{bubbles:true}),{pointerId:1,pointerType:'touch',isPrimary:true,clientX,clientY}));
+ }
+ await flush();
+}
 
 after(()=>window.close());
 
@@ -81,7 +88,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.ok($('.result-instrument'));
  await click('.mobile-nav [data-route="home"]');
  assert.equal($('#overview-switch'),null,'One result needs no selector.');
- assert.match($('.home-workspace .screen-head p').textContent,/Complete a different age assessment/);
+ assert.equal($('.home-workspace [data-overview-swipe]'),null);
  await click('.instrument-footer [data-action="results"]');
  await click('[data-action="report"]');
  assert.equal(document.querySelectorAll('.report-tabs button').length,4);assert.equal(document.querySelector('#report-chapter'),null);
@@ -276,7 +283,15 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('.mobile-nav [data-route="home"]');
  assert.ok($('.home-workspace .result-instrument'));
  assert.match($('.readout-label').textContent,/APPROXIMATE KIDNEY AGE/);
- assert.match($('.home-workspace .screen-head p').textContent,/Tap the result name to switch/);
+ assert.match($('.instrument-footer .overview-slide-hint').textContent,/Slide to switch between results/);
+ assert.equal($('.instrument-heading #overview-switch'),null);
+ await swipeOverview(-20,0);
+ await swipeOverview(-35,90);
+ assert.match($('.readout-label').textContent,/APPROXIMATE KIDNEY AGE/);
+ await swipeOverview(-95,3);
+ assert.match($('.readout-label').textContent,/APPROXIMATE VASCULAR AGE/);
+ await swipeOverview(95,3);
+ assert.match($('.readout-label').textContent,/APPROXIMATE KIDNEY AGE/);
  await click('#overview-switch');
  assert.deepEqual([...document.querySelectorAll('.overview-option')].map(option=>option.dataset.type),['kidney','heart-vascular','phenoage']);
  await click('.overview-option[data-type="phenoage"]');
@@ -286,7 +301,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('.instrument-footer [data-action="open-overview-draft"]');
  assert.ok($('#main [data-action="report"]'),'The result link opens the selected draft.');
  await click('.mobile-nav [data-route="home"]');
- assert.match($('#overview-switch').textContent,/Clinical PhenoAge/);
+ assert.match($('#result-instrument-title').textContent,/Clinical PhenoAge/);
  await pickOverview('kidney');
  await click('.instrument-footer [data-action="open-overview-draft"]');
  assert.match($('.heart-estimate').textContent,/APPROXIMATE KIDNEY AGE/);

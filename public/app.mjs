@@ -11,7 +11,7 @@ import {initializeLaunch} from './launch-screen.mjs';
 import {APP_NAME} from './brand.mjs';
 import {CONSENT_VERSION} from './account-consent.mjs';
 import {accountEntry} from './account-entry.mjs';
-import {freshAssessment,continueAssessment,assessmentProgress} from './assessment-flow.mjs';
+import {freshAssessment,continueAssessment,assessmentProgress,previousAssessment} from './assessment-flow.mjs';
 import {labReferenceGroup,validateLabReferences,setLabEntryUnit} from './lab-review.mjs';
 import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 import {renderAssessmentReport} from './report-ui.mjs';
@@ -152,6 +152,19 @@ function renderOverview(){
  const focused=$('#overview-switch')===document.activeElement;
  render();
  if(focused)($('#overview-switch')||$('#main')).focus({preventScroll:true});
+}
+function switchOverviewTo(choice,direction=0){
+ overviewType=choice.type;
+ if($('.overview-picker'))close();
+ renderOverview();
+ if(direction&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  $('.home-workspace .instrument-stage')?.animate?.(
+   [{transform:`translateX(${direction*20}px)`,opacity:.45},{transform:'translateX(0)',opacity:1}],
+   {duration:180,easing:'ease-out'}
+  );
+ }
+ announce(choice.title);
+ void hydrateOverview();
 }
 async function hydrateOverview(retry=false){
  if(state.view!=='home')return;
@@ -608,20 +621,12 @@ function completedForGoal(draft,goal){
  if(goal==='labs')return draft.labSubmitted===true;
  return draft.assessment===true;
 }
-function previousSaved(goal){
- return auth.history.findLast(record=>{
-  if(record.sample)return false;
-  if(goal==='labs')return record.labSubmitted||typeof record.value==='number';
-  if(goal==='profile')return record.hasProfile;
-  return record.assessmentType===goal;
- });
-}
 async function requestAssessment(goal,startOver=false){
  const current=state,view=state.view,tab=state.accountTab;
  if(accountRefresh)await accountRefresh;
  if(state!==current||state.view!==view||state.accountTab!==tab)return;
  const draft=draftForGoal(goal);
- const saved=hasEntriesForGoal(draft,goal)?null:previousSaved(goal);
+ const saved=hasEntriesForGoal(draft,goal)?null:previousAssessment(auth.history,goal);
  if(!startOver&&!completedForGoal(draft,goal)&&!saved)return beginAssessment(goal);
  modal('Start a new assessment?',`<p><strong>${esc(goalTitle(goal))}</strong></p><p>Starting over replaces the working answers for this assessment on this device.</p><div class="actions"><button class="btn" data-action="edit-existing-assessment" data-goal="${esc(goal)}" ${saved?`data-id="${esc(saved.id)}"`:''}>Edit existing</button><button class="btn secondary" data-action="restart-assessment" data-goal="${esc(goal)}">Start over</button></div>`);
 }
@@ -644,12 +649,17 @@ async function editExistingAssessment(goal,id,button){
  const saved=id?await api('assessments/'+id):null;
  if(!button.isConnected||id&&hiddenRecords.has(id))return;
  close();
- selectAssessment(draftTypeForGoal(goal));
- if(saved){
-  const pairedGoal=goal==='labs'?'profile':goal==='profile'?'labs':'';
-  const other=pairedGoal&&hasEntriesForGoal(state,pairedGoal)?otherRouteFields(state,goal):{};
-  state={...savedDraft(saved.assessment,saved.report,goal),...other};
-  if(Object.keys(other).length){dirty();state.assessment=false;}
+ if(saved?.assessment.sample){
+  rememberDraftForSample();
+  state=savedDraft(saved.assessment,saved.report,goal);
+ }else{
+  selectAssessment(draftTypeForGoal(goal));
+  if(saved){
+   const pairedGoal=goal==='labs'?'profile':goal==='profile'?'labs':'';
+   const other=pairedGoal&&hasEntriesForGoal(state,pairedGoal)?otherRouteFields(state,goal):{};
+   state={...savedDraft(saved.assessment,saved.report,goal),...other};
+   if(Object.keys(other).length){dirty();state.assessment=false;}
+  }
  }
  if(goal===HEART_ASSESSMENT&&state.heart.result){
   state.heartStep=state.heartPrefilled?.length?'review':'country';
@@ -660,11 +670,14 @@ async function editExistingAssessment(goal,id,button){
   state.systemPrefillLoaded=true;state.systemPrefilled=[];state.systemStep='age';
   goto('system');return;
  }
- return beginAssessment(goal);
+ return resumeAssessment(goal);
 }
 function beginAssessment(goal){
  if(state.view==='review')state.profileCompleted=true;
  selectAssessment(draftTypeForGoal(goal));
+ return resumeAssessment(goal);
+}
+function resumeAssessment(goal){
  if(goal===HEART_ASSESSMENT){
   state.reportTab='summary';
   if(state.consent)return enterHeart();
@@ -737,10 +750,9 @@ document.addEventListener('click',async e=>{
   return;
  }
  if(act==='show-overview-result'){
-  if(state.view==='home'&&overviewSelection().choices.some(choice=>choice.type===b.dataset.type)){
-   overviewType=b.dataset.type;
-   close();renderOverview();void hydrateOverview();
-  }else close();
+  const choice=state.view==='home'&&overviewSelection().choices.find(item=>item.type===b.dataset.type);
+  if(choice)switchOverviewTo(choice);
+  else close();
   return;
  }
  if(act==='retry-overview'){void hydrateOverview(true);return;}
@@ -959,6 +971,29 @@ document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target
 document.addEventListener('invalid',e=>{if(e.target.closest?.('#consult-form'))e.preventDefault();},true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('.overlay'))close();if(e.key==='Tab'&&$('.modal')){const items=[...$('.modal').querySelectorAll('button,a,input,select')].filter(el=>!el.hidden&&!el.disabled);const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
 
+let overviewSwipe=null;
+document.addEventListener('pointerdown',e=>{
+ if(e.pointerType!=='touch')return;
+ overviewSwipe=null;
+ const card=e.target.closest('.home-workspace [data-overview-swipe]');
+ if(e.isPrimary&&card&&!e.target.closest('button,a')){
+  overviewSwipe={id:e.pointerId,x:e.clientX,y:e.clientY,card};
+ }
+});
+document.addEventListener('pointerup',e=>{
+ if(!overviewSwipe||overviewSwipe.id!==e.pointerId)return;
+ const {x,y,card}=overviewSwipe;
+ overviewSwipe=null;
+ if(state.view!=='home'||!card.isConnected)return;
+ const dx=e.clientX-x,dy=e.clientY-y;
+ if(Math.abs(dx)<44||Math.abs(dx)<Math.abs(dy)*1.4)return;
+ const {choices,choice}=overviewSelection();
+ if(choices.length<2)return;
+ const index=choices.findIndex(item=>item.type===choice.type);
+ const direction=dx<0?1:-1;
+ switchOverviewTo(choices[(index+direction+choices.length)%choices.length],direction);
+});
+document.addEventListener('pointercancel',e=>{if(overviewSwipe?.id===e.pointerId)overviewSwipe=null;});
 initializeAppearance();
 render();
 refreshAccount().then(async()=>{if(location.hash==='#account'){state.accountTab='settings';goto('account');}else if(['account','report','results'].includes(state.view))render();await paymentReturn();});

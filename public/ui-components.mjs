@@ -21,8 +21,16 @@ export function unmeasuredMark(){
  return '<svg class="unmeasured-mark" viewBox="0 0 100 84" fill="none" aria-hidden="true" focusable="false"><defs><linearGradient id="signature-satin" x1="24" y1="10" x2="72" y2="73" gradientUnits="userSpaceOnUse"><stop stop-color="var(--result-accent)" stop-opacity=".3"/><stop offset=".32" stop-color="var(--result-ink)"/><stop offset=".48" stop-color="var(--result-accent)" stop-opacity=".5"/><stop offset=".7" stop-color="var(--result-ink)" stop-opacity=".9"/><stop offset="1" stop-color="var(--result-accent)" stop-opacity=".35"/></linearGradient></defs><g class="signature-surface"><path class="signature-rear" d="M33 6C70 17 73 28 52 42C30 56 33 68 67 80C42 61 41 57 60 45C87 28 70 13 33 6Z"/><path class="signature-front" d="M67 6C30 17 27 28 48 42C70 56 67 68 33 80C58 61 59 57 40 45C13 28 30 13 67 6Z"/><path class="signature-light" d="M67 6C35 18 30 28 48 42M60 51C65 61 54 71 33 80"/></g></svg>';
 }
 
+export function instrumentFooterNote(note,switchable=false){
+ const caption=`<span class="instrument-footer-caption">${escapeHTML(note)}</span>`;
+ if(!switchable)return caption;
+ return `<button id="overview-switch" class="overview-switch" type="button" data-action="choose-overview-result" aria-label="Switch results" aria-haspopup="dialog">
+   ${note?caption:''}<span class="overview-slide-hint">Slide to switch between results</span><span class="overview-desktop-hint">Switch results</span>
+ </button>`;
+}
+
 // Calibration is decorative, not a health score, confidence interval or aging speed.
-export function resultInstrument({value,age=null,gap=null,sample=false,illustrative=false,empty=false,profileOnly=false,withheld=false,action='sample',actionLabel='',recordId='',title='A look at the result',date='',readoutLabel='CLINICAL PHENOAGE',caption='BLOOD-BASED ESTIMATE',ageLabel='Age at blood draw',comparison,boundary,direction,headingControl=''}){
+export function resultInstrument({value,age=null,gap=null,sample=false,illustrative=false,empty=false,profileOnly=false,withheld=false,action='sample',actionLabel='',recordId='',title='A look at the result',date='',readoutLabel='CLINICAL PHENOAGE',caption='BLOOD-BASED ESTIMATE',ageLabel='Age at blood draw',comparison,boundary,direction,switchable=false}){
   const boundLabel={below:'Below',above:'Above','at-least':'At least','up-to':'Up to'}[direction];
   const bounded=typeof boundLabel==='string'&&Number.isInteger(boundary);
   if(!empty&&!profileOnly&&!withheld&&!isReportableAge(value)&&!bounded){withheld=true;profileOnly=true;}
@@ -32,9 +40,10 @@ export function resultInstrument({value,age=null,gap=null,sample=false,illustrat
   const secondary=comparison
     ? `<div><span>${escapeHTML(comparison.label)}</span><strong class="comparison-method">${escapeHTML(comparison.value)}${comparison.unit?`<small>${escapeHTML(comparison.unit)}</small>`:''}</strong></div>`
     : `<div><span>Simple difference</span><strong>${instrumentValue(gap,{signed:true})}<small>years</small></strong></div>`;
-  return `<section class="result-instrument result-surface ${sample?'sample-panel':'personal-result'} ${noAge?'welcome-instrument':''}" aria-labelledby="result-instrument-title" data-theme-part ${!noAge&&Number.isFinite(value)?'data-result-motion':''}>
+  const note=empty?'No profile needed':sample||illustrative?'Illustrative data · Not your result':date;
+  return `<section class="result-instrument result-surface ${sample?'sample-panel':'personal-result'} ${noAge?'welcome-instrument':''}" aria-labelledby="result-instrument-title" data-theme-part ${switchable?'data-overview-swipe':''} ${!noAge&&Number.isFinite(value)?'data-result-motion':''}>
     <img class="theme-orb" data-theme-asset="blood-moon" src="/assets/blood-moon-overview-v2.webp" srcset="/assets/blood-moon-overview-v2-small.webp 256w, /assets/blood-moon-overview-v2.webp 512w" sizes="260px" width="512" height="512" alt="" decoding="async">
-    <div class="instrument-heading ${empty?'instrument-heading-empty':''}"><h2 id="result-instrument-title" ${empty||headingControl?'class="sr-only"':''}>${empty?'Start here':escapeHTML(title)}</h2>${headingControl}<span class="instrument-tag">${empty?'START HERE':withheld?'REVIEW NEEDED':profileOnly?'HEALTH PROFILE':sample||illustrative?'SAMPLE':'YOUR RESULT'}</span></div>
+    <div class="instrument-heading ${empty?'instrument-heading-empty':''}"><h2 id="result-instrument-title" ${empty?'class="sr-only"':''}>${empty?'Start here':escapeHTML(title)}</h2><span class="instrument-tag">${empty?'START HERE':withheld?'REVIEW NEEDED':profileOnly?'HEALTH PROFILE':sample||illustrative?'SAMPLE':'YOUR RESULT'}</span></div>
     <div class="instrument-stage">
       <div class="instrument-atmosphere" aria-hidden="true"><span class="bionic-rib rib-one"></span><span class="bionic-rib rib-two"></span><span class="bionic-rib rib-three"></span></div>
       <div class="instrument-dial">
@@ -44,7 +53,7 @@ export function resultInstrument({value,age=null,gap=null,sample=false,illustrat
       </div>
     </div>
     ${noAge?`<p class="welcome-instrument-note">${empty?'Begin with your health profile or blood results you already have.':withheld?'Open this assessment to review why an estimate is unavailable.':'Your questionnaire creates a health profile. It does not calculate an age.'}</p>`:`<div class="instrument-comparison"><div><span>${escapeHTML(ageLabel)}</span><strong>${instrumentValue(age)}<small>years</small></strong></div><span class="comparison-line" aria-hidden="true"></span>${secondary}</div>`}
-    <div class="instrument-footer"><span>${empty?'No profile needed':sample||illustrative?'Illustrative data · Not your result':escapeHTML(date)}</span><button class="text-btn" data-action="${action}" ${recordId?`data-id="${escapeHTML(recordId)}"`:''}>${actionLabel||(empty?'Explore a sample':sample?'Explore the result':'About the calculation')}<span aria-hidden="true">↗</span></button></div>
+    <div class="instrument-footer">${instrumentFooterNote(note,switchable)}<button class="text-btn" data-action="${action}" ${recordId?`data-id="${escapeHTML(recordId)}"`:''}>${actionLabel||(empty?'Explore a sample':sample?'Explore the result':'About the calculation')}<span aria-hidden="true">↗</span></button></div>
   </section>`;
 }
 
@@ -96,7 +105,7 @@ export function renderAssessments({profile,history=[],loading=false,error='',pag
 
 export function renderReportLibrary({profile,history=[],loading=false,error='',assessment=false,currentRecordId='',pagesPreview=false}){
  return `<div class="wrap app-screen reports-screen">${screenHeading('YOUR WORKSPACE','Reports','The detail behind your result.')}
-  <button class="report-feature" data-action="${assessment?'report':'sample-report'}" data-theme-part>${reportArtwork()}<span class="eyebrow">${assessment?'CURRENT ASSESSMENT':'EXPLORE A SAMPLE'}</span><strong>Your health,<br>explained.</strong><span class="report-feature-caption">Interpretation · Findings · Sources</span><span class="report-feature-action">${assessment?'Open your report':'Preview a sample report'} ${uiIcon('arrow')}</span></button>
+  <button class="report-feature" data-action="${assessment?'report':'sample-report'}" data-theme-part>${reportArtwork()}<span class="eyebrow">${assessment?'LATEST ASSESSMENT':'EXPLORE A SAMPLE'}</span><strong>Your health,<br>explained.</strong><span class="report-feature-caption">Interpretation · Findings · Sources</span><span class="report-feature-action">${assessment?'Open your report':'Preview a sample report'} ${uiIcon('arrow')}</span></button>
   ${assessment?`<div class="assessment-controls">${removeLocalButton(currentRecordId)}</div>`:''}
   <section class="saved-records"><div class="section-caption"><h2>Saved reports</h2><span>PRIVATE LIBRARY</span></div>${statusMessage({loading,error})}${history.length?recordSummary(history,true):'<div class="quiet-empty"><p>'+(pagesPreview?'Cloud history is available in the hosted app.':'Save an assessment to keep its dated report here.')+'</p></div>'}</section>
   ${pagesPreview?'<button class="account-nudge text-btn" data-action="pages-info">Cloud features ↗</button>':!profile?'<button class="account-nudge text-btn" data-action="signup">Sign in to access saved reports <span aria-hidden="true">↗</span></button>':''}

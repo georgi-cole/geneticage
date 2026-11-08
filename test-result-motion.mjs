@@ -24,7 +24,9 @@ const fitness={assessmentType:'fitness',system:{inputs:{age:{value:'33',unit:'ye
 const savedSample={...frozen,id:'saved-sample',labSubmitted:true,sample:true};
 const choices=overviewChoices([], [savedSample,fitness]);
 assert.deepEqual(choices.map(({type,title,sample})=>[type,title,sample]),[['fitness','Fitness',false],['phenoage','PhenoAge',true]]);
-assert.match(renderThemeHome(overviewPresentation(savedSample),{choices,selected:'phenoage'}),/id="overview-switch".*PhenoAge.*>SAMPLE</s);
+const sampleOverview=renderThemeHome(overviewPresentation(savedSample),{choices,selected:'phenoage'});
+assert.match(sampleOverview,/data-overview-swipe.*<h2 id="result-instrument-title" >PhenoAge<\/h2>.*>SAMPLE</s);
+assert.match(sampleOverview,/instrument-footer.*id="overview-switch".*Illustrative data · Not your result.*Slide to switch between results/s);
 assert.match(renderOverviewPicker(choices,'phenoage'),/data-type="phenoage" aria-current="true".*PhenoAge.*>Sample</s);
 assert.match(renderThemeHome(welcome,{choices,selected:'phenoage',loadStatus:'loading',loadingTitle:'Clinical PhenoAge',loadingSample:true}),/>SAMPLE</);
 const personal={...frozen,labSubmitted:true};
