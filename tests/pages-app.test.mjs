@@ -77,6 +77,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.ok($('.result-instrument'));
  await click('.mobile-nav [data-route="home"]');
  assert.equal($('#overview-result'),null,'One result needs no selector.');
+ assert.match($('.home-workspace .screen-head p').textContent,/Complete a different age assessment/);
  await click('.instrument-footer [data-action="results"]');
  await click('[data-action="report"]');
  assert.equal(document.querySelectorAll('.report-tabs button').length,4);assert.equal(document.querySelector('#report-chapter'),null);
@@ -259,9 +260,15 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.match($('[data-report-panel="methods"]').textContent,/Astley.*Table S10/s);
  await click('[data-action="report-tab"][data-tab="measurements"]');
  assert.ok([...$('[data-report-panel="measurements"]').querySelectorAll('a')].some(a=>a.href==='https://www.mayocliniclabs.com/test-catalog/Overview/617062'));
+ await click('.mobile-nav [data-route="history"]');
+ assert.equal($('#main [data-action="report"]'),null,'My assessments has no current report shortcut.');
+ await click('.mobile-nav [data-route="reports"]');
+ await click('.report-feature[data-action="report"]');
+ assert.match($('.heart-estimate').textContent,/APPROXIMATE KIDNEY AGE/);
  await click('.mobile-nav [data-route="home"]');
  assert.ok($('.home-workspace .result-instrument'));
  assert.match($('.readout-label').textContent,/APPROXIMATE KIDNEY AGE/);
+ assert.match($('.home-workspace .screen-head p').textContent,/Choose an assessment from the menu on the card/);
  assert.deepEqual([...$('#overview-result').options].map(option=>option.value),['kidney','heart-vascular','phenoage']);
  $('#overview-result').focus();
  await enter('#overview-result','phenoage','change');

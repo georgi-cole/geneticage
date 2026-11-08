@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {sections,sampleAnswers} from './public/model.mjs';
 import {questionContext,questionChoices,questionDestination,labErrorStep,renderLabForm} from './public/flow-ui.mjs';
-import {renderAssessments,renderReportLibrary,renderAccount,pageSlice,resultInstrument} from './public/ui-components.mjs';
+import {renderAssessments,renderReportLibrary,renderRecordLibrary,renderAccount,pageSlice,resultInstrument} from './public/ui-components.mjs';
 
 // Every applicable question is visited once, including conditional follow-ups.
 for(const answers of [{age:'45'},sampleAnswers,{...sampleAnswers,smoking:'Used to smoke regularly',alcohol:'Yes'},{...sampleAnswers,smoking:'Smoke now',alcohol:'Yes'}]){
@@ -34,6 +34,19 @@ assert.equal(pageSlice([1,2,3],-1).page,0);
 const guest={profile:null,history:[],loading:false,error:''};
 assert.match(renderAssessments(guest),/data-action="start-labs"/);
 assert.match(renderAssessments(guest),/data-action="start"/);
+const history=[
+ {id:'blood-fixture',saved:'2026-11-01T08:00:00Z',labSubmitted:true,value:45},
+ {id:'fitness-fixture',saved:'2026-11-02T08:00:00Z',assessmentType:'fitness',method:'HUNT',value:null},
+ {id:'heart-fixture',saved:'2026-11-03T08:00:00Z',assessmentType:'heart-vascular',model:'score2-v1',value:null},
+];
+const assessmentHistory=renderRecordLibrary({history});
+assert.match(assessmentHistory,/Fitness/);
+assert.match(assessmentHistory,/Heart & Vascular/);
+assert.doesNotMatch(assessmentHistory,/data-action="open-(report|saved)"/,'System histories show summaries, with detailed reports in Reports.');
+assert.match(renderRecordLibrary({history,page:1}),/data-action="open-saved" data-id="blood-fixture">View result/);
+const savedReports=renderRecordLibrary({history,reports:true});
+assert.match(savedReports,/data-action="open-report" data-id="fitness-fixture">Read report/);
+assert.match(savedReports,/data-action="open-report" data-id="heart-fixture">Read report/);
 assert.match(renderReportLibrary(guest),/data-action="sample-report"/,'Reports are useful before an account exists.');
 assert.match(renderReportLibrary({...guest,assessment:true}),/data-action="report"/,'The current assessment report stays reachable without saving.');
 assert.match(renderAccount(guest),/Sign in \/ Create account/);

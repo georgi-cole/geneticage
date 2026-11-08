@@ -1150,6 +1150,8 @@ export const BG=Object.freeze({
   "Kidney": "Бъбречно здраве",
   "Fitness": "Физическа форма",
   "Assessment result": "Резултат от анализа",
+  "Choose an assessment from the menu on the card.": "Изберете анализ от менюто в картата с резултата.",
+  "Complete a different age assessment to switch results.": "Завършете друг анализ на възрастта, за да сменяте резултата.",
   "Loading your saved result…": "Зареждаме запазения ви резултат…",
   "Could not load your saved result.": "Запазеният ви резултат не можа да се зареди.",
   "System assessments": "Анализи по системи",

@@ -30,6 +30,9 @@ export function renderThemeHome({age=45,sample=true,...presentation},{choices=[]
  const {empty=false,profileOnly=false,withheld=false,hasProfile=false}=presentation;
  const welcome=empty&&!loadStatus;
  const picker=choices.length>1?'<select id="overview-result" class="overview-result-select" aria-label="Assessment result">'+choices.map(({type,label})=>`<option value="${escapeHTML(type)}" ${type===selected?'selected':''}>${escapeHTML(label)}</option>`).join('')+'</select>':'';
+ const subtitle=welcome
+  ? hasProfile?'Your workspace is ready. Start your first assessment.':'Start an assessment. No profile needed.'
+  : picker?'Choose an assessment from the menu on the card.':choices.length?'Complete a different age assessment to switch results.':'A personal perspective, grounded in science.';
  const title=(picker?choices.find(choice=>choice.type===selected)?.label:null)??presentation.title??(empty?'Your first assessment':withheld?'Review your assessment':profileOnly?'Your health profile':'A look at the result');
  const instrument=loadStatus
   ? `<section class="result-instrument result-surface personal-result" aria-labelledby="result-instrument-title" data-theme-part>
@@ -38,7 +41,7 @@ export function renderThemeHome({age=45,sample=true,...presentation},{choices=[]
     </section>`
   : resultInstrument({age,sample,...presentation,title,headingControl:picker});
  return `<div class="wrap home-workspace app-screen">
-  ${screenHeading('YOUR HEALTH',profileOnly?'Your health, in context.':'Your age, in context.',welcome?(hasProfile?'Your workspace is ready. Start your first assessment.':'Start an assessment. No profile needed.'):'A personal perspective, grounded in science.')}
+  ${screenHeading('YOUR HEALTH',profileOnly?'Your health, in context.':'Your age, in context.',subtitle)}
   ${instrument}
   <div class="overview-actions" data-theme-part><button class="btn" data-action="assessments">${welcome?'Start assessment':'New assessment'} ${uiIcon('arrow')}</button><button class="overview-method text-btn" data-action="method" aria-label="Understand the method"><span>The method</span>${uiIcon('external')}</button></div>
   <p class="overview-footnote">For adults 18+ · Saving is optional</p>
