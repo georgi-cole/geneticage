@@ -4,7 +4,7 @@ import {initializeAppearance} from './theme.mjs';
 import {PAGES_PREVIEW,HOSTED_APP_URL} from './hosting-mode.mjs';
 import {decorateDirectionalSymbols} from './icons.mjs';
 import {clearContactFeedback,validateContactPage,showContactPage,advanceContactPage} from './consultation-feedback.mjs';
-import {renderThemeHome,overviewPresentation} from './theme-home.mjs';
+import {renderThemeHome,overviewChoices,overviewPresentation} from './theme-home.mjs';
 import {initializeResultMotion} from './result-motion.mjs';
 import {initializeLanguage} from './language-system.mjs';
 import {initializeLaunch} from './launch-screen.mjs';
@@ -93,18 +93,10 @@ function method(){modal('About the assessments',`<p>Biological age is an estimat
 function privacy(){if(PAGES_PREVIEW){modal('Privacy & data','<p>Your answers stay in this page’s memory. Reloading or closing the page clears them. Only theme and language preferences are stored on this device.</p><p>This preview does not send your answers to an account database or payment service. GitHub delivers the static app files.</p>');return;}modal('Your account & information',`<p>You can explore an assessment without saving it. Unsaved questionnaire and blood entries stay in this page’s memory.</p><p>KoleQuant stores your sign-in email, nickname and consent record. Resend delivers a one-time code to your email address. Sign-in emails contain no health information.</p><p>When you explicitly save, your questionnaire, blood entries, results and educational report are sent over HTTPS and stored in the hosted account database. Health records are encrypted by the application before database storage. Authorized service operators can administer the service; this is not end-to-end encryption.</p><p>Saving is optional and is not permission for research, marketing or sharing with a consultation team. Those uses are not enabled. Hosting providers may process ordinary connection logs.</p><p>You can export or delete individual assessments, or delete your KoleQuant account and its live records in Data & settings. Provider backups may retain deleted data for a limited period. Downloaded copies remain on your device.</p><p>For a report purchase, Stripe collects payment and billing details. We store the purchase status, amount, payment references and receipt link. No questionnaire, blood entries or results are sent to Stripe. Deleting a purchased report removes account access; this does not request a refund. Stripe retains its own payment records.</p><p>Legacy demo accounts remain in their original browser storage unless you remove them. They are not uploaded automatically.</p><p class="small muted">The age calculation and consultation enquiry remain prototype features. A clinician has not reviewed results. Report purchases use Stripe when enabled; purchase availability is shown before checkout.</p>`);}
 
 function overviewSelection(){
- const byType=new Map();
  const history=auth.profile?auth.history:[];
- const add=(record,source)=>{
-  const type=independentAssessment(record)?assessmentType(record):record.labSubmitted||typeof record.value==='number'?'phenoage':null;
-  if(type&&!record.sample&&!byType.has(type))byType.set(type,{type,label:assessmentTitle(record),[source]:record});
- };
- for(const draft of [state.sample?draftBackup:state,...[...parkedAssessments.values()].reverse()]){
-  if(draft?.assessment)add(draft,'draft');
- }
- for(const record of [...history].reverse())add(record,'saved');
- const choices=[...byType.values()];
- const choice=byType.get(overviewType)||choices[0]||(state.assessment?{draft:state}:{saved:history.at(-1)});
+ const drafts=[state.sample?draftBackup:state,...[...parkedAssessments.values()].reverse()];
+ const choices=overviewChoices(drafts,history);
+ const choice=choices.find(item=>item.type===overviewType)||choices[0]||(state.assessment?{draft:state}:{saved:history.at(-1)});
  return {choices,choice};
 }
 function overviewSnapshot(id){
@@ -118,7 +110,7 @@ function home(){
  const loadStatus=choice.saved&&!record?(snapshot?.failed?'error':'loading'):'';
  const presentation=overviewPresentation(record,{hasProfile:!!auth.profile});
  if(choice.draft&&choice.draft!==state)presentation.action='open-overview-draft';
- return renderThemeHome(presentation,{choices,selected:choice.type,loadStatus,loadingTitle:choice.saved&&assessmentTitle(choice.saved)});
+ return renderThemeHome(presentation,{choices,selected:choice.type,loadStatus,loadingTitle:choice.saved&&assessmentTitle(choice.saved),loadingSample:choice.saved?.sample===true});
 }
 function renderOverview(){
  const focused=$('#overview-result')===document.activeElement;
@@ -184,7 +176,8 @@ function report(){
 function checkout(){if(PAGES_PREVIEW){pagesInfo();return;}if(!auth.payments?.enabled){modal('Report purchases are opening soon.',`<p>The full report will be available for <strong>US$7.99</strong> per saved assessment. Purchasing is not enabled yet, and no payment will be taken.</p><p>Your free insight, saved assessments and account history remain available.</p><button class="btn" data-action="close">Back to my report</button>`);return;}if(!account()){state.pendingCheckout=true;signup();return;}if(state.sample){modal('Explore this sample for free.','<p>This assessment contains illustrative data. Create an assessment with your own inputs before buying a personal report.</p><button class="btn" data-action="close">Back to sample</button>');return;}if(!state.saveId||!state.savedReport){modal('Save before you buy.',`<p>Save this assessment and report preview to your private account first. Your purchase will unlock this dated report on every device where you sign in.</p><button class="btn" data-action="save-before-checkout">Save & review purchase</button>`);return;}modal('Your full report. One simple purchase.',`<span class="pill">${auth.payments.mode==='test'?'Stripe test checkout · no real charge':'One-time purchase · no subscription'}</span><p style="margin-top:20px">Unlock the complete educational report for this saved assessment: all applicable priorities, your input summary, methods, and questions for a professional.</p><div class="notice"><strong>US$7.99</strong> · Any applicable taxes and the final total are shown on Stripe before you pay. This is an automated educational report, not a clinical consultation or diagnosis.</div><p class="small muted">Stripe handles payment details. Your questionnaire, blood measurements and results are not sent to Stripe. You’ll return here after checkout; purchased reports will also appear in your account.</p><button class="btn" data-action="purchase-checkout">Continue to secure payment →</button><button class="text-btn" data-action="close" style="margin-top:14px">Cancel</button>`);}
 async function openSaved(id,view='results'){
  const {assessment:s,report}=await api('assessments/'+id);
- selectAssessment(assessmentType(s));
+ if(s.sample)rememberDraftForSample();
+ else selectAssessment(assessmentType(s));
  state={...freshAssessment(assessmentType(s)),...s,labReferenceMode:s.labReferenceMode||'lab-only',labReferenceVersion:s.labReferenceVersion||null,labReferenceGroup:s.labReferenceGroup||'unspecified',profileCompleted:Object.keys(s.answers||{}).length>1,saveId:s.id,savedReport:report,unlocked:report.full===true,assessment:true,labValid:true,consent:true};
  goto(independentAssessment(state)?'report':view);
 }
@@ -562,7 +555,8 @@ function beginAssessment(goal){
  if(systemAssessment(goal)&&state.consent)return enterSystem();
  state=continueAssessment(state,goal);goto(state.view);
 }
-function loadSample(){if(!state.sample&&assessmentProgress(state).hasData)draftBackup=structuredClone(state);state={...freshAssessment(),resultTab:'summary',answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labReferenceGroup:'male',labFasting:'Yes',labDate:'2026-11-01',labValid:true,labContext:true,sample:true,labSubmitted:true,consent:true,assessment:true,profileCompleted:true};state.lab.crp.assay='standard-crp';goto('results');}
+function rememberDraftForSample(){if(!state.sample&&assessmentProgress(state).hasData)draftBackup=structuredClone(state);}
+function loadSample(){rememberDraftForSample();state={...freshAssessment(),resultTab:'summary',answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labReferenceGroup:'male',labFasting:'Yes',labDate:'2026-11-01',labValid:true,labContext:true,sample:true,labSubmitted:true,consent:true,assessment:true,profileCompleted:true};state.lab.crp.assay='standard-crp';goto('results');}
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-action]');if(!b)return;const act=b.dataset.action;e.preventDefault();
  if(state.view==='questionnaire')captureQuestion();else if(state.view==='labs')captureLabs();
  if(act==='start-system'&&systemAssessment(b.dataset.type)){await action(b,()=>beginAssessment(b.dataset.type));return;}
