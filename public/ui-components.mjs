@@ -5,6 +5,9 @@ import {isReportableAge} from './lab-safety.mjs';
 import {HEART_ASSESSMENT, heartSavedMethod} from './heart-vascular.mjs';
 import {systemAssessment, systemAssessments} from './system-assessments.mjs';
 export const screenHeading=(eyebrow,title,subtitle='',action='')=>`<header class="screen-head" data-theme-part><div><span class="eyebrow">${eyebrow}</span><h1>${title}</h1>${subtitle?`<p>${subtitle}</p>`:''}</div>${action}</header>`;
+export function backButton(action,label='Back',tab=''){
+ return `<button class="text-btn task-back no-print" type="button" data-action="${escapeHTML(action)}"${tab?` data-tab="${escapeHTML(tab)}"`:''}>${uiIcon('back')}<span>${escapeHTML(label)}</span></button>`;
+}
 export const specialistHelp=()=>`<details class="specialist-help">
   <summary>Need help finding this test?</summary>
   <a class="text-link" href="https://kolequant.xyz/en/about.html#contact" target="_blank" rel="noopener noreferrer">Ask KoleQuant about access ↗</a>
@@ -81,7 +84,7 @@ function historyRows(history,reports=false,page=0){
  });
  return `<div class="record-list">${rows.join('')}</div>${libraryPager(slice.page,slice.pages)}`;
 }
-export function renderRecordLibrary({history=[],reports=false,page=0}){return `<div class="wrap app-screen account-subscreen"><button class="text-btn task-back" data-action="account-tab" data-tab="${reports?'reports':'history'}">← ${reports?'Reports':'My assessments'}</button>${screenHeading('YOUR PRIVATE LIBRARY',reports?'Saved reports':'Assessment history',`${history.length} dated ${history.length===1?'record':'records'}`)}${historyRows(history,reports,page)}${!reports?'<button class="text-link" data-action="account-tab" data-tab="progress">View progress over time ↗</button>':''}</div>`;}
+export function renderRecordLibrary({history=[],reports=false,page=0}){return `<div class="wrap app-screen account-subscreen">${backButton('account-tab',reports?'Reports':'My assessments',reports?'reports':'history')}${screenHeading('YOUR PRIVATE LIBRARY',reports?'Saved reports':'Assessment history',`${history.length} dated ${history.length===1?'record':'records'}`)}${historyRows(history,reports,page)}${!reports?'<button class="text-link" data-action="account-tab" data-tab="progress">View progress over time ↗</button>':''}</div>`;}
 const recordSummary=(history,reports=false)=>`<button class="record-summary" data-action="account-tab" data-tab="${reports?'report-history':'saved'}"><span class="record-icon">${uiIcon(reports?'report':'pulse')}</span><span><strong>${history.length} saved ${reports?'reports':'assessments'}</strong><small>Open your private library</small></span>${uiIcon('arrow')}</button>`;
 
 const systemRouteCard=(title,icon,caption,action,type='')=>`<button class="assessment-route" data-action="${action}" ${type ? `data-type="${type}"` : ''} data-theme-part><span class="route-icon">${uiIcon(icon)}</span><span><strong>${title}</strong><small>${caption}</small></span></button>`;

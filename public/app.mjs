@@ -20,7 +20,7 @@ import {heartSteps, heartRoute, readHeartForm, refreshHeartFeedback, changeHeart
 import {heartPrefill} from './heart-prefill.mjs';
 import {assessSystem, systemAssessment, systemAssessments, systemField, systemPrefill, systemSampleInputs} from './system-assessments.mjs';
 import {readSystemForm, refreshSystemFeedback, renderSystemForm, renderSystemReport, systemMethods, systemRoute, systemSampleButton, systemStepFor} from './system-assessment-ui.mjs';
-import {resultInstrument,screenHeading,uiIcon,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,assessmentTitle,statusMessage,unmeasuredMark} from './ui-components.mjs';
+import {resultInstrument,screenHeading,uiIcon,backButton,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,assessmentTitle,statusMessage,unmeasuredMark} from './ui-components.mjs';
 import {questionContext,questionChoices,questionDestination,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
 import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,insights,sampleAnswers,sampleLabs} from './model.mjs';
 import {references,clockComparison} from './evidence.mjs';
@@ -28,6 +28,7 @@ const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=
 let state={...freshAssessment(),view:'home'},draftBackup=null;
 const parkedAssessments=new Map();
 const overviewSnapshots=new Map();
+const returnTrail=[];
 const hiddenRecordsKey='kq-hidden-assessments-v1';
 function readHiddenRecords(){
  try{
@@ -45,6 +46,7 @@ let auth={loading:true,authenticated:false,csrf:null,profile:null,history:[],pur
 let signIn={};
 function discardCurrentDraft(){
  const {view,accountTab,libraryPage}=state;
+ returnTrail.length=0;
  state=state.sample&&draftBackup?draftBackup:freshAssessment();
  draftBackup=null;
  Object.assign(state,{view:view==='account'?'account':'home',accountTab,libraryPage});
@@ -98,15 +100,64 @@ function dirty(){delete state.saveId;delete state.savedReport;delete state.saved
 
 function announce(t){$('#live').textContent=t;}
 const arrow=' '+uiIcon('forward'),sampleBadge=()=>state.sample?'<div class="sample-badge">Illustrative sample data · Not a personal assessment'+(draftBackup?'<button class="text-link" data-action="restore-draft">Return to your assessment</button>':'')+'</div>':'';
+const accountLabels={history:'My assessments',saved:'Assessment history','report-history':'Saved reports',reports:'Reports',settings:'Account',data:'Saved data',about:'About',purchases:'Purchases',progress:'Progress'};
+const screenLabels={home:'Overview',consent:'Before you begin',questionnaire:'Health profile',review:'Review answers',heart:'Heart & Vascular',labs:'Blood results',results:'Your result',report:'Assessment report',consult:'Consultation',enquiry:'Enquiry preview'};
+const returnFields={
+ account:['accountTab','libraryPage','showSampleTrends'],report:['reportTab'],results:['resultTab','insightPage'],
+ consent:['goal'],questionnaire:['goal','step','questionIndex','optionPage'],review:['goal'],
+ labs:['goal','labStep'],heart:['heartStep'],system:['systemStep'],
+};
+const assessmentEntry={view:'account',position:{accountTab:'history',libraryPage:0},label:'My assessments'};
+const reportEntry={view:'account',position:{accountTab:'reports',libraryPage:0},label:'Reports'};
+const fallbackReturn=()=>state.view==='report'?reportEntry:assessmentEntry;
 function nav(){
  $('#account-nav')?.setAttribute('aria-label',account()?'My account':'Account');
- const accountLabels={history:'My assessments',saved:'Assessment history','report-history':'Saved reports',reports:'Reports',settings:'Account',data:'Saved data',about:'About',purchases:'Purchases',progress:'Progress'};
- const labels={home:'Overview',consent:'New assessment',questionnaire:'Health profile',review:'Review answers',heart:'Heart & Vascular',system:systemAssessment(state.assessmentType)?.title,labs:'Blood results',results:'Your result',report:'Assessment report',consult:'Consultation',enquiry:'Enquiry preview'};
+ const labels={...screenLabels,consent:'New assessment',system:systemAssessment(state.assessmentType)?.title};
  $('#workspace-current').textContent=state.view==='account'?(accountLabels[state.accountTab]||'Account'):(labels[state.view]||'Overview');
  const route=state.view==='account'?(['history','saved','reports','report-history','progress'].includes(state.accountTab)?(['reports','report-history'].includes(state.accountTab)?'reports':'history'):'settings'):state.view==='report'?'reports':['consent','questionnaire','review','labs','heart','system'].includes(state.view)?'history':state.view==='results'?'home':state.view;
  document.querySelectorAll('.workspace-link[data-route]').forEach(link=>{if(link.dataset.route===route)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
 }
-function goto(view){state.view=view;state.errors={};render();$('#main').scrollTop=0;$('#main').focus({preventScroll:true});if(view==='home')void hydrateOverview();}
+function goto(view,scrollTop=0){state.view=view;state.errors={};render();$('#main').scrollTop=scrollTop;$('#main').focus({preventScroll:true});if(view==='home')void hydrateOverview();}
+function gotoRoot(view){returnTrail.length=0;goto(view);}
+function returnPoint(opener,{restore='',editStep=''}={}){
+ const view=state.view;
+ const position=Object.fromEntries((returnFields[view]||[]).map(key=>[key,state[key]]));
+ const label=view==='account'?accountLabels[state.accountTab]:screenLabels[view]||systemAssessment(state.assessmentType)?.title;
+ const focus=opener?.closest('#main')?{...opener.dataset}:null;
+ return {view,position,label,focus,scrollTop:$('#main').scrollTop,reportScrollTop:$('.report-workspace .report-paper')?.scrollTop,editStep,restore,
+  ...(restore?{draft:state,backup:draftBackup}:{})};
+}
+function rememberReturn(opener,options){returnTrail.push(returnPoint(opener,options));}
+function returnLabel(){return returnTrail.at(-1)?.label||fallbackReturn().label;}
+function goBack({commitEdit=false}={}){
+ let origin=returnTrail.pop();
+ while(origin?.draft&&hiddenRecords.has(origin.draft.saveId))origin=returnTrail.pop();
+ origin??=fallbackReturn();
+ const restoreDraft=origin.restore==='edit'?!commitEdit:origin.restore==='preview'||state.savedReport||state.sample;
+ if(restoreDraft&&origin.draft&&state!==origin.draft){
+  state=origin.draft;
+  draftBackup=origin.backup;
+  parkedAssessments.delete(assessmentType(state));
+ }
+ Object.assign(state,origin.position);
+ goto(origin.view,origin.scrollTop);
+ const paper=$('.report-workspace .report-paper');
+ if(paper&&origin.reportScrollTop!==undefined)paper.scrollTop=origin.reportScrollTop;
+ if(origin.focus){
+  [...$('#main').querySelectorAll('[data-action]')].find(button=>
+   Object.entries(origin.focus).every(([key,value])=>button.dataset[key]===value)
+  )?.focus({preventScroll:true});
+ }
+}
+function finishAt(view){
+ const origin=returnTrail.at(-1);
+ if(origin?.view===view&&origin.editStep)goBack({commitEdit:true});
+ else goto(view);
+}
+function beginReportEdit(opener,step){
+ rememberReturn(opener,{restore:'edit',editStep:step});
+ state=structuredClone(state);
+}
 function modal(title,body,{picker=false}={}){
  $('#modal-root').innerHTML=`<div class="overlay${picker?' overview-picker-overlay':''}"><section class="modal${picker?' overview-picker':''}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="close" data-action="close" aria-label="Close dialog">×</button><h2 id="modal-title">${title}</h2>${body}</section></div>`;
  const dialog=$('.modal');
@@ -201,9 +252,21 @@ function pruneSmokingAnswers(){
  if(a.smoking!=='Some days')delete a.smokingDays30;
 }
 function editDrink(index=-1){const d=state.answers.drinks?.[index]||{type:'Wine',count:'',ml:'',abv:''};modal(index<0?'Add a drink':'Edit drink',`<form id="drink-form" class="form-stack" data-index="${index}"><label for="drink-type">Drink type</label><select id="drink-type">${['Wine','Beer','Spirits','Other'].map(x=>`<option ${d.type===x?'selected':''}>${x}</option>`).join('')}</select>${[['count','Servings'],['ml','mL per serving'],['abv','Alcohol %']].map(([k,label])=>`<label for="drink-${k}">${label}</label><input id="drink-${k}" type="number" inputmode="decimal" min="0.1" ${k==='abv'?'max="100"':''} step="any" value="${esc(d[k])}">`).join('')}<button class="btn" type="submit">Keep drink →</button></form>`);}
-function questionnaire(){return renderQuestionnaire(state,inputField);}
+function questionnaire(){
+ const origin=returnTrail.at(-1);
+ return renderQuestionnaire(state,inputField,returnLabel(),origin?.view==='review'?Number(origin.editStep):undefined);
+}
+function advanceQuestion(opener){
+ const next=questionDestination(state);
+ if(next.view==='review'&&returnTrail.at(-1)?.view!=='review')rememberReturn(opener);
+ Object.assign(state,next);
+ finishAt(next.view);
+}
 function review(){return `<div class="wrap narrow"><div class="eyebrow">Questionnaire</div><h1>Review your answers</h1><p class="lead">You can edit a section before viewing your health profile. Unanswered questions remain missing; they are not treated as healthy answers.</p>${sampleBadge()}<div class="card">${sections.map((s,i)=>{const qs=s.questions.filter(q=>!q.show||q.show(state.answers));const n=qs.filter(q=>state.answers[q.id]!==undefined&&state.answers[q.id]!==''&&(!Array.isArray(state.answers[q.id])||state.answers[q.id].length)).length;return `<div class="row" style="display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line)"><span>${s.name} <span class="small muted">${n} of ${qs.length} answered</span></span><button class="text-link" data-action="edit-section" data-index="${i}">Edit</button></div>`;}).join('')}</div><div class="actions" style="margin-top:25px"><button class="btn" data-action="results">View health profile ${arrow}</button><button class="btn secondary" data-action="labs">Add blood results</button></div></div>`;}
-function labForm(){return renderLabForm(state,labHelp);}
+function labForm(){
+ const origin=returnTrail.at(-1);
+ return renderLabForm(state,labHelp,returnLabel(),origin?.editStep===String(state.labStep)?origin.label:undefined);
+}
 function clinical(draft=state){if(draft.savedReport)return clinicalForDisplay(draft.savedReport.clinical,{stored:true});if(!draft.labSubmitted)return null;return assessClinical({age:Number(draft.labAge),lab:draft.lab,contextConfirmed:draft.labContext===true,fasting:draft.labFasting});}
 function result(){
  const c=clinical(),all=state.savedReport?state.savedReport.priorities:insights(state.answers),tab=state.resultTab||'summary';
@@ -229,10 +292,14 @@ function checkout(){if(PAGES_PREVIEW){pagesInfo();return;}if(!auth.payments?.ena
 function savedDraft(s,report,goal=s.labSubmitted?'labs':assessmentType(s)){
  return {...freshAssessment(goal),...s,labReferenceMode:s.labReferenceMode||'lab-only',labReferenceVersion:s.labReferenceVersion||null,labReferenceGroup:s.labReferenceGroup||'unspecified',profileCompleted:Object.keys(s.answers||{}).length>1,saveId:s.id,savedReport:report,unlocked:report.full===true,assessment:true,labValid:true,consent:true};
 }
-async function openSaved(id,view='results'){
+async function openSaved(id,view='results',origin){
  if(hiddenRecords.has(id))return;
  const {assessment:s,report}=await api('assessments/'+id);
  if(hiddenRecords.has(id))return;
+ if(origin){
+  if(state!==origin.draft||state.view!==origin.view||origin.view==='account'&&(state.accountTab!==origin.position.accountTab||state.libraryPage!==origin.position.libraryPage))return;
+  returnTrail.push(origin);
+ }
  if(s.sample)rememberDraftForSample();
  else selectAssessment(assessmentType(s));
  state=savedDraft(s,report);
@@ -279,7 +346,7 @@ function clearAccountState(){
  signIn={};
  auth={...auth,authenticated:false,csrf:null,profile:null,history:[],purchases:[],reportReview:false};
  overviewType='';overviewSnapshots.clear();
- draftBackup=null;parkedAssessments.clear();state=freshAssessment();
+ draftBackup=null;parkedAssessments.clear();returnTrail.length=0;state=freshAssessment();
 }
 
 function snapshot(){
@@ -305,9 +372,9 @@ function dashboard(){
  }
  if(state.accountTab==='reports')return renderReportLibrary({...common,assessment:state.assessment||profileAssessment&&progress.hasData});
  if(state.accountTab==='settings')return PAGES_PREVIEW?renderPagesAccount():renderAccount(common);
- const back='<button class="text-btn task-back" data-action="account-tab" data-tab="settings">← Account</button>';
+ const back=backButton('account-tab','Account','settings');
  if(state.accountTab==='about')return `<div class="wrap app-screen account-subscreen">${back}${screenHeading('INFORMATION & SUPPORT','About this app')}<section class="card" data-theme-part><h2>Understand the assessment</h2><p>Explore the assessment experience and its methods. Automated educational estimates do not diagnose disease or predict lifespan.</p><a class="text-link" href="https://kolequant.xyz/en/index.html" target="_blank" rel="noopener noreferrer">KoleQuant website ↗</a></section><section class="account-settings utility-actions" aria-label="Support and assessment controls"><button class="account-setting" data-action="consult"><span class="setting-symbol">${uiIcon('consult')}</span><span class="setting-copy"><strong>Contact options</strong><small>Questions, interpretation and support</small></span>${uiIcon('external')}</button><button class="account-setting quiet-setting" data-action="reset"><span class="setting-symbol">${uiIcon('reset')}</span><span class="setting-copy"><strong>Reset assessment</strong><small>Clear the current assessment</small></span>${uiIcon('forward')}</button></section></div>`;
- if(state.accountTab==='progress')return `<div class="wrap app-screen account-subscreen"><button class="text-btn task-back" data-action="account-tab" data-tab="history">← My assessments</button>${screenHeading('YOUR HISTORY','Progress over time')}<div class="actions"><button class="btn secondary" data-action="trend-personal">My results</button><button class="text-link" data-action="trend-sample">Sample history</button></div>${trend(auth.history)}</div>`;
+ if(state.accountTab==='progress')return `<div class="wrap app-screen account-subscreen">${backButton('account-tab','My assessments','history')}${screenHeading('YOUR HISTORY','Progress over time')}<div class="actions"><button class="btn secondary" data-action="trend-personal">My results</button><button class="text-link" data-action="trend-sample">Sample history</button></div>${trend(auth.history)}</div>`;
  if(state.accountTab==='purchases')return `<div class="wrap app-screen account-subscreen">${back}${screenHeading('YOUR ACCOUNT','Purchases')}${statusMessage({loading:auth.loading,error:auth.error||auth.purchaseError})}${account()?purchaseList():'<section class="card"><h2>Keep your reports together.</h2><p>Sign in to check purchased-report access and payment status.</p><button class="btn" data-action="signup">Sign in / create profile →</button></section>'}</div>`;
  return `<div class="wrap app-screen account-subscreen">${back}${screenHeading('YOUR ACCOUNT','Manage saved data')}<section class="card"><h2>Your information, your choice.</h2><p>Saved assessments and report snapshots are encrypted before database storage. Saving does not enable research, marketing or consultation sharing.</p>${account()?'<div class="actions"><button class="btn secondary" data-action="export">Export data & reports</button><button class="text-link" data-action="delete-account">Delete KoleQuant account</button></div><button class="text-link" data-action="import-legacy">Import an old on-device demo account</button>':'<button class="btn" data-action="signup">Sign in / create profile →</button>'}</section><button class="text-link" data-action="privacy">Read the full storage notice ↗</button></div>`;
 }
@@ -358,7 +425,11 @@ function captureLabs(){
  if($('#lab-context'))state.labContext=$('#lab-context').checked;
  const fasting=form.querySelector('[name=lab-fasting]:checked');if(fasting)state.labFasting=fasting.value;
 }
-function heartForm(){return renderHeartForm({inputs:state.heart.inputs,errors:state.errors,step:state.heartStep,specialistEdit:!!state.heartSpecialist,prefilled:state.heartPrefilled,touched:state.heartTouched,prefillUnavailable:state.heartPrefillUnavailable});}
+function heartForm(){
+ const origin=returnTrail.at(-1);
+ const backLabel=origin?.editStep===state.heartStep?origin.label:undefined;
+ return renderHeartForm({inputs:state.heart.inputs,errors:state.errors,step:state.heartStep,specialistEdit:!!state.heartSpecialist,prefilled:state.heartPrefilled,touched:state.heartTouched,prefillUnavailable:state.heartPrefillUnavailable,backLabel,entryLabel:returnLabel()});
+}
 function captureHeart(form){
  const previous=state.heart.inputs,inputs=readHeartForm(form,previous,state.heartStep);
  if(inputs.smoking!==previous.smoking)for(const id of ['smokingDays30','cigarettes','smokingYears'])delete inputs[id];
@@ -397,7 +468,26 @@ function reviewArterialField(target,editing){
   refreshHeartFeedback(form,inputs,{cfpwv:!editing});
  }
 }
-function render(){state.choiceCapacity=undefined;nav();document.body.dataset.view=state.view;const views={home,consent,questionnaire,review,labs:labForm,heart:heartForm,system:systemForm,results:result,report,consult:consultation,account:dashboard,enquiry:()=>enquiryDone(state.enquiry)};$('#main').innerHTML=(views[state.view]||home)();if(state.view==='questionnaire'){language.refresh();fitQuestionChoices();}if(state.view==='consult')organizeConsultation();if(state.view==='review')$('#main>.wrap')?.classList.add('app-screen','task-screen','review-screen');if(state.view==='consent')$('#main>.wrap')?.classList.add('app-screen','task-screen','consent-screen');decorateDirectionalSymbols($('#main'));document.title=({home:'Your health workspace',account:state.accountTab==='reports'?'Reports':state.accountTab==='history'?'My assessments':'Your account',results:'Your assessment',heart:'Heart & Vascular',system:systemAssessment(state.assessmentType)?.title,report:'Your report',consult:'Consultation'}[state.view]||'Your assessment')+' — '+APP_NAME;language.refresh();resultMotion.refresh();}
+function render(){
+ state.choiceCapacity=undefined;
+ nav();
+ const {view}=state,main=$('#main');
+ document.body.dataset.view=view;
+ const views={home,consent,questionnaire,review,labs:labForm,heart:heartForm,system:systemForm,results:result,report,consult:consultation,account:dashboard,enquiry:()=>enquiryDone(state.enquiry)};
+ main.innerHTML=(views[view]||home)();
+ const screen=main.firstElementChild;
+ if(['consent','review','results'].includes(view)||view==='report'&&screen?.matches('.report-workspace')){
+  screen?.insertAdjacentHTML('afterbegin',backButton('back-screen',returnLabel()));
+ }
+ if(view==='questionnaire'){language.refresh();fitQuestionChoices();}
+ if(view==='consult')organizeConsultation();
+ if(view==='review')screen?.classList.add('app-screen','task-screen','review-screen');
+ if(view==='consent')screen?.classList.add('app-screen','task-screen','consent-screen');
+ decorateDirectionalSymbols(main);
+ document.title=({home:'Your health workspace',account:state.accountTab==='reports'?'Reports':state.accountTab==='history'?'My assessments':'Your account',results:'Your assessment',heart:'Heart & Vascular',system:systemAssessment(state.assessmentType)?.title,report:'Your report',consult:'Consultation'}[view]||'Your assessment')+' — '+APP_NAME;
+ language.refresh();
+ resultMotion.refresh();
+}
 function selectAssessment(type){
  if(state.sample){state=draftBackup||freshAssessment();draftBackup=null;}
  const current=assessmentType(state);
@@ -486,7 +576,8 @@ function currentSystemStep(){
 function systemForm(){
  return renderSystemForm({type:state.assessmentType,inputs:state.system.inputs,step:currentSystemStep(),
   prefilled:state.systemPrefilled,errors:state.errors,mode:state.systemMode,touched:state.systemTouched,
-  prefillUnavailable:state.systemPrefillUnavailable});
+  prefillUnavailable:state.systemPrefillUnavailable,entryLabel:returnLabel(),
+  backLabel:returnTrail.at(-1)?.editStep===state.systemStep?returnLabel():undefined});
 }
 
 function captureSystem(form){
@@ -544,13 +635,16 @@ function backSystem(){
   state.assessment=!!state.system.result;
   endSystemEdit();
   if(review||returnStep){state.systemStep=review?'review':returnStep;goto('system');}
+  else if(returnTrail.at(-1)?.restore==='edit')goBack();
   else goto('report');
   return;
  }
  const route=systemRoute(state.assessmentType,state.system.inputs,state.systemPrefilled);
  const index=route.findIndex(step=>step.id===currentSystemStep().id);
+ const origin=returnTrail.at(-1);
+ if(origin?.view==='report'&&origin.editStep===state.systemStep){goBack();return;}
  if(index>0){state.systemStep=route[index-1].id;goto('system');}
- else{state.accountTab='history';goto('account');}
+ else goBack();
 }
 
 function showSystemReport({inputs,result,review}){
@@ -558,7 +652,7 @@ function showSystemReport({inputs,result,review}){
  state.system={inputs,result,review};
  state.assessment=true;
  state.reportTab='summary';
- goto('report');
+ finishAt('report');
 }
 
 function submitSystem(partial=false){
@@ -588,6 +682,7 @@ function submitSystem(partial=false){
  }
  if(Object.keys(checked.errors).length){
   const part=Object.keys(checked.errors)[0].replace(/Reference$/,'');
+  state.systemReturnStep??=current.id;
   editSystem(part,'finish');
   state.errors=checked.errors;
   render();
@@ -621,13 +716,16 @@ function completedForGoal(draft,goal){
  if(goal==='labs')return draft.labSubmitted===true;
  return draft.assessment===true;
 }
-async function requestAssessment(goal,startOver=false){
+async function requestAssessment(goal,startOver=false,opener){
  const current=state,view=state.view,tab=state.accountTab;
  if(accountRefresh)await accountRefresh;
  if(state!==current||state.view!==view||state.accountTab!==tab)return;
  const draft=draftForGoal(goal);
  const saved=hasEntriesForGoal(draft,goal)?null:previousAssessment(auth.history,goal);
- if(!startOver&&!completedForGoal(draft,goal)&&!saved)return beginAssessment(goal);
+ if(!startOver&&!completedForGoal(draft,goal)&&!saved){
+  rememberReturn(opener);
+  return beginAssessment(goal);
+ }
  modal('Start a new assessment?',`<p><strong>${esc(goalTitle(goal))}</strong></p><p>Starting over replaces the working answers for this assessment on this device.</p><div class="actions"><button class="btn" data-action="edit-existing-assessment" data-goal="${esc(goal)}" ${saved?`data-id="${esc(saved.id)}"`:''}>Edit existing</button><button class="btn secondary" data-action="restart-assessment" data-goal="${esc(goal)}">Start over</button></div>`);
 }
 function otherRouteFields(draft,goal){
@@ -639,6 +737,7 @@ function otherRouteFields(draft,goal){
  return {};
 }
 function restartAssessment(goal){
+ rememberReturn();
  selectAssessment(draftTypeForGoal(goal));
  const other=otherRouteFields(state,goal);
  const hasOtherResult=other.profileCompleted||other.labSubmitted&&!state.savedReport;
@@ -649,6 +748,7 @@ async function editExistingAssessment(goal,id,button){
  const saved=id?await api('assessments/'+id):null;
  if(!button.isConnected||id&&hiddenRecords.has(id))return;
  close();
+ rememberReturn(null,saved?.assessment.sample?{restore:'preview'}:undefined);
  if(saved?.assessment.sample){
   rememberDraftForSample();
   state=savedDraft(saved.assessment,saved.report,goal);
@@ -686,7 +786,8 @@ function resumeAssessment(goal){
  state=continueAssessment(state,goal);goto(state.view);
 }
 function rememberDraftForSample(){if(!state.sample&&assessmentProgress(state).hasData)draftBackup=structuredClone(state);}
-function loadSample(type){
+function loadSample(type,opener){
+ rememberReturn(opener,{restore:'preview'});
  rememberDraftForSample();
  const sample=systemSampleInputs(type);
  if(sample){
@@ -703,10 +804,11 @@ document.addEventListener('click',async e=>{
  if(e.target.matches('.overview-picker-overlay')){close();return;}
  const b=e.target.closest('[data-action]');if(!b)return;const act=b.dataset.action;e.preventDefault();
  if(state.view==='questionnaire')captureQuestion();else if(state.view==='labs')captureLabs();
- if(act==='start-system'&&systemAssessment(b.dataset.type)){await action(b,()=>requestAssessment(b.dataset.type));return;}
+ if(act==='back-screen'){goBack();return;}
+ if(act==='start-system'&&systemAssessment(b.dataset.type)){await action(b,()=>requestAssessment(b.dataset.type,false,b));return;}
  if(act==='start'||act==='start-labs'||act==='start-heart'){
   const goal=act==='start'?'profile':act==='start-labs'?'labs':HEART_ASSESSMENT;
-  await action(b,()=>requestAssessment(goal));return;
+  await action(b,()=>requestAssessment(goal,false,b));return;
  }
  if(act==='consent-next'){
   state.consent=$('#consent').checked;
@@ -723,13 +825,21 @@ document.addEventListener('click',async e=>{
   if(act==='system-review-edit')editSystem(b.dataset.part,'review');
   if(act==='system-finish'){
    const part=state.system.result?.missing?.[0],step=systemStepFor(state.assessmentType,state.system.inputs,part);
-   if(step){state.systemStep=step.id;goto('system');}
+   if(step){beginReportEdit(b,step.id);state.systemStep=step.id;goto('system');}
   }
   if(act==='system-extra'){
    if(state.view==='system')state.systemReturnStep=state.systemStep;
+   else{
+    const step=systemStepFor(state.assessmentType,state.system.inputs,b.dataset.part);
+    if(!step)return;
+    beginReportEdit(b,step.id);
+   }
    editSystem(b.dataset.part,'report');
   }
   if(act==='system-edit'){
+   const step=b.hasAttribute('data-review-all')?'age':systemStepFor(state.assessmentType,state.system.inputs,b.dataset.part)?.id;
+   if(!step)return;
+   beginReportEdit(b,step);
    if(b.hasAttribute('data-review-all')){
     state.systemPrefilled=[];
     state.systemStep='age';
@@ -758,7 +868,7 @@ document.addEventListener('click',async e=>{
  if(act==='retry-overview'){void hydrateOverview(true);return;}
  if(act==='open-overview-draft'){
   const {draft}=overviewSelection().choice;
-  if(draft){selectAssessment(assessmentType(draft));goto(independentAssessment(state)?'report':'results');}
+  if(draft){rememberReturn(b);selectAssessment(assessmentType(draft));goto(independentAssessment(state)?'report':'results');}
   return;
  }
  if(act==='auth-change-email'){signIn={};signup();return;}
@@ -774,7 +884,9 @@ document.addEventListener('click',async e=>{
  }
  if(act==='report-tab'){state.reportTab=b.dataset.tab;goto('report');return;}
  if(act==='lab-reference-edit'&&['creatinine','crp'].includes(b.dataset.id)){
-  dirty();state.labReferenceVersion=REFERENCE_CATALOG_VERSION;state.labStep=labErrorStep({[b.dataset.id]:true});goto('labs');return;
+  const step=labErrorStep({[b.dataset.id]:true});
+  beginReportEdit(b,String(step));
+  dirty();state.labReferenceVersion=REFERENCE_CATALOG_VERSION;state.labStep=step;goto('labs');return;
  }
  if(act==='heart-arterial'&&state.heart){
   const form=$('#heart-form');
@@ -785,22 +897,25 @@ document.addEventListener('click',async e=>{
   return;
  }
  if(act==='heart-back'){
+  const form=$('#heart-form'),origin=returnTrail.at(-1);
+  if(form)captureHeart(form);
+  if(origin?.restore==='edit'&&(origin.editStep===state.heartStep||state.heartCompleteVascularAge)){goBack();return;}
   if(state.heartStep==='specialist'&&state.heartSpecialist){
    Object.assign(state,state.heartSpecialist);
    delete state.heartSpecialist;
    state.heartStep='measurements';
-   goto('report');
+   finishAt('report');
    return;
   }
   if(state.heartCompleteVascularAge){
    state.heartCompleteVascularAge=false;
-   if(state.heart.result){goto('report');return;}
+   if(state.heart.result){finishAt('report');return;}
   }
   if(state.heartReviewEdit){returnToHeartReview();return;}
   const steps=heartRoute(state.heart.inputs,state.heartPrefilled);
   const index=steps.findIndex(step=>step.id===state.heartStep);
   if(index>0){state.heartStep=steps[index-1].id;goto('heart');}
-  else{state.accountTab='history';goto('account');}
+  else goBack();
   return;
  }
  if(act==='heart-review-edit'){
@@ -808,45 +923,109 @@ document.addEventListener('click',async e=>{
  }
  if(act==='heart-edit'){
   const part=b.dataset.part;
+  const step=part==='answers'?(state.heartPrefilled?.length?'review':'country'):part;
+  if(state.view==='report')beginReportEdit(b,step);
   if(part==='specialist'&&state.view==='report'){
    const {heart, saved, saveId, savedReport, unlocked, assessment}=state;
    state.heartSpecialist={heart,saved,saveId,savedReport,unlocked,assessment};
   }
-  state.heartStep=part==='answers'?(state.heartPrefilled?.length?'review':'country'):part;
+  state.heartStep=step;
   state.heartCompleteVascularAge=b.hasAttribute('data-complete-age');
   state.heartReviewEdit=part!=='specialist'&&!state.heartCompleteVascularAge&&!heartRoute(state.heart.inputs,state.heartPrefilled).some(step=>step.id===state.heartStep);
   state.reportTab=!state.heartCompleteVascularAge&&['measurements','blood-pressure'].includes(state.heartStep)?'measurements':'summary';
   goto('heart');
   return;
  }
- if(act==='restore-draft'&&draftBackup){state=draftBackup;draftBackup=null;goto(state.view);return;}
- if(act==='new-assessment'){await action(b,()=>requestAssessment(state.goal,true));return;}
+ if(act==='restore-draft'&&draftBackup){
+  const origin=returnTrail.at(-1);
+  if(origin?.restore==='preview'&&assessmentProgress(origin.draft).hasData)goBack();
+  else{state=draftBackup;draftBackup=null;gotoRoot(state.view);}
+  return;
+ }
+ if(act==='new-assessment'){await action(b,()=>requestAssessment(state.goal,true,b));return;}
  if(act==='edit-existing-assessment'&&assessmentGoal(b.dataset.goal)){
   await action(b,()=>editExistingAssessment(b.dataset.goal,b.dataset.id,b));return;
  }
  if(act==='restart-assessment'&&assessmentGoal(b.dataset.goal)){close();restartAssessment(b.dataset.goal);return;}
- if(act==='sample-report'){loadSample();state.reportTab='summary';goto('report');return;}
+ if(act==='sample-report'){loadSample(undefined,b);state.reportTab='summary';goto('report');return;}
  if(act==='result-tab'){state.resultTab=b.dataset.tab;goto('results');return;}
  if(act==='insight-page'){state.insightPage=Number(b.dataset.page);goto('results');return;}
  if(act==='library-page'){state.libraryPage=Number(b.dataset.page);goto('account');return;}
- if(act==='lab-back'){if((state.labStep||0)>0){state.labStep--;goto('labs');}else goto('consent');return;}
+ if(act==='lab-back'){
+  const step=state.labStep||0;
+  if(step>0&&returnTrail.at(-1)?.editStep!==String(step)){state.labStep--;goto('labs');}
+  else goBack();
+  return;
+ }
  if(act==='consult-step'){advanceContactPage($('#consult-form'),Number(b.dataset.direction));return;}
- if(act==='account-area'||act==='assessments'){state.accountTab=b.dataset.tab||'history';state.libraryPage=0;goto('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='home'){goto('home');return;}if(act==='method'){method();return;}if(act==='privacy'){privacy();return;}if(act==='close'){close();return;}if(act==='sample'){loadSample(b.dataset.type);return;}
- if(act==='question-back'){if(questionChoices(state).page>0){state.optionPage--;render();return;}Object.assign(state,questionDestination(state,-1));goto(state.view);return;}if(act==='skip'){dirty();delete state.answers[b.dataset.id];Object.assign(state,questionDestination(state));goto(state.view);return;}if(act==='edit-section'){state.step=Number(b.dataset.index);state.questionIndex=0;state.optionPage=0;goto('questionnaire');return;}if(act==='add-drink'){editDrink();return;}if(act==='edit-drink'){editDrink(Number(b.dataset.index));return;}if(act==='remove-drink'){dirty();state.answers.drinks.splice(Number(b.dataset.index),1);render();return;}
- if(act==='without-labs'){state.profileCompleted=true;dirty();state.labSubmitted=false;state.assessment=true;goto('results');return;}if(act==='labs'){beginAssessment('labs');return;}if(act==='sample-labs'){loadSample();state.labStep=0;goto('labs');return;}if(act==='results'){if(state.view==='review')state.profileCompleted=true;state.assessment=true;state.resultTab='summary';goto(independentAssessment(state)?'report':'results');return;}if(act==='review'){goto('review');return;}if(act==='report'){state.reportTab='summary';goto('report');return;}if(act==='checkout'){checkout();return;}if(act==='print'){if(independentAssessment(state)||auth.reportReview||state.savedReport?.full===true){const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(d=>d.open);details.forEach(d=>d.open=true);window.addEventListener('afterprint',()=>details.forEach((d,i)=>d.open=previous[i]),{once:true});window.print();}else checkout();return;}
+ if(act==='account-area'||act==='assessments'){
+  state.accountTab=b.dataset.tab||'history';state.libraryPage=0;gotoRoot('account');
+  void refreshAccount().then(()=>{if(state.view==='account')render();});return;
+ }
+ if(act==='home'){gotoRoot('home');return;}
+ if(act==='method'){method();return;}
+ if(act==='privacy'){privacy();return;}
+ if(act==='close'){close();return;}
+ if(act==='sample'){loadSample(b.dataset.type,b);return;}
+ if(act==='question-back'){
+  if(questionChoices(state).page>0){state.optionPage--;render();return;}
+  const previous=questionDestination(state,-1),origin=returnTrail.at(-1);
+  if(previous.view==='consent'||origin?.view==='review'&&origin.editStep===String(state.step)&&questionContext(state).index===0)goBack();
+  else{Object.assign(state,previous);goto(previous.view);}
+  return;
+ }
+ if(act==='skip'){dirty();delete state.answers[b.dataset.id];advanceQuestion(b);return;}
+ if(act==='edit-section'){
+  rememberReturn(b,{editStep:b.dataset.index});
+  state.step=Number(b.dataset.index);state.questionIndex=0;state.optionPage=0;goto('questionnaire');return;
+ }
+ if(act==='add-drink'){editDrink();return;}
+ if(act==='edit-drink'){editDrink(Number(b.dataset.index));return;}
+ if(act==='remove-drink'){dirty();state.answers.drinks.splice(Number(b.dataset.index),1);render();return;}
+ if(act==='without-labs'){
+  rememberReturn(b);state.profileCompleted=true;dirty();state.labSubmitted=false;state.assessment=true;goto('results');return;
+ }
+ if(act==='labs'){
+  if(state.view==='report')beginReportEdit(b,'0');
+  else rememberReturn(b);
+  beginAssessment('labs');return;
+ }
+ if(act==='sample-labs'){loadSample(undefined,b);state.labStep=0;goto('labs');return;}
+ if(act==='results'){
+  if(state.view==='review')state.profileCompleted=true;
+  state.assessment=true;
+  const view=independentAssessment(state)?'report':'results';
+  if(returnTrail.at(-1)?.view===view)goBack();
+  else{rememberReturn(b);state.resultTab='summary';goto(view);}
+  return;
+ }
+ if(act==='review'||act==='report'){
+  if(returnTrail.at(-1)?.view===act)goBack();
+  else{
+   if(state.view!==act)rememberReturn(b);
+   if(act==='report')state.reportTab='summary';
+   goto(act);
+  }
+  return;
+ }
+ if(act==='checkout'){checkout();return;}
+ if(act==='print'){if(independentAssessment(state)||auth.reportReview||state.savedReport?.full===true){const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(d=>d.open);details.forEach(d=>d.open=true);window.addEventListener('afterprint',()=>details.forEach((d,i)=>d.open=previous[i]),{once:true});window.print();}else checkout();return;}
  if(act==='save-before-checkout'){await action(b,async()=>{await api('assessments','POST',snapshot());await openSaved(state.saveId,'report');checkout();});return;}
  if(act==='purchase-checkout'){await action(b,async()=>{const result=await api('payments/checkout','POST',{assessmentId:state.saveId,confirm:true});if(result.purchased){close();await openSaved(state.saveId,'report');return;}const url=new URL(result.url);if(url.protocol!=='https:'||url.hostname!=='checkout.stripe.com')throw Error('Could not open secure checkout.');modal('Your secure checkout is ready.',`<p>Continue to Stripe to review the final total and pay. Your saved report stays in your account if you leave checkout.</p><a class="btn" href="${esc(url.href)}" target="_top" rel="noreferrer">Open Stripe checkout →</a><p class="small muted" style="margin-top:15px">You can return to Purchases to check or cancel an unfinished checkout.</p>`);});return;}
  if(act==='refresh-payments'||act==='check-order'){await action(b,async()=>{const result=await api('payments/refresh','POST',act==='check-order'?{orderId:b.dataset.id}:{});auth.purchases=result.purchases;await refreshAccount();state.accountTab='purchases';goto('account');});return;}
  if(act==='cancel-payment'){await action(b,async()=>{await api('payments/cancel','POST',{orderId:b.dataset.id});await refreshAccount();state.accountTab='purchases';goto('account');});return;}
- if(act==='consult'){goto('consult');return;}if(act==='account'){state.accountTab='settings';goto('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='signup'||act==='signin'){signup();return;}if(act==='refresh-account'){close();const job=refreshAccount();goto('account');void job.then(()=>{if(state.view==='account')render();});return;}if(act==='account-tab'){if(state.accountTab!==b.dataset.tab)state.libraryPage=0;state.accountTab=b.dataset.tab;goto('account');return;}if(act==='trend-personal'||act==='trend-sample'){state.showSampleTrends=act==='trend-sample';goto('account');return;}if(act==='save'){save();return;}
+ if(act==='consult'){goto('consult');return;}if(act==='account'){state.accountTab='settings';gotoRoot('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='signup'||act==='signin'){signup();return;}if(act==='refresh-account'){close();const job=refreshAccount();gotoRoot('account');void job.then(()=>{if(state.view==='account')render();});return;}if(act==='account-tab'){if(state.accountTab!==b.dataset.tab)state.libraryPage=0;state.accountTab=b.dataset.tab;gotoRoot('account');return;}if(act==='trend-personal'||act==='trend-sample'){state.showSampleTrends=act==='trend-sample';goto('account');return;}if(act==='save'){save();return;}
  if(act==='confirm-save'){await action(b,async()=>{
   const draft=state, entry=snapshot();
   await api('assessments','POST',entry);
   if(independentAssessment(draft)&&draft.saveId===entry.id)draft.saved=new Date().toISOString();
   await refreshAccount();if(auth.error)throw new Error('Your assessment was saved, but history could not refresh. Reopen your account to check.');
-  close();if(state===draft){state.accountTab='history';goto('account');}announce('Assessment and report saved to your private account.');
+  close();if(state===draft){state.accountTab='history';gotoRoot('account');}announce('Assessment and report saved to your private account.');
  });return;}
- if(act==='open-saved'||act==='open-report'){await action(b,async()=>{close();await openSaved(b.dataset.id,act==='open-report'?'report':'results');});return;}
+ if(act==='open-saved'||act==='open-report'){
+  const origin=returnPoint(b,{restore:'saved'});
+  await action(b,async()=>{close();await openSaved(b.dataset.id,act==='open-report'?'report':'results',origin);});return;
+ }
  if(act==='remove-local'||act==='reset'){
   const id=b.dataset.id;
   if(id&&!auth.history.some(record=>record.id===id)||!id&&!assessmentProgress(state).hasData)return;
@@ -858,7 +1037,7 @@ document.addEventListener('click',async e=>{
   const id=b.dataset.id;
   const persisted=id?hideSavedRecord(id):true;
   if(!id)discardCurrentDraft();
-  close();goto('account');
+  close();gotoRoot('account');
   announce(persisted?'Removed from this device.':'Removed for this session.');
   return;
  }
@@ -884,7 +1063,7 @@ document.addEventListener('focusout',e=>{const t=e.target;if(t.form?.id==='heart
 document.addEventListener('input',e=>{const t=e.target;clearContactFeedback(t);if(t.dataset.answer!==undefined||t.dataset.lab||t.dataset.drink!==undefined||['lab-age','lab-date'].includes(t.id))dirty();if(t.dataset.answer!==undefined&&!['radio','checkbox'].includes(t.type)){state.answers[t.dataset.answer]=t.value;if(['weight','weightYearAgo'].includes(t.dataset.answer))delete state.answers.weightChangeIntent;}if(t.dataset.lab){state.lab[t.dataset.lab]??={unit:labs.find(l=>l.id===t.dataset.lab).units[0]};state.lab[t.dataset.lab].value=t.value;}if(t.dataset.drink!==undefined)state.answers.drinks[Number(t.dataset.drink)][t.dataset.key]=t.value;if(t.id==='lab-age')state.labAge=t.value;if(t.id==='lab-date')state.labDate=t.value;});
 document.addEventListener('change',e=>{const t=e.target;clearContactFeedback(t);if(t.dataset.answer!==undefined||t.dataset.unit||t.dataset.labUnit||['lab-valid','lab-context'].includes(t.id))dirty();if(t.dataset.answer!==undefined&&['radio','checkbox'].includes(t.type)){const id=t.dataset.answer;if(t.type==='checkbox'){const exclusive=['None','Prefer not to say','Not sure'];let v=Array.isArray(state.answers[id])?[...state.answers[id]]:[];if(t.checked){v=exclusive.includes(t.value)?[t.value]:[...v.filter(x=>!exclusive.includes(x)),t.value];}else v=v.filter(x=>x!==t.value);state.answers[id]=v;}else{state.answers[id]=t.value;if(['smoking','smokingEver100','smokingRegular'].includes(id))pruneSmokingAnswers();if(id==='alcohol'&&t.value!=='Yes'){delete state.answers.alcoholDays;delete state.answers.drinks;}}syncChoiceInputs(id,t);}
  if(t.dataset.unit){state.answers[t.dataset.unit+'Unit']=t.value;if(['weight','weightYearAgo'].includes(t.dataset.unit))delete state.answers.weightChangeIntent;}if(t.dataset.labUnit){const id=t.dataset.labUnit,previous=state.lab[id]||{value:''},changed=previous.unit!==t.value&&['referenceLow','referenceHigh'].some(key=>previous[key]!==undefined&&previous[key]!=='');state.lab[id]=setLabEntryUnit(id,previous,t.value);for(const input of t.closest('fieldset').querySelectorAll('[data-lab-reference]'))input.value=state.lab[id][input.dataset.referenceKey]??'';if(changed){let note=t.closest('fieldset').querySelector('.reference-unit-note');if(!note){note=document.createElement('p');note.className='hint reference-unit-note';note.setAttribute('role','status');t.closest('.input-row').after(note);}note.textContent='Reference limits were converted to the selected unit. Check them against your report.';language.refresh();}}if(t.id==='lab-valid')state.labValid=t.checked;if(t.name==='lab-fasting'){dirty();state.labFasting=t.value;}if(t.id==='lab-context')state.labContext=t.checked;if(t.id==='share-assessment')$('#share-options').hidden=!t.checked;});
-document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target;if(f.id==='system-form'){captureSystem(f);submitSystem();return;}if(f.id==='questions'){captureQuestion();const choices=questionChoices(state);if(choices.page<choices.pages-1){state.optionPage=choices.page+1;render();return;}const q=questionContext(state).question,errors=validateQuestionnaire(state.answers);state.errors=errors[q.id]?{[q.id]:errors[q.id]}:{};if(Object.keys(state.errors).length){render();return;}Object.assign(state,questionDestination(state));goto(state.view);}
+document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target;if(f.id==='system-form'){captureSystem(f);submitSystem();return;}if(f.id==='questions'){captureQuestion();const choices=questionChoices(state);if(choices.page<choices.pages-1){state.optionPage=choices.page+1;render();return;}const q=questionContext(state).question,errors=validateQuestionnaire(state.answers);state.errors=errors[q.id]?{[q.id]:errors[q.id]}:{};if(Object.keys(state.errors).length){render();return;}advanceQuestion(e.submitter);return;}
  if(f.id==='heart-form'){
   captureHeart(f);
   const specialist=state.heartStep==='specialist'&&state.heartSpecialist;
@@ -904,7 +1083,7 @@ document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target
    if(!state.saved){dirty();state.heart={inputs,result,review};}
    state.assessment=true;
    state.reportTab='measurements';
-   goto('report');return;
+   finishAt('report');return;
   }
   if(state.heartReviewEdit){returnToHeartReview();return;}
   if(state.heartCompleteVascularAge){
@@ -916,7 +1095,7 @@ document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target
    state.heartStep=steps[index+1].id;goto('heart');return;
   }
   if(!state.saved){dirty();state.heart={inputs,result,review};}
-  state.assessment=true;goto('report');return;
+  state.assessment=true;finishAt('report');return;
  }
  if(f.id==='heart-arterial-form'){
   const cfpwv=e.submitter?.value==='remove'?null:readHeartArterialForm(f);
@@ -946,7 +1125,11 @@ document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target
   else if(step<4){const all=validateLabs(state.lab),references=validateLabReferences(state.lab);for(const l of labs.slice((step-1)*3,step*3)){if(all[l.id])errors[l.id]=all[l.id];if(references[l.id])errors[l.id+'Reference']=references[l.id];}}
   else{state.labValid=$('#lab-valid').checked;state.labContext=$('#lab-context').checked;errors={...validateLabs(state.lab),...Object.fromEntries(Object.entries(validateLabReferences(state.lab)).map(([id,message])=>[id+'Reference',message]))};if(!state.labValid)errors.confirm='Confirm that these entries match the laboratory report.';}
   state.errors=errors;if(Object.keys(errors).length){if(step===4)state.labStep=labErrorStep(errors);render();return;}
-  if(step<4){state.labStep=step+1;goto('labs');return;}state.labSubmitted=true;state.assessment=true;state.resultTab='summary';goto('results');
+  if(step<4){state.labStep=step+1;goto('labs');return;}
+  state.labSubmitted=true;state.assessment=true;state.resultTab='summary';
+  const origin=returnTrail.at(-1);
+  if(origin?.restore==='edit')goBack({commitEdit:true});
+  else goto('results');
  }
  if(f.id==='consult-form'){
   const current=Number(f.dataset.page)||0;if(current<2){advanceContactPage(f,1);return;}

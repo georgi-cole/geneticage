@@ -1,7 +1,7 @@
 import {assessSystem, systemAssessment, systemExtras, systemField, systemSteps} from './system-assessments.mjs';
 import {measurementFeedbackMarkup} from './lab-feedback.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
-import {escapeHTML as esc, reportArtwork, screenHeading, specialistHelp, uiIcon} from './ui-components.mjs';
+import {backButton, escapeHTML as esc, reportArtwork, screenHeading, specialistHelp, uiIcon} from './ui-components.mjs';
 
 const arrow = ' ' + uiIcon('forward');
 
@@ -88,7 +88,7 @@ export function systemSampleButton(type, entry = false) {
   return spec ? `<button class="text-btn${entry ? ' system-alternate' : ''}" type="button" data-action="sample" data-type="${esc(type)}">Try a ${esc(spec.title)} sample</button>` : '';
 }
 
-export function renderSystemForm({type, inputs, step, prefilled, errors, mode, touched, prefillUnavailable}) {
+export function renderSystemForm({type, inputs, step, prefilled, errors, mode, touched, prefillUnavailable, backLabel, entryLabel = 'Back'}) {
   const spec = systemAssessment(type);
   const route = systemRoute(type, inputs, prefilled);
   const current = (mode ? step : route.find(item => item.id === step?.id)) || route[0];
@@ -99,7 +99,9 @@ export function renderSystemForm({type, inputs, step, prefilled, errors, mode, t
   const next = last ? 'View report' : 'Continue';
   const entered = current.fields.some(id => inputs[id]?.value || typeof inputs[id] === 'string' && inputs[id]);
   const index = route.findIndex(item => item.id === current.id);
+  const back = backButton('system-back', mode === 'report' ? 'Keep current results' : backLabel || (index === 0 && !mode ? entryLabel : 'Back'));
   return `<div class="wrap app-screen task-screen question-screen heart-entry system-entry">
+    ${back}
     <div class="system-heading">${screenHeading(current.specialist ? 'SPECIALIST TEST' : 'ASSESSMENT', spec.title)}<span aria-hidden="true">${uiIcon(spec.icon)}</span></div>
     ${!mode ? `<div class="task-caption"><span>${esc(current.title)}</span><span>${index + 1} / ${route.length}</span></div>
     <div class="heart-progress" aria-hidden="true">${route.map((_, i) => `<i class="${i < index ? 'complete' : i === index ? 'current' : ''}"></i>`).join('')}</div>` : ''}
@@ -118,7 +120,6 @@ export function renderSystemForm({type, inputs, step, prefilled, errors, mode, t
       ${current.id === 'creatinine' && !mode ? '<button class="text-btn system-alternate" type="button" data-action="system-partial">I don’t have this result yet</button>' : ''}
       ${index === 0 && !mode ? systemSampleButton(type, true) : ''}
       <div class="form-nav">
-        <button class="text-btn" type="button" data-action="system-back">${mode === 'report' ? 'Keep current results' : '← Back'}</button>
         <button class="btn" type="submit"><span${skip ? ' data-system-skip="'+esc(skip)+'"' : ''}>${mode === 'review' ? 'Save changes' : skip && !entered ? skip : next}</span>${arrow}</button>
       </div>
     </form>

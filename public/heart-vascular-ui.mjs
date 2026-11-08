@@ -9,7 +9,7 @@ import {arterialMeasurement, heartDecimal, heartMeasurements, reviewHeartMeasure
 import {pday, heartPdayAge} from './heart-pday.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
 import {measurementFeedbackMarkup, safetyMarkup} from './lab-feedback.mjs';
-import {escapeHTML as esc, reportArtwork, screenHeading, specialistHelp, uiIcon} from './ui-components.mjs';
+import {backButton, escapeHTML as esc, reportArtwork, screenHeading, specialistHelp, uiIcon} from './ui-components.mjs';
 
 const arrow = uiIcon('forward');
 const [country, sex, smoking, conditions, treatment] = heartQuestions;
@@ -389,15 +389,18 @@ export function changeHeartUnit(control, entry = {}) {
   editor.open = true;
 }
 
-export function renderHeartForm({inputs = {}, errors = {}, step = 'country', specialistEdit = false, prefilled = [], touched = {}, prefillUnavailable = false}) {
+export function renderHeartForm({inputs = {}, errors = {}, step = 'country', specialistEdit = false, prefilled = [], touched = {}, prefillUnavailable = false, backLabel, entryLabel = 'Back'}) {
   const steps = heartSteps(inputs);
   const {phase, fields} = step === 'review' ? {phase:0} : steps.find(item => item.id === step) || steps[0];
   const phases = ['About you', 'Health history', 'Your measurements'];
   const measures = phase === 2;
   const extra = step === 'specialist';
-  const last = heartRoute(inputs, prefilled).at(-1).id === step;
+  const route = heartRoute(inputs, prefilled);
+  const last = route.at(-1).id === step;
   const specialistEntered = specialist.some(field => hasAnswer(inputs[field.id])) || hasAnswer(inputs.cfpwv);
+  const back = backButton('heart-back', specialistEdit ? 'Keep current results' : backLabel || (route[0].id === step ? entryLabel : 'Back'));
   return `<div class="wrap app-screen task-screen question-screen heart-entry${measures ? ' lab-screen' : ''}">
+    ${back}
     ${screenHeading(extra ? 'SPECIALIST TESTS' : 'CARDIOVASCULAR ASSESSMENT', 'Heart & Vascular', '', pulseMark())}
     ${extra ? '' : `<div class="task-caption"><span>${phases[phase]}</span><span>${phase + 1} / ${phases.length}</span></div>
     <div class="heart-progress" role="progressbar" aria-label="Assessment progress" aria-valuemin="0" aria-valuemax="${phases.length}" aria-valuenow="${phase + 1}">
@@ -409,7 +412,6 @@ export function renderHeartForm({inputs = {}, errors = {}, step = 'country', spe
         : step === 'review' ? prefillReview(inputs, errors, prefilled)
         : step === 'smoking-history' ? smokingHistory(fields, inputs, errors) : promptField(fields[0], inputs, errors)}
       <div class="form-nav">
-        <button class="text-btn" type="button" data-action="heart-back">${specialistEdit ? 'Keep current results' : '← Back'}</button>
         <button class="btn" type="submit"><span${extra && !specialistEdit ? ' data-heart-specialist-next' : ''}>${specialistEdit ? 'Save changes' : extra && !specialistEntered ? 'Continue without these tests' : last ? 'View report' : 'Continue'}</span> ${arrow}</button>
       </div>
     </form>
