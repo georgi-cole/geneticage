@@ -53,6 +53,7 @@ async function authCall(path, method = 'GET', data, options) {
   return { response, data: await response.json() };
 }
 const cookieValue = header => header.split(';', 1)[0];
+const withSiteCookie = cookie => 'site_access=fixture; ' + cookie;
 const codeFrom = message => message.text.match(/\b(\d{8})\b/)?.[1];
 
 try {
@@ -95,7 +96,7 @@ try {
   assert.equal(incomplete.response.status, 400);
   assert.equal(db.prepare('SELECT count(*) n FROM profiles').get().n, 0);
 
-  const registered = await authCall('register', 'POST', { name: 'Health journal', adult: true, consent: true, consentVersion: CONSENT_VERSION }, { cookie: proofCookie });
+  const registered = await authCall('register', 'POST', { name: 'Health journal', adult: true, consent: true, consentVersion: CONSENT_VERSION }, { cookie: withSiteCookie(proofCookie) });
   assert.equal(registered.response.status, 201);
   assert.equal(registered.data.created, true);
   const proofReplay = await authCall('register','POST',{name:'Duplicate',adult:true,consent:true,consentVersion:CONSENT_VERSION},{cookie:proofCookie});
@@ -109,7 +110,7 @@ try {
   assert.match(registrationCookies.find(value => value.startsWith('__Host-kq_email_proof=')), /Max-Age=0/);
   const sessionCookie = cookieValue(sessionHeader);
   const sessionToken = sessionCookie.split('=')[1];
-  const owner = await getEmailUser(request('/api/session', 'GET', undefined, { cookie: sessionCookie }), env);
+  const owner = await getEmailUser(request('/api/session', 'GET', undefined, { cookie: withSiteCookie(sessionCookie) }), env);
   assert.ok(owner?.userId);
   const storedSessionHash = db.prepare('SELECT token_hash FROM auth_sessions').get().token_hash;
   assert.match(storedSessionHash, /^[a-f0-9]{64}$/);
@@ -128,7 +129,7 @@ try {
   assert.equal(loginOwner.userId, owner.userId);
   assert.equal(loginCode.response.status, 202);
 
-  const logout = await authCall('logout', 'POST', {}, { cookie: loginCookie });
+  const logout = await authCall('logout', 'POST', {}, { cookie: withSiteCookie(loginCookie) });
   assert.equal(logout.response.status, 200);
   assert.ok(logout.response.headers.getSetCookie().length >= 2);
   assert.equal(await getEmailUser(request('/api/session', 'GET', undefined, { cookie: loginCookie }), env), null);
