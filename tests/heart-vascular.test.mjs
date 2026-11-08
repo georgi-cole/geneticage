@@ -97,12 +97,77 @@ test('earlier measurement-only submissions stay supported and new younger drafts
     assert.equal(result.risk, undefined);
   }
   assert.ok(assessHeartVascular({country:'Germany',age:33}, {requireHistory:true}).errors.smoking);
-  const younger = assessHeartVascular({...example, age:33, conditions:'Yes', diagnoses:['Diabetes']}, {requireHistory:true});
+  const younger = assessHeartVascular({...example, age:33, conditions:'Yes', diagnoses:['Diabetes'], diabetesType:'Type 2 diabetes'}, {requireHistory:true});
   assert.deepEqual(younger.errors, {});
   assert.equal(younger.result.issue, 'young');
   assert.equal(younger.result.historyIssue, 'diabetes');
+  assert.equal(younger.result.dial2, true);
+  assert.equal(younger.result.risk, undefined);
   assert.deepEqual(younger.inputs.diagnoses, ['Diabetes']);
   assert.ok(heartRoute(younger.inputs).some(step => step.id === 'diagnoses'));
+  assert.ok(!heartRoute({...younger.inputs,country:'Bulgaria'}).some(step => step.id === 'diabetes-labs'));
+});
+
+test('measured arterial stiffness gives a separate age comparison at 33', () => {
+  const profile = {...example, age:33, country:'Bulgaria', conditions:'Yes', diagnoses:['Diabetes']};
+  const cfpwv = {value:'8.3', unit:'m/s', method:'direct-80'};
+  for (const [sex, age] of [['Male',50], ['Female',56]]) {
+    const {inputs, errors, result, review} = assessHeartVascular({...profile, sex, cfpwv});
+    assert.deepEqual(errors, {});
+    assert.deepEqual(inputs.cfpwv, cfpwv);
+    assert.equal(result.issue, 'young');
+    assert.equal(result.risk, undefined);
+    assert.deepEqual(review.arterialAge, {version:'lead-cfpwv-2024-v1', age, ageRange:null});
+  }
+  for (const [value, range] of [['5.5','below'], ['12','above']]) {
+    const {review} = assessHeartVascular({...profile, cfpwv:{...cfpwv,value}});
+    assert.equal(review.arterialAge.age, null);
+    assert.equal(review.arterialAge.ageRange, range);
+  }
+  assert.ok(assessHeartVascular({...profile, cfpwv:{...cfpwv,method:'unknown'}}).errors.cfpwvMethod);
+  assert.ok(assessHeartVascular({...profile, cfpwv:{...cfpwv,value:'830'}}).errors.cfpwv);
+  for (const change of [{age:40}, {sex:'Prefer not to say'}, {diagnoses:['Currently pregnant']}, {systolic:{value:'180',unit:'mmHg'}}]) {
+    assert.equal(assessHeartVascular({...profile, cfpwv, ...change}).review.arterialAge, undefined);
+  }
+});
+
+const type2 = {...example, age:60, smoking:'No', conditions:'Yes', diagnoses:['Diabetes'],
+  diabetesType:'Type 2 diabetes', diabetesDamage:'No'};
+
+test('SCORE2-Diabetes matches the paper’s moderate-risk examples for both sexes', () => {
+  for (const [sex, diagnosisAge, hba1c, egfr, expected] of [
+    ['Male',60,50,90,'11.0'], ['Female',60,50,90,'7.6'],
+    ['Male',50,70,60,'17.2'], ['Female',50,70,60,'12.7'],
+  ]) {
+    const profile = {...type2, sex, diagnosisAge, hba1c:{value:hba1c,unit:'mmol/mol'}, egfr:{value:egfr,unit:'mL/min/1.73 m²'}};
+    const {errors,result} = assessHeartVascular(profile);
+    assert.deepEqual(errors,{});
+    assert.equal(result.method,'SCORE2-Diabetes');
+    assert.equal(result.risk.toFixed(1),expected);
+    const percent = assessHeartVascular({...profile,hba1c:{value:0.09148*hba1c+2.152,unit:'%'}}).result;
+    assert.ok(Math.abs(percent.risk-result.risk) < 1e-10);
+  }
+});
+
+test('diabetes requires exact data and never falls through to the standard SCORE2 equation', () => {
+  const missing = assessHeartVascular(type2);
+  assert.deepEqual(missing.errors,{});
+  assert.equal(missing.result.issue,'diabetes-data');
+  assert.deepEqual(missing.result.missing,['diagnosisAge','hba1c','egfr']);
+  assert.ok(heartRoute(type2).some(step => step.id === 'diabetes-labs'));
+  const ready = {...type2, diagnosisAge:60,hba1c:{value:50,unit:'mmol/mol'},egfr:{value:'>90',unit:'mL/min/1.73 m²'}};
+  assert.deepEqual(assessHeartVascular(ready).result.missing,['egfr']);
+  assert.equal(assessHeartVascular({...ready,egfr:{...ready.egfr,value:50}}).result.issue,'diabetes-range');
+  assert.equal(assessHeartVascular({...ready,diagnosisAge:61}).errors.diagnosisAge,'Enter the age at diagnosis in whole years. It must be no greater than your current age.');
+  for (const variant of [{diabetesType:'Type 1 diabetes'},{treatment:'Yes'},{diabetesDamage:'Not sure'},{age:33},{age:70},{diagnoses:['Diabetes','Chronic kidney disease']}]) {
+    const {result} = assessHeartVascular({...ready,...variant});
+    assert.ok(result.reason);
+    assert.equal(result.risk,undefined);
+    assert.notEqual(result.issue,'diabetes-data');
+  }
+  const high = {...type2,systolic:{value:180,unit:'mmHg'}};
+  assert.equal(assessHeartVascular(high).result.issue,'pressure');
+  assert.ok(!heartRoute(high).some(step => step.id === 'diabetes-labs'));
 });
 
 test('lifestyle prefill carries matching facts forward and leaves narrower heart questions open', () => {

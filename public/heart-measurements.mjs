@@ -4,6 +4,7 @@ import {referenceCatalog} from './lab-reference-catalog.mjs';
 export const HEART_MEASUREMENT_REVIEW = 'heart-measurement-review-v1';
 const cholesterolFactor = unit => unit === 'mg/dL' ? 1 / 38.67 : 1;
 const upperGuide = (high, page) => ({high, highExclusive:true, unit:'mg/dL', page});
+export const arterialMeasurement = {id:'cfpwv', label:'Carotid–femoral pulse wave velocity (cfPWV)', units:['m/s'], group:'arterial', optional:true, coverage:[3, 25]};
 export const heartMeasurements = [
   {id:'systolic', label:'Systolic blood pressure', units:['mmHg'], group:'pressure', coverage:[100, 180]},
   {id:'diastolic', label:'Diastolic blood pressure', units:['mmHg'], group:'pressure', optional:true},
@@ -11,6 +12,9 @@ export const heartMeasurements = [
   {id:'hdl', label:'HDL cholesterol', units:['mmol/L', 'mg/dL'], factor:cholesterolFactor, coverage:[0.5, 3], guide:{unit:'mg/dL', page:4, lowBySex:{Female:50, Male:40}}},
   {id:'apob', label:'ApoB (apolipoprotein B)', units:['g/L', 'mg/dL'], factor:unit => unit === 'mg/dL' ? 0.01 : 1, group:'specialist', optional:true, guide:upperGuide(90, 2)},
   {id:'lpa', label:'Lp(a) (lipoprotein(a))', units:['nmol/L', 'mg/dL'], group:'specialist', optional:true, guide:upperGuide(30, 7)},
+  {id:'hba1c', label:'HbA1c', units:['mmol/mol', '%'], group:'diabetes', optional:true, coverage:[20, 140]},
+  {id:'egfr', label:'eGFR (kidney function)', units:['mL/min/1.73 m²'], group:'diabetes', optional:true, coverage:[60, 150]},
+  arterialMeasurement,
 ];
 
 export const heartPressureMessage = 'Check the numbers against your reading. If this is a recent, confirmed reading, seek urgent medical advice.';
@@ -66,20 +70,27 @@ function compareHeartLipid(field, entry, context) {
 }
 
 const mmol = entry => entry ? Number(entry.value) / (entry.unit === 'mg/dL' ? 38.67 : 1) : null;
+export function hba1cMmol(entry) {
+  const value = Number(entry?.value);
+  // NGSP/IFCC master equation, with the result in mmol/mol.
+  return entry?.unit === '%' ? (value - 2.152) / 0.09148 : value;
+}
 
-export function reviewHeartMeasurements(raw = {}, context = raw) {
+export function reviewHeartMeasurements(raw = {}, context = raw, {includeDiabetes = false, includeArterial = false} = {}) {
   const inputs = {}, errors = {}, fields = {};
   for (const field of heartMeasurements) {
     const {id, units, group} = field;
+    if (group === 'diabetes' && !includeDiabetes) continue;
+    if (group === 'arterial' && !includeArterial) continue;
     const entry = raw?.[id];
     if (entry == null || typeof entry === 'object' && !entered(entry.value)) continue;
-    const value = heartDecimal(entry.value, group === 'specialist');
+    const value = heartDecimal(entry.value, group === 'specialist' || group === 'diabetes');
     if (value === null || group !== 'specialist' && Number(value) <= 0 || !units.includes(entry.unit)) {
       errors[id] = 'Check the measured value and unit.';
       continue;
     }
     inputs[id] = {value, unit:entry.unit};
-    if (group !== 'pressure') {
+    if (field.guide) {
       const {limits, error} = referenceLimits(entry);
       if (error) errors[id+'Reference'] = error;
       else Object.assign(inputs[id], limits);
@@ -98,14 +109,17 @@ export function reviewHeartMeasurements(raw = {}, context = raw) {
     const {id, group, coverage} = field;
     const entry = inputs[id], error = errors[id], referenceError = errors[id+'Reference'];
     if (!entry && !error) continue;
-    const value = id === 'total' ? total : id === 'hdl' ? hdl : Number(entry?.value);
+    const value = id === 'total' ? total : id === 'hdl' ? hdl : id === 'hba1c' ? hba1cMmol(entry) : Number(entry?.value);
     const outside = coverage && !highPressureFields.includes(id) && (value < coverage[0] || value > coverage[1]);
     const status = error ? 'invalid' : outside ? 'review' : 'ok';
-    outsideCoverage ||= status === 'review';
-    const comparison = error || referenceError || group === 'pressure' ? null : compareHeartLipid(field, entry, context);
+    outsideCoverage ||= status === 'review' && (group === 'pressure' || !group);
+    const comparison = error || referenceError || !field.guide ? null : compareHeartLipid(field, entry, context);
     fields[id] = {check:{status, ...(error ? {message:error} : {})}, comparison, direction:comparison?.status || 'unknown', referenceError};
   }
   return {inputs, errors, review:{version:HEART_MEASUREMENT_REVIEW, fields,
-      ...(highPressure ? {pressureWarning:{...pressureWarning, fields:highPressureFields}} : {})},
+      ...(highPressure ? {pressureWarning:{...pressureWarning, fields:highPressureFields}} : {}),
+      ...(!highPressure && !errors.systolic && !errors.diastolic && (systolic >= 140 || diastolic >= 90) ? {
+        pressureFollowUp:'This reading reaches the ESC office blood-pressure threshold. Several readings help show whether it stays elevated.',
+      } : {})},
     values:{systolic,total,hdl}, highPressure, outsideCoverage};
 }

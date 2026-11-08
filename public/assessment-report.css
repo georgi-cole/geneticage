@@ -100,6 +100,18 @@
 .heart-measurement-row {row-gap:0}
 .heart-measurement-row .heart-measurement-review {grid-column:1/-1;text-align:left}
 .heart-measurement-review .lab-comparison a {display:block;margin-top:3px;color:var(--muted);text-decoration:underline}
+.heart-reading-context {margin:7px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
+.heart-prevention h2 {margin:0 0 8px}
+.heart-limit-reason {font-weight:550}
+.heart-missing ul {padding-left:19px;margin:8px 0 12px;font-size:12px;line-height:1.55}
+.heart-missing .btn {margin-top:5px}
+.heart-arterial .btn {margin-top:8px}
+.heart-arterial .text-btn {margin-top:10px}
+.heart-arterial .report-age-line {margin:7px 0}
+#heart-arterial-form {display:grid;gap:13px}
+#heart-arterial-form p,#heart-arterial-form .checkline {margin:0}
+#heart-arterial-form .checkline {align-items:flex-start}
+#heart-arterial-form .checkline input {flex-shrink:0;margin-top:3px}
 @media print {.heart-measurement-review .lab-comparison,.heart-measurement-review .lab-comparison a {color:#222}}
 @media (max-width:480px) {
  .heart-estimate .report-age-line {gap:6px}

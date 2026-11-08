@@ -1,17 +1,22 @@
-import {heartMeasurements, heartDecimal as decimal, heartPressureMessage, reviewHeartMeasurements} from './heart-measurements.mjs';
+import {heartMeasurements, heartDecimal as decimal, heartPressureMessage, reviewHeartMeasurements, hba1cMmol} from './heart-measurements.mjs';
 
 export const HEART_ASSESSMENT = 'heart-vascular';
 const SCORE2 = 'SCORE2';
 const SCORE2_OP = 'SCORE2-OP';
+export const SCORE2_DIABETES = 'SCORE2-Diabetes';
 const coverageSources = ['score2-regions', 'score2-scope'];
+export const arterialReference = {minAge:18, maxAge:80, method:'direct-80'};
 
 export function heartSources(result, review) {
   const labs = Object.values(review?.fields || {}).some(field => field.comparison?.sourceKind === 'published') ? ['adult-intervals'] : [];
+  if (review?.pressureFollowUp || review?.pressureWarning) labs.push('esc-blood-pressure');
   if (result.issue) {
-    const extras = [result.issue === 'pressure' && 'esc-blood-pressure', result.issue === 'young' && 'life-cvd2',
-      (result.issue === 'diabetes' || result.historyIssue === 'diabetes') && 'score2-diabetes'].filter(Boolean);
-    return ['score2', 'score2-op', ...coverageSources, ...extras, ...labs];
+    const extras = [result.issue === 'pressure' && !labs.includes('esc-blood-pressure') && 'esc-blood-pressure', result.issue === 'young' && 'life-cvd2',
+      (result.issue.startsWith('diabetes') || result.historyIssue === 'diabetes') && 'score2-diabetes',
+      result.dial2 && 'dial2'].filter(Boolean);
+    return ['score2', 'score2-op', ...coverageSources, ...extras, ...labs, ...(result.issue === 'young' ? ['arterial-reference'] : [])];
   }
+  if (result.method === SCORE2_DIABETES) return ['score2', 'score2-diabetes', 'score2-diabetes-coefficients', 'hba1c-units', ...coverageSources, 'vascular-age', ...labs];
   return result.method === SCORE2_OP
     ? ['score2-op', 'score2-calculators', ...coverageSources, 'vascular-age', ...labs]
     : ['score2', 'score2-coefficients', ...coverageSources, 'vascular-age', ...labs];
@@ -51,6 +56,9 @@ const diagnosesByIssue = {
 };
 export const heartDiagnosisQuestion = {id:'diagnoses', label:'Which apply to you?', hint:'Select all that apply.', options:[...Object.keys(diagnosesByIssue), 'Not sure which'], multiple:true};
 export const heartDiagnosisActive = inputs => inputs.conditions === 'Yes';
+export const heartDiabetesTypeQuestion = {id:'diabetesType', label:'Which type of diabetes were you diagnosed with?', options:['Type 2 diabetes', 'Type 1 diabetes', 'Another type or not sure']};
+export const heartDiabetesDamageQuestion = {id:'diabetesDamage', label:'Has a clinician identified complications from diabetes?',
+  hint:'For example, kidney disease, protein in your urine, diabetic eye disease, or nerve damage.', options:yesNo};
 
 const smokingDetails = [
   {id:'smokingDays30', label:'Days you smoked in the past 30 days', min:1, max:30, integer:true},
@@ -91,25 +99,69 @@ const score2 = {name:SCORE2, version:'score2-2021-regional-v1', minAge:40, maxAg
   center:{age:60, systolic:120, hdl:1.3}, scale:{age:5, systolic:20, hdl:0.5}, coefficients:score2Coefficients};
 const score2Op = {name:SCORE2_OP, version:'score2-op-2021-regional-v1', minAge:70, maxAge:89,
   center:{age:73, systolic:150, hdl:1.4}, scale:{age:1, systolic:1, hdl:1}, coefficients:score2OpCoefficients};
+// SCORE2-Diabetes (ehad260), Supplementary Methods Table 1. The survival
+// constants in the prediction equations reproduce the publication examples.
+const score2Diabetes = {...score2, name:SCORE2_DIABETES, version:'score2-diabetes-2023-regional-v1', coefficients:{
+  Male:{age:0.5368, smoking:0.4774, systolic:0.1322, total:0.1102, hdl:-0.1087,
+    ageSmoking:-0.0672, ageSystolic:-0.0268, ageTotal:-0.0181, ageHdl:0.0095, survival:0.9605, calibration:score2Coefficients.Male.calibration,
+    diabetes:0.6457, ageDiabetes:-0.0983, diagnosisAge:-0.0998, hba1c:0.0955, egfr:-0.0591, egfrSquared:0.0058, ageHba1c:-0.0134, ageEgfr:0.0115},
+  Female:{age:0.6624, smoking:0.6139, systolic:0.1421, total:0.1127, hdl:-0.1568,
+    ageSmoking:-0.1122, ageSystolic:-0.0167, ageTotal:-0.0200, ageHdl:0.0186, survival:0.9776, calibration:score2Coefficients.Female.calibration,
+    diabetes:0.8096, ageDiabetes:-0.1272, diagnosisAge:-0.1180, hba1c:0.1173, egfr:-0.0640, egfrSquared:0.0062, ageHba1c:-0.0196, ageEgfr:0.0169},
+}};
 const models = [score2, score2Op];
 const modelForAge = age => models.find(model => age >= model.minAge && age <= model.maxAge);
 
+function reportedDiabetes(inputs) {
+  return heartDiagnosisActive(inputs) && Array.isArray(inputs.diagnoses) && inputs.diagnoses.includes('Diabetes');
+}
+
+function dial2Scope(inputs) {
+  return Number(inputs.age) >= 30 && Number(inputs.age) <= 85 && ['low', 'moderate'].includes(regionsByCountry.get(inputs.country))
+    && inputs.diagnoses?.every(diagnosis => diagnosis === 'Diabetes');
+}
+
+export function heartDiabetesCandidate(inputs) {
+  return reportedDiabetes(inputs) && inputs.diagnoses.every(diagnosis => diagnosis === 'Diabetes') &&
+    inputs.diabetesType === 'Type 2 diabetes' && modelForAge(Number(inputs.age)) === score2 && regionsByCountry.has(inputs.country);
+}
+
+export const heartNeedsDiabetesDamage = inputs => heartDiabetesCandidate(inputs) && inputs.treatment === 'No';
+
+export function heartNeedsDiabetesType(inputs) {
+  return reportedDiabetes(inputs) && inputs.diagnoses.every(diagnosis => diagnosis === 'Diabetes') &&
+    (modelForAge(Number(inputs.age)) === score2 && regionsByCountry.has(inputs.country) || dial2Scope(inputs));
+}
+
+export function heartUsesDiabetesLabs(inputs) {
+  return heartDiabetesCandidate(inputs) && inputs.diabetesDamage === 'No' && inputs.treatment === 'No' &&
+    ['Female', 'Male'].includes(inputs.sex) && (currentSmoking.includes(inputs.smoking) || ['No','Used to smoke','Never smoked'].includes(inputs.smoking));
+}
+
 export function heartModelForReport(result) {
   if (result.reason) return null;
-  const {name, minAge, maxAge} = result.method === SCORE2_OP ? score2Op : score2;
+  const {name, minAge, maxAge} = result.method === SCORE2_DIABETES ? score2Diabetes : result.method === SCORE2_OP ? score2Op : score2;
   return {name, minAge, maxAge};
 }
 
-function scoreLogHazard({age, sex, region, smoking, systolic, total, hdl}, {center, scale, coefficients}) {
+function scoreLogHazard({age, sex, region, smoking, systolic, total, hdl, diabetes}, {center, scale, coefficients}) {
   const model = coefficients[sex];
   const ageTerm = (age - center.age) / scale.age;
   const pressureTerm = (systolic - center.systolic) / scale.systolic;
   const totalTerm = total - 6;
   const hdlTerm = (hdl - center.hdl) / scale.hdl;
-  const linear = model.age * ageTerm + model.smoking * smoking + model.systolic * pressureTerm
+  let linear = model.age * ageTerm + model.smoking * smoking + model.systolic * pressureTerm
     + model.total * totalTerm + model.hdl * hdlTerm
     + ageTerm * (model.ageSmoking * smoking + model.ageSystolic * pressureTerm
       + model.ageTotal * totalTerm + model.ageHdl * hdlTerm);
+  if (diabetes) {
+    const hba1c = (diabetes.hba1c - 31) / 9.34;
+    const egfr = (Math.log(diabetes.egfr) - 4.5) / 0.15;
+    const diagnosisAge = (diabetes.diagnosisAge - 50) / 5;
+    linear += model.diabetes + model.diagnosisAge * diagnosisAge + model.hba1c * hba1c +
+      model.egfr * egfr + model.egfrSquared * egfr ** 2 +
+      ageTerm * (model.ageDiabetes + model.ageHba1c * hba1c + model.ageEgfr * egfr);
+  }
   const [scale1, scale2] = model.calibration[region];
   return scale1 + scale2 * (Math.log(-Math.log(model.survival)) + linear - (model.mean ?? 0));
 }
@@ -134,6 +186,9 @@ export const heartLimitations = {
   region:{reason:'The country selected is outside the SCORE2 regions covered here.', next:'Check your country of residence or ask a clinician which risk assessment is used where you live.', edit:'country'},
   cvd:{reason:'These equations estimate the chance of a first cardiovascular event. Risk with established disease uses a separate assessment.', next:'Ask the clinician who manages your heart or blood vessel condition about a follow-up risk assessment.'},
   diabetes:{reason:'A diabetes-specific assessment can account for blood sugar control, kidney function and how long you have had diabetes.', next:'Bring your latest HbA1c and kidney function results if available. Ask which cardiovascular assessment fits your age and medical history.'},
+  'diabetes-complications':{reason:'Diabetes complications can change how cardiovascular risk is assessed.', next:'Review your kidney results and any eye or nerve complications with your diabetes care team.', edit:'diabetes-damage'},
+  'diabetes-data':{reason:'SCORE2-Diabetes needs a few more details to calculate your estimate.', next:'Add the missing values from your records. An exact lab value is needed for the calculation.', edit:'diabetes-labs'},
+  'diabetes-range':{reason:'A diabetes measurement is outside the range this assessment uses.', next:'Check the HbA1c and eGFR values and units. If they match the report, review them with your diabetes care team.', edit:'diabetes-labs'},
   kidney:{reason:'Kidney function can change the way cardiovascular risk is assessed.', next:'Ask how your kidney function results factor into your cardiovascular risk.'},
   inherited:{reason:'Inherited lipid or blood pressure disorders can affect risk beyond the measurements these equations use.', next:reviewMeasurements},
   pregnancy:{reason:'Pregnancy changes how blood pressure and cholesterol are interpreted.', next:'Share your measurements with your maternity care team.'},
@@ -154,6 +209,22 @@ export function heartStartIssue(inputs) {
   return null;
 }
 
+export function heartCanCompareArterialAge(inputs) {
+  return heartStartIssue(inputs) === 'young' && ['Female', 'Male'].includes(inputs.sex) &&
+    (inputs.conditions === 'No' || inputs.conditions === 'Yes' && inputs.diagnoses?.length > 0 &&
+      !inputs.diagnoses.some(diagnosis => ['Currently pregnant', 'Not sure which'].includes(diagnosis)));
+}
+
+function compareArterialAge({sex, cfpwv}) {
+  // Invert the sex-specific median curves in Table 3 of the Austrian LEAD study.
+  const [intercept, slope] = sex === 'Female' ? [1.705, 0.0073] : [1.769, 0.0070];
+  const {minAge, maxAge} = arterialReference;
+  const value = Number(cfpwv.value);
+  const ageRange = value < Math.exp(intercept + slope * minAge) ? 'below'
+    : value > Math.exp(intercept + slope * maxAge) ? 'above' : null;
+  return {version:'lead-cfpwv-2024-v1', age:ageRange ? null : Math.round((Math.log(value) - intercept) / slope), ageRange};
+}
+
 function historyIssue(inputs) {
   if (inputs.conditions !== 'No') {
     const issues = (inputs.diagnoses || []).map(diagnosis => diagnosesByIssue[diagnosis]);
@@ -168,8 +239,12 @@ function scopeIssue(inputs, region, history) {
   const startIssue = heartStartIssue(inputs);
   if (startIssue) return startIssue;
   if (!region) return 'region';
-  if (history) return history;
-  if (inputs.conditions !== 'No') return 'conditions';
+  if (history === 'diabetes') {
+    if (!heartDiabetesCandidate(inputs)) return 'diabetes';
+    if (heartNeedsDiabetesDamage(inputs) && inputs.diabetesDamage !== 'No') return 'diabetes-complications';
+  } else if (history) return history;
+  else if (inputs.conditions !== 'No') return 'conditions';
+  if (inputs.treatment === 'Yes') return 'treatment';
   if (inputs.treatment === 'Not sure') return 'treatmentUnknown';
   if (inputs.sex === 'Prefer not to say') return 'sex';
   if (['Not sure', 'Prefer not to say'].includes(inputs.smoking)) return 'smoking';
@@ -177,6 +252,23 @@ function scopeIssue(inputs, region, history) {
 }
 
 const unavailable = issue => ({issue, reason:heartLimitations[issue].reason});
+
+function readDiabetesInputs(inputs, raw, errors, required) {
+  for (const [field, active] of [[heartDiabetesTypeQuestion, heartNeedsDiabetesType], [heartDiabetesDamageQuestion, heartNeedsDiabetesDamage]]) {
+    if (!active(inputs)) continue;
+    if (field.options.includes(raw[field.id])) inputs[field.id] = raw[field.id];
+    else if (required || raw[field.id] !== undefined) errors[field.id] = 'Choose an answer.';
+  }
+  if (heartUsesDiabetesLabs(inputs) && raw.diagnosisAge != null && raw.diagnosisAge !== '') {
+    const value = Number(decimal(raw.diagnosisAge));
+    if (!Number.isInteger(value) || value < 1 || value > inputs.age) errors.diagnosisAge = 'Enter the age at diagnosis in whole years. It must be no greater than your current age.';
+    else inputs.diagnosisAge = value;
+  }
+}
+
+function diabetesValues(inputs) {
+  return {diagnosisAge:inputs.diagnosisAge, hba1c:hba1cMmol(inputs.hba1c), egfr:Number(inputs.egfr?.value)};
+}
 
 export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   const inputs = {};
@@ -201,6 +293,7 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
     else if (choices.includes('Not sure which') && choices.length > 1) errors.diagnoses = 'Choose Not sure which on its own.';
     else inputs.diagnoses = choices;
   }
+  readDiabetesInputs(inputs, raw, errors, requireHistory);
 
   for (const {id, min, max, integer} of heartSmokingFields(inputs)) {
     const entry = raw?.[id];
@@ -214,10 +307,25 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
 
   const region = regionsByCountry.get(inputs.country);
   const history = historyIssue(inputs), issue = scopeIssue(inputs, region, history);
-  const measurements = reviewHeartMeasurements(raw, inputs);
+  const includeDiabetes = heartUsesDiabetesLabs(inputs);
+  const includeArterial = heartCanCompareArterialAge(inputs);
+  const measurements = reviewHeartMeasurements(raw, inputs, {includeDiabetes, includeArterial});
   Object.assign(inputs, measurements.inputs);
   Object.assign(errors, measurements.errors);
   const {review, highPressure, outsideCoverage, values:{systolic, total, hdl}} = measurements;
+  if (inputs.cfpwv && !highPressure) {
+    if (raw.cfpwv.method !== arterialReference.method) errors.cfpwvMethod = 'Confirm that your report uses 80% of the direct carotid–femoral distance.';
+    else if (review.fields.cfpwv.check.status === 'review') errors.cfpwv = 'Enter the pulse wave velocity in m/s, from 3 to 25.';
+    else {
+      inputs.cfpwv.method = arterialReference.method;
+      review.arterialAge = compareArterialAge(inputs);
+    }
+  }
+  if (highPressure) {
+    delete inputs.cfpwv;
+    delete errors.cfpwv;
+    delete review.fields.cfpwv;
+  }
   if (!issue && !highPressure) {
     for (const {id, optional} of heartMeasurements) {
       if (!optional && !inputs[id] && !errors[id]) errors[id] = 'Enter the measured value.';
@@ -225,11 +333,22 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   }
   if (Object.keys(errors).length) return {inputs, errors, review, result:null};
   if (highPressure) return {inputs, errors, review, result:unavailable('pressure')};
-  if (issue) return {inputs, errors, review, result:{...unavailable(issue), ...(startIssue && history ? {historyIssue:history} : {})}};
+  if (issue) return {inputs, errors, review, result:{...unavailable(issue), ...(startIssue && history ? {historyIssue:history} : {}),
+    ...(inputs.diabetesType === 'Type 2 diabetes' && dial2Scope(inputs) ? {dial2:true} : {})}};
   if (outsideCoverage) return {inputs, errors, review, result:unavailable('measurements')};
 
-  const model = modelForAge(inputs.age);
-  const logHazard = scoreLogHazard({age:inputs.age, sex:inputs.sex, region, smoking:Number(currentSmoking.includes(inputs.smoking)), systolic, total, hdl}, model);
+  let diabetes;
+  if (includeDiabetes) {
+    diabetes = diabetesValues(inputs);
+    const missing = Object.keys(diabetes).filter(id => !Number.isFinite(diabetes[id]));
+    if (missing.length) return {inputs, errors, review, result:{...unavailable('diabetes-data'), missing}};
+    // The app uses a conservative range and directs known complications or lower
+    // kidney function to clinical review before applying the published equation.
+    const outside = ['hba1c','egfr'].filter(id => review.fields[id].check.status === 'review');
+    if (outside.length) return {inputs, errors, review, result:{...unavailable('diabetes-range'), outside}};
+  }
+  const model = diabetes ? score2Diabetes : modelForAge(inputs.age);
+  const logHazard = scoreLogHazard({age:inputs.age, sex:inputs.sex, region, smoking:Number(currentSmoking.includes(inputs.smoking)), systolic, total, hdl, diabetes}, model);
   const risk = -100 * Math.expm1(-Math.exp(logHazard));
-  return {inputs, errors, review, result:{method:model.name, version:model.version, risk, region, ...riskEquivalentAge(logHazard, inputs.sex, region, model)}};
+  return {inputs, errors, review, result:{method:model.name, version:model.version, risk, region, ...riskEquivalentAge(logHazard, inputs.sex, region, diabetes ? score2 : model)}};
 }

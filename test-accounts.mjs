@@ -103,6 +103,16 @@ assert.equal(savedOlderHeart.heart.result.method,'SCORE2-OP');
 assert.ok(savedOlderHeart.sources.includes('https://doi.org/10.1093/eurheartj/ehab312'));
 assert.equal(savedOlderHeart.heart.inputs.smokingDays30,8);
 assert.equal((await call(a,'assessments/'+olderHeart.id,'DELETE',{confirm:true})).response.status,200);
+const arterialEntry={...heartEntry,id:randomUUID(),heart:{...heartEntry.heart,
+  age:33,country:'Bulgaria',conditions:'Yes',diagnoses:['Diabetes'],
+  cfpwv:{value:'8.3',unit:'m/s',method:'direct-80'},review:{arterialAge:{age:25}},
+}};
+assert.equal((await call(a,'assessments','POST',arterialEntry)).response.status,201);
+const savedArterial=(await call(a,'assessments/'+arterialEntry.id+'/report')).data.report;
+assert.equal(savedArterial.heart.result.issue,'young');
+assert.equal(savedArterial.heart.review.arterialAge.age,50);
+assert.ok(savedArterial.sources.includes('https://doi.org/10.1038/s41598-024-74162-5'));
+assert.equal((await call(a,'assessments/'+arterialEntry.id,'DELETE',{confirm:true})).response.status,200);
 assert.equal((await call(a,'assessments/'+heartId,'DELETE',{confirm:true})).response.status,200);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
 sqlite.prepare('UPDATE assessments SET payload=? WHERE id=?').run(stored.payload,withheldId);
