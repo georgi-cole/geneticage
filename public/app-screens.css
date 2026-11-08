@@ -102,25 +102,28 @@ footer {display:none}
 .assessment-route>svg {width:22px;height:22px;color:var(--muted);flex-shrink:0}
 .assessment-route:hover {border-color:var(--accent)}
 
-.heart-assessment-screen {max-width:680px;gap:14px}
-.heart-assessment-screen .card {padding:18px;margin:0}
-.heart-assessment-screen .card h2 {font-size:18px;margin:0 0 8px}
-.heart-form {display:grid;gap:14px}
-.heart-fields,.heart-estimates {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.heart-field {min-width:0}
-.heart-field label {display:block;margin-bottom:6px;font-weight:500}
-.heart-field p {margin:5px 0 0}
-.heart-field .input-row {margin:0;max-width:100%}
-.heart-field .input-row input {min-width:0}
-.heart-field select {width:100%}
-.heart-field .input-row select {width:auto;max-width:50%}
-.heart-estimates strong {display:block;font-size:clamp(24px,6vw,40px);line-height:1.15;margin-top:4px}
-.heart-estimate p {margin:10px 0 0}
-@media (max-width:480px) {.heart-fields {grid-template-columns:minmax(0,1fr);gap:12px}}
-@media print {
- .heart-report-screen .no-print {display:none!important}
- .heart-report-screen .card {margin:12px 0;break-inside:avoid}
-}
+.heart-pulse-mark {width:clamp(58px,18vw,106px);height:auto;flex:none;color:var(--accent);opacity:.8}
+.heart-pulse-mark path {stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.heart-pulse-mark .pulse-guide {opacity:.22;stroke-dasharray:2 4}
+.heart-pulse-mark .pulse-trace {stroke-width:1.35}
+.heart-pulse-mark circle {fill:var(--bg);stroke:currentColor;opacity:.85}
+.heart-progress {display:flex;gap:5px;flex-shrink:0}
+.heart-progress i {flex:1;height:2px;border-radius:2px;background:var(--line)}
+.heart-progress .complete {background:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.heart-progress .current {background:var(--accent)}
+.heart-entry .question.heart-prompt>legend {padding-top:clamp(18px,5vh,42px)}
+.heart-entry .heart-prompt>select,.heart-entry .heart-prompt>input {width:100%;max-width:370px}
+.heart-entry .question .heart-choices {grid-template-columns:minmax(0,1fr);max-width:370px}
+.heart-entry .heart-choices .option {min-height:46px}
+.heart-entry .heart-choices .option>input {width:100%;height:100%;margin:0}
+.heart-entry .heart-measurements {gap:16px;padding-top:8px}
+.heart-entry .heart-measurements .question>legend {font-size:20px;margin:0 0 7px}
+.heart-measurement-list {display:grid;gap:12px}
+.heart-measurement {min-width:0}
+.heart-measurement label {display:block;font-size:12px;font-weight:500;margin:0 0 5px}
+.heart-entry .heart-measurement .input-row {max-width:370px}
+.heart-measurement .input-row select {width:auto;max-width:46%}
+.heart-specialist .reference-settings-content {gap:8px}
 .saved-records {min-height:0}
 .section-caption {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .section-caption h2 {font-size:12px;margin:0;font-weight:500}

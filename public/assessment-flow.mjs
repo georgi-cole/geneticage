@@ -11,7 +11,7 @@ export function assessmentProgress(state){
  return {answered,total:questions.length,measurements,hasData:answered>0||measurements>0||provided(state.labAge)||provided(state.labDate)};
 }
 export function freshAssessment(goal='profile'){
- return {view:'consent',step:0,questionIndex:0,optionPage:0,labStep:0,resultTab:'summary',reportTab:'summary',libraryPage:0,answers:{},lab:{},labAge:'',labDate:'',labReferenceMode:'published',labReferenceGroup:'unspecified',labReferenceVersion:REFERENCE_CATALOG_VERSION,consent:false,goal,sample:false,errors:{},unlocked:false,assessment:false,profileCompleted:false,accountTab:'history',...(goal===HEART_ASSESSMENT?{assessmentType:HEART_ASSESSMENT,heart:{inputs:{}}}:{})};
+ return {view:'consent',step:0,questionIndex:0,optionPage:0,labStep:0,resultTab:'summary',reportTab:'summary',libraryPage:0,answers:{},lab:{},labAge:'',labDate:'',labReferenceMode:'published',labReferenceGroup:'unspecified',labReferenceVersion:REFERENCE_CATALOG_VERSION,consent:false,goal,sample:false,errors:{},unlocked:false,assessment:false,profileCompleted:false,accountTab:'history',...(goal===HEART_ASSESSMENT?{assessmentType:HEART_ASSESSMENT,heartStep:0,heart:{inputs:{}}}:{})};
 }
 // Profile and blood entry share a draft. Heart & Vascular has its own draft.
 export function continueAssessment(state,goal){

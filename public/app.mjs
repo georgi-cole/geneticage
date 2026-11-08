@@ -14,7 +14,7 @@ import {validateLabReferences,setLabEntryUnit} from './lab-review.mjs';
 import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 import {renderAssessmentReport} from './report-ui.mjs';
 import {assessHeartVascular, HEART_ASSESSMENT} from './heart-vascular.mjs';
-import {readHeartForm, renderHeartForm, renderHeartOverview, renderHeartReport} from './heart-vascular-ui.mjs';
+import {HEART_MEASUREMENT_STEP, heartErrorStep, readHeartForm, renderHeartForm, renderHeartOverview, renderHeartReport} from './heart-vascular-ui.mjs';
 import {resultInstrument,screenHeading,uiIcon,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,assessmentTitle,statusMessage,unmeasuredMark} from './ui-components.mjs';
 import {questionContext,questionChoices,questionDestination,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
 import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,insights,sampleAnswers,sampleLabs} from './model.mjs';
@@ -131,7 +131,7 @@ function hasContext(){return state.answers.illness==='Yes'||['conditions','medic
 
 function pagesInfo(){modal('Cloud features in the hosted app',`<p>This GitHub Pages preview supports assessments, themes and report exploration. Accounts, cloud storage and purchases are available in the hosted app.</p><a class="btn" href="${HOSTED_APP_URL}" target="_blank" rel="noopener noreferrer">Open hosted app ↗</a>`);}
 function report(){
- if(isHeartAssessment(state))return state.heart.result?renderHeartReport({heart:state.heart,saved:!!state.saved,pagesPreview:PAGES_PREVIEW,sourceLinks}):heartForm();
+ if(isHeartAssessment(state))return state.heart.result?renderHeartReport({heart:state.heart,saved:!!state.saved,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):heartForm();
  const reviewing=!!auth.reportReview||!!state.savedReport?.access?.review;state.unlocked=state.savedReport?.full===true||reviewing;
  return renderAssessmentReport({state,clinical:clinical(),full:state.unlocked,reviewing,pagesPreview:PAGES_PREVIEW,sourceLinks,ageComparison,hasDraftBackup:!!draftBackup});
 }
@@ -220,9 +220,10 @@ function captureLabs(){
  if($('#lab-context'))state.labContext=$('#lab-context').checked;
  const fasting=form.querySelector('[name=lab-fasting]:checked');if(fasting)state.labFasting=fasting.value;
 }
-function heartForm(){return renderHeartForm({inputs:state.heart.inputs,errors:state.errors});}
+function heartForm(){return renderHeartForm({inputs:state.heart.inputs,errors:state.errors,step:state.heartStep,showOptional:state.heartOptional});}
 function captureHeart(form){
- const inputs=readHeartForm(form);
+ const inputs=readHeartForm(form,state.heart.inputs,state.heartStep);
+ if(JSON.stringify(inputs)===JSON.stringify(state.heart.inputs))return;
  dirty();
  state.heart={inputs};
  state.assessment=false;
@@ -240,6 +241,7 @@ function selectAssessment(type){
 function beginAssessment(goal){
  if(state.view==='review')state.profileCompleted=true;
  selectAssessment(goal===HEART_ASSESSMENT?HEART_ASSESSMENT:'profile');
+ if(goal===HEART_ASSESSMENT)state.reportTab='summary';
  state=continueAssessment(state,goal);goto(state.view);
 }
 function loadSample(){if(!state.sample&&assessmentProgress(state).hasData)draftBackup=structuredClone(state);state={...freshAssessment(),resultTab:'summary',answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labReferenceGroup:'male',labFasting:'Yes',labDate:'2026-11-01',labValid:true,labContext:true,sample:true,labSubmitted:true,consent:true,assessment:true,profileCompleted:true};state.lab.crp.assay='standard-crp';goto('results');}
@@ -247,6 +249,20 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
  if(state.view==='questionnaire')captureQuestion();else if(state.view==='labs')captureLabs();
  if(act==='pages-info'){pagesInfo();return;}
  if(act==='report-tab'){state.reportTab=b.dataset.tab;goto('report');return;}
+ if(act==='heart-back'){
+  if(state.heartStep>0){state.heartStep--;goto('heart');}
+  else{state.accountTab='history';goto('account');}
+  return;
+ }
+ if(act==='heart-edit'){
+  const part=b.dataset.part;
+  state.heartStep=part==='answers'?0:HEART_MEASUREMENT_STEP;
+  state.heartOptional=part==='specialist';
+  state.reportTab=part==='answers'?'summary':'measurements';
+  goto('heart');
+  if(state.heartOptional)$('#heart-apob')?.focus();
+  return;
+ }
  if(act==='restore-draft'&&draftBackup){state=draftBackup;draftBackup=null;goto(state.view);return;}
  if(act==='new-assessment'){modal('Start a new assessment?','<p>This clears the current unsaved answers and blood entries.</p><div class="actions"><button class="btn secondary" data-action="close">Keep current assessment</button><button class="btn" data-action="new-assessment-confirm">Start new assessment</button></div>');return;}
  if(act==='new-assessment-confirm'){close();reset();return;}
@@ -258,7 +274,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
  if(act==='consult-step'){advanceContactPage($('#consult-form'),Number(b.dataset.direction));return;}
  if(act==='account-area'||act==='assessments'){state.accountTab=b.dataset.tab||'history';state.libraryPage=0;goto('account');void refreshAccount().then(()=>{if(state.view==='account')render();});return;}if(act==='home'){goto('home');void hydrateOverview();return;}if(act==='method'){method();return;}if(act==='privacy'){privacy();return;}if(act==='close'){close();return;}if(act==='start'){beginAssessment('profile');return;}if(act==='start-labs'){beginAssessment('labs');return;}if(act==='start-heart'){beginAssessment(HEART_ASSESSMENT);return;}if(act==='sample'){loadSample();return;}if(act==='consent-next'){state.consent=$('#consent').checked;if(!state.consent){state.errors={consent:'Confirm your age and that you have read the assessment note.'};render();return;}goto(state.goal===HEART_ASSESSMENT?'heart':state.goal==='labs'?'labs':'questionnaire');return;}
  if(act==='question-back'){if(questionChoices(state).page>0){state.optionPage--;render();return;}Object.assign(state,questionDestination(state,-1));goto(state.view);return;}if(act==='skip'){dirty();delete state.answers[b.dataset.id];Object.assign(state,questionDestination(state));goto(state.view);return;}if(act==='edit-section'){state.step=Number(b.dataset.index);state.questionIndex=0;state.optionPage=0;goto('questionnaire');return;}if(act==='add-drink'){editDrink();return;}if(act==='edit-drink'){editDrink(Number(b.dataset.index));return;}if(act==='remove-drink'){dirty();state.answers.drinks.splice(Number(b.dataset.index),1);render();return;}
- if(act==='without-labs'){state.profileCompleted=true;dirty();state.labSubmitted=false;state.assessment=true;goto('results');return;}if(act==='labs'){beginAssessment('labs');return;}if(act==='sample-labs'){loadSample();state.labStep=0;goto('labs');return;}if(act==='results'){if(state.view==='review')state.profileCompleted=true;state.assessment=true;state.resultTab='summary';goto('results');return;}if(act==='review'){goto('review');return;}if(act==='report'){state.reportTab='summary';goto('report');return;}if(act==='checkout'){checkout();return;}if(act==='print'){if(isHeartAssessment(state)){window.print();return;}if(auth.reportReview||state.savedReport?.full===true){const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(d=>d.open);details.forEach(d=>d.open=true);window.addEventListener('afterprint',()=>details.forEach((d,i)=>d.open=previous[i]),{once:true});window.print();}else checkout();return;}
+ if(act==='without-labs'){state.profileCompleted=true;dirty();state.labSubmitted=false;state.assessment=true;goto('results');return;}if(act==='labs'){beginAssessment('labs');return;}if(act==='sample-labs'){loadSample();state.labStep=0;goto('labs');return;}if(act==='results'){if(state.view==='review')state.profileCompleted=true;state.assessment=true;state.resultTab='summary';goto('results');return;}if(act==='review'){goto('review');return;}if(act==='report'){state.reportTab='summary';goto('report');return;}if(act==='checkout'){checkout();return;}if(act==='print'){if(isHeartAssessment(state)||auth.reportReview||state.savedReport?.full===true){const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(d=>d.open);details.forEach(d=>d.open=true);window.addEventListener('afterprint',()=>details.forEach((d,i)=>d.open=previous[i]),{once:true});window.print();}else checkout();return;}
  if(act==='save-before-checkout'){await action(b,async()=>{await api('assessments','POST',snapshot());await openSaved(state.saveId,'report');checkout();});return;}
  if(act==='purchase-checkout'){await action(b,async()=>{const result=await api('payments/checkout','POST',{assessmentId:state.saveId,confirm:true});if(result.purchased){close();await openSaved(state.saveId,'report');return;}const url=new URL(result.url);if(url.protocol!=='https:'||url.hostname!=='checkout.stripe.com')throw Error('Could not open secure checkout.');modal('Your secure checkout is ready.',`<p>Continue to Stripe to review the final total and pay. Your saved report stays in your account if you leave checkout.</p><a class="btn" href="${esc(url.href)}" target="_top" rel="noreferrer">Open Stripe checkout →</a><p class="small muted" style="margin-top:15px">You can return to Purchases to check or cancel an unfinished checkout.</p>`);});return;}
  if(act==='refresh-payments'||act==='check-order'){await action(b,async()=>{const result=await api('payments/refresh','POST',act==='check-order'?{orderId:b.dataset.id}:{});auth.purchases=result.purchases;await refreshAccount();state.accountTab='purchases';goto('account');});return;}
@@ -296,17 +312,19 @@ document.addEventListener('change',e=>{const t=e.target;clearContactFeedback(t);
  if(t.dataset.unit){state.answers[t.dataset.unit+'Unit']=t.value;if(['weight','weightYearAgo'].includes(t.dataset.unit))delete state.answers.weightChangeIntent;}if(t.dataset.labUnit){const id=t.dataset.labUnit,previous=state.lab[id]||{value:''},changed=previous.unit!==t.value&&['referenceLow','referenceHigh'].some(key=>previous[key]!==undefined&&previous[key]!=='');state.lab[id]=setLabEntryUnit(id,previous,t.value);for(const input of t.closest('fieldset').querySelectorAll('[data-lab-reference]'))input.value=state.lab[id][input.dataset.referenceKey]??'';if(changed){let note=t.closest('fieldset').querySelector('.reference-unit-note');if(!note){note=document.createElement('p');note.className='hint reference-unit-note';note.setAttribute('role','status');t.closest('.input-row').after(note);}note.textContent='Reference limits were converted to the selected unit. Check them against your report.';language.refresh();}}if(t.id==='lab-valid')state.labValid=t.checked;if(t.name==='lab-fasting'){dirty();state.labFasting=t.value;}if(t.id==='lab-context')state.labContext=t.checked;if(t.id==='share-assessment')$('#share-options').hidden=!t.checked;});
 document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target;if(f.id==='questions'){captureQuestion();const choices=questionChoices(state);if(choices.page<choices.pages-1){state.optionPage=choices.page+1;render();return;}const q=questionContext(state).question,errors=validateQuestionnaire(state.answers);state.errors=errors[q.id]?{[q.id]:errors[q.id]}:{};if(Object.keys(state.errors).length){render();return;}Object.assign(state,questionDestination(state));goto(state.view);}
  if(f.id==='heart-form'){
-  const input=readHeartForm(f);
-  const {inputs,errors,result}=assessHeartVascular(input);
-  if(Object.keys(errors).length){
-   dirty();state.heart={inputs:input};state.assessment=false;state.errors=errors;render();
+  captureHeart(f);
+  const {inputs,errors,result}=assessHeartVascular(state.heart.inputs);
+  const errorStep=heartErrorStep(errors);
+  if(errorStep>=0&&errorStep<=state.heartStep){
+   state.heartStep=errorStep;state.errors=errors;render();
    $('#heart-form [aria-invalid="true"]')?.focus();
    return;
   }
-  if(!state.saved||JSON.stringify(inputs)!==JSON.stringify(state.heart.inputs)){
-   dirty();state.heart={inputs,result};
+  if(state.heartStep<HEART_MEASUREMENT_STEP){
+   state.heartStep++;goto('heart');return;
   }
-  state.assessment=true;goto('report');return;
+  if(!state.saved){dirty();state.heart={inputs,result};}
+  state.assessment=true;state.heartOptional=false;goto('report');return;
  }
  if(f.id==='drink-form'){if(!f.reportValidity())return;const draft={type:$('#drink-type').value,count:$('#drink-count').value,ml:$('#drink-ml').value,abv:$('#drink-abv').value},index=Number(f.dataset.index);state.answers.drinks??=[];if(index<0)state.answers.drinks.push(draft);else state.answers.drinks[index]=draft;dirty();close();render();return;}
  if(f.id==='labs-form'){
