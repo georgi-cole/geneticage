@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {counterText,dialFrame,initializeResultMotion,RESULT_MOTION_DURATION} from './public/result-motion.mjs';
-import {overviewChoices,overviewPresentation,renderThemeHome} from './public/theme-home.mjs';
+import {overviewChoices,overviewPresentation,renderOverviewPicker,renderThemeHome} from './public/theme-home.mjs';
 import {resultInstrument,libraryMotif} from './public/ui-components.mjs';
 
 // No guest, questionnaire or withheld estimate can silently become a sample age.
@@ -23,13 +23,14 @@ assert.match(sample,/>SAMPLE</);assert.match(sample,/Not your result/);
 const fitness={assessmentType:'fitness',system:{inputs:{age:{value:'33',unit:'years'}},result:{status:'ready',method:'HUNT',age:25,ageBand:{from:20,to:29}}}};
 const savedSample={...frozen,id:'saved-sample',labSubmitted:true,sample:true};
 const choices=overviewChoices([], [savedSample,fitness]);
-assert.deepEqual(choices.map(({type,label})=>[type,label]),[['fitness','Fitness'],['phenoage','PhenoAge · Sample']]);
-assert.match(renderThemeHome(overviewPresentation(savedSample),{choices,selected:'phenoage'}),/id="overview-result".*PhenoAge · Sample.*>SAMPLE</s);
+assert.deepEqual(choices.map(({type,title,sample})=>[type,title,sample]),[['fitness','Fitness',false],['phenoage','PhenoAge',true]]);
+assert.match(renderThemeHome(overviewPresentation(savedSample),{choices,selected:'phenoage'}),/id="overview-switch".*PhenoAge.*>SAMPLE</s);
+assert.match(renderOverviewPicker(choices,'phenoage'),/data-type="phenoage" aria-current="true".*PhenoAge.*>Sample</s);
 assert.match(renderThemeHome(welcome,{choices,selected:'phenoage',loadStatus:'loading',loadingTitle:'Clinical PhenoAge',loadingSample:true}),/>SAMPLE</);
 const personal={...frozen,labSubmitted:true};
 assert.equal(overviewChoices([], [personal,savedSample,fitness]).find(item=>item.type==='phenoage').saved,personal,'A newer sample cannot replace the personal result.');
 assert.equal(overviewChoices([{...savedSample,assessment:true}], []).length,0,'An unsaved sample is still a preview.');
-assert.deepEqual(overviewChoices([], [savedSample,{...fitness,sample:true}]).map(item=>item.label),['Fitness · Sample','PhenoAge · Sample']);
+assert.ok(overviewChoices([], [savedSample,{...fitness,sample:true}]).every(item=>item.sample));
 const fitnessHome=renderThemeHome(overviewPresentation(fitness));
 assert.match(fitnessHome,/home-workspace.*result-instrument.*APPROXIMATE FITNESS AGE/s);
 assert.match(fitnessHome,/Study age group.*20–29.*Open your report/s);

@@ -54,6 +54,7 @@ export function statusMessage({loading,error}){return `${loading?'<span class="s
 export function pageSlice(items,page=0,size=2){const pages=Math.max(1,Math.ceil(items.length/size)),index=Math.max(0,Math.min(Number(page)||0,pages-1));return {items:items.slice(index*size,(index+1)*size),page:index,pages};}
 export function libraryPager(page,pages){return pages<2?'':`<nav class="compact-pager" aria-label="Saved records pages"><button class="text-btn" data-action="library-page" data-page="${page-1}" ${page===0?'disabled':''}>← Previous</button><span>${page+1} / ${pages}</span><button class="text-btn" data-action="library-page" data-page="${page+1}" ${page===pages-1?'disabled':''}>Next →</button></nav>`;}
 export const assessmentTitle=s=>systemAssessment(s.assessmentType)?.title||(s.assessmentType===HEART_ASSESSMENT?'Heart & Vascular':s.labSubmitted||s.value!==null?'Clinical PhenoAge':'Health & lifestyle');
+const removeLocalButton=(id='',iconOnly=false)=>`<button class="${iconOnly?'record-remove':'text-btn'}" type="button" data-action="remove-local" ${id?`data-id="${escapeHTML(id)}"`:''} ${iconOnly?'aria-label="Remove from this device" title="Remove from this device"':''}>${iconOnly?uiIcon('remove'):'Remove from this device'}</button>`;
 function recordStatus(s){
  if(systemAssessment(s.assessmentType))return escapeHTML(s.method||'Needs review');
  if(s.assessmentType===HEART_ASSESSMENT)return escapeHTML(heartSavedMethod(s.model));
@@ -61,12 +62,13 @@ function recordStatus(s){
  return s.labSubmitted||s.value!==null?'Needs review':'Profile';
 }
 function historyRows(history,reports=false,page=0){
+ if(!history.length)return '<div class="quiet-empty"><p>No saved records on this device.</p></div>';
  const slice=pageSlice([...history].reverse(),page);
  const rows=slice.items.map(entry=>{
   const system=systemAssessment(entry.assessmentType);
   const reportOnly=system||entry.assessmentType===HEART_ASSESSMENT;
   const action=reports?'open-report':reportOnly?'':'open-saved';
-  return `<article class="record-row"><span class="record-icon">${uiIcon(reports?'report':system?.icon||(entry.labSubmitted||entry.value!==null?'drop':'pulse'))}</span><div><h3>${assessmentTitle(entry)}</h3><p>${escapeHTML(entry.labDate||new Date(entry.saved).toLocaleDateString('en-GB'))}${entry.sample?' · Sample':''}</p></div><div class="record-end"><strong>${recordStatus(entry)}</strong>${action?`<button class="text-link" data-action="${action}" data-id="${escapeHTML(entry.id)}">${reports?'Read report':'View result'} <span aria-hidden="true">↗</span></button>`:''}</div></article>`;
+  return `<article class="record-row"><span class="record-icon">${uiIcon(reports?'report':system?.icon||(entry.labSubmitted||entry.value!==null?'drop':'pulse'))}</span><div><h3>${assessmentTitle(entry)}</h3><p>${escapeHTML(entry.labDate||new Date(entry.saved).toLocaleDateString('en-GB'))}${entry.sample?' · Sample':''}</p></div><div class="record-end"><strong>${recordStatus(entry)}</strong>${action?`<button class="text-link" data-action="${action}" data-id="${escapeHTML(entry.id)}">${reports?'Read report':'View result'} <span aria-hidden="true">↗</span></button>`:''}</div>${removeLocalButton(entry.id,true)}</article>`;
  });
  return `<div class="record-list">${rows.join('')}</div>${libraryPager(slice.page,slice.pages)}`;
 }
@@ -75,7 +77,7 @@ const recordSummary=(history,reports=false)=>`<button class="record-summary" dat
 
 const systemRouteCard=(title,icon,caption,action,type='')=>`<button class="assessment-route" data-action="${action}" ${type ? `data-type="${type}"` : ''} data-theme-part><span class="route-icon">${uiIcon(icon)}</span><span><strong>${title}</strong><small>${caption}</small></span></button>`;
 
-export function renderAssessments({profile,history=[],loading=false,error='',pagesPreview=false,progress=null,resumeLabs=false,canStartNew=false,heartDraft=false,systemDrafts={}}){
+export function renderAssessments({profile,history=[],loading=false,error='',pagesPreview=false,progress=null,resumeLabs=false,canStartNew=false,currentRecordId='',heartDraft=false,systemDrafts={}}){
  return `<div class="wrap app-screen assessments-screen">${screenHeading('YOUR WORKSPACE','My assessments')}
   <section class="assessment-intro" data-theme-part>${libraryMotif()}<span class="eyebrow">ASSESSMENT OPTIONS</span><h2>Choose where to begin.</h2><p>Start with what you have.</p></section>
   ${progress?.hasData?`<section class="current-assessment"><div><strong>Continue your assessment</strong><p><span>${progress.answered} / ${progress.total}</span> <span>questions answered</span> · <span>${progress.measurements} / 9</span> <span>blood measurements</span></p></div><button class="text-btn" data-action="${resumeLabs?'start-labs':'start'}">Continue</button></section>`:''}
@@ -86,15 +88,16 @@ export function renderAssessments({profile,history=[],loading=false,error='',pag
       ${Object.entries(systemAssessments).map(([type, spec])=>systemRouteCard(spec.title,spec.icon,systemDrafts[type]?'Continue your assessment':spec.caption,'start-system',type)).join('')}
     </div>
   </section>
-  ${canStartNew?'<button class="text-btn new-assessment-link" data-action="new-assessment">Start a new assessment</button>':''}
+  ${canStartNew?`<div class="assessment-controls"><button class="text-btn new-assessment-link" data-action="new-assessment">Start a new assessment</button>${removeLocalButton(currentRecordId)}</div>`:''}
   <section class="saved-records" aria-label="Saved assessments"><div class="section-caption"><h2>Your history</h2><span>${profile?'PRIVATE':'OPTIONAL TO SAVE'}</span></div>${statusMessage({loading,error})}${history.length?recordSummary(history):'<div class="quiet-empty"><span class="empty-orbit" aria-hidden="true"></span><p>'+(pagesPreview?'Cloud history is available in the hosted app.':'Your saved assessments will appear here.')+'</p></div>'}</section>
   ${pagesPreview?'<button class="account-nudge text-btn" data-action="pages-info">Cloud features ↗</button>':!profile?'<button class="account-nudge text-btn" data-action="signup">Sign in to keep your history <span aria-hidden="true">↗</span></button>':''}
  </div>`;
 }
 
-export function renderReportLibrary({profile,history=[],loading=false,error='',assessment=false,pagesPreview=false}){
+export function renderReportLibrary({profile,history=[],loading=false,error='',assessment=false,currentRecordId='',pagesPreview=false}){
  return `<div class="wrap app-screen reports-screen">${screenHeading('YOUR WORKSPACE','Reports','The detail behind your result.')}
   <button class="report-feature" data-action="${assessment?'report':'sample-report'}" data-theme-part>${reportArtwork()}<span class="eyebrow">${assessment?'CURRENT ASSESSMENT':'EXPLORE A SAMPLE'}</span><strong>Your health,<br>explained.</strong><span class="report-feature-caption">Interpretation · Findings · Sources</span><span class="report-feature-action">${assessment?'Open your report':'Preview a sample report'} ${uiIcon('arrow')}</span></button>
+  ${assessment?`<div class="assessment-controls">${removeLocalButton(currentRecordId)}</div>`:''}
   <section class="saved-records"><div class="section-caption"><h2>Saved reports</h2><span>PRIVATE LIBRARY</span></div>${statusMessage({loading,error})}${history.length?recordSummary(history,true):'<div class="quiet-empty"><p>'+(pagesPreview?'Cloud history is available in the hosted app.':'Save an assessment to keep its dated report here.')+'</p></div>'}</section>
   ${pagesPreview?'<button class="account-nudge text-btn" data-action="pages-info">Cloud features ↗</button>':!profile?'<button class="account-nudge text-btn" data-action="signup">Sign in to access saved reports <span aria-hidden="true">↗</span></button>':''}
  </div>`;

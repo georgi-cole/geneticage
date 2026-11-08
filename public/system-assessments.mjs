@@ -25,15 +25,23 @@ export const systemAssessments = {
 
 export const systemAssessment = type => typeof type === 'string' && Object.hasOwn(systemAssessments, type) ? systemAssessments[type] : null;
 
-export const sampleFitnessInputs = () => ({
-  age:{value:'33',unit:'years'},
-  sex:'Male',
-  fitnessContext:'None of these',
-  waist:{value:'85',unit:'cm'},
-  pulse:{value:'62',unit:'beats/min'},
-  moderate:{value:'130',unit:'min / week'},
-  vigorous:{value:'15',unit:'min / week'},
-});
+const sampleInputs = {
+  metabolic: {
+    age:{value:'42',unit:'years'}, diabetes:'No', pregnancy:'No', height:{value:'180',unit:'cm'}, waist:{value:'90',unit:'cm'},
+    hypertension:'No', smoking:'Never smoked', activity:{value:'5',unit:'hours/week'}, coffee:{value:'1',unit:'cups/day'},
+    wholeGrain:{value:'100',unit:'g/day'}, redMeat:{value:'0',unit:'g/day'}, parents:'Neither parent', siblings:'No',
+  },
+  kidney: {
+    age:{value:'33',unit:'years'}, sex:'Male', kidneyHistory:'No known kidney disease', kidneyContext:'Stable health',
+    creatinine:{value:'88.4',unit:'µmol/L'},
+  },
+  fitness: {
+    age:{value:'33',unit:'years'}, sex:'Male', fitnessContext:'None of these', waist:{value:'85',unit:'cm'},
+    pulse:{value:'62',unit:'beats/min'}, moderate:{value:'130',unit:'min / week'}, vigorous:{value:'15',unit:'min / week'},
+  },
+};
+
+export const systemSampleInputs = type => systemAssessment(type) ? structuredClone(sampleInputs[type]) : null;
 
 const yesNo = ['Yes', 'No'];
 const contextAnswers = ['Yes', 'No', 'Not sure'];

@@ -15,6 +15,10 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 async function click(selector){assert.ok($(selector),selector);$(selector).click();await flush();}
 async function enter(selector,value,event='input'){const input=$(selector);assert.ok(input,selector);input.value=value;input.dispatchEvent(new window.Event(event,{bubbles:true}));await flush();}
 async function submit(selector){$(selector).dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));await flush();}
+async function pickOverview(type){
+ await click('#overview-switch');
+ await click(`.overview-option[data-type="${type}"]`);
+}
 
 after(()=>window.close());
 
@@ -76,7 +80,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  $('#lab-valid').checked=true;$('#lab-context').checked=true;await submit('#labs-form');
  assert.ok($('.result-instrument'));
  await click('.mobile-nav [data-route="home"]');
- assert.equal($('#overview-result'),null,'One result needs no selector.');
+ assert.equal($('#overview-switch'),null,'One result needs no selector.');
  assert.match($('.home-workspace .screen-head p').textContent,/Complete a different age assessment/);
  await click('.instrument-footer [data-action="results"]');
  await click('[data-action="report"]');
@@ -153,11 +157,15 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.match($('[data-report-panel="measurements"]').textContent,/0\.95 g\/L/);assert.match($('[data-report-panel="measurements"]').textContent,/<12 nmol\/L/);assert.equal($('#main [data-action="save"]'),null);
  await click('[data-action="heart-edit"][data-part="specialist"]');assert.equal($('#heart-apob').value,'0.95');assert.equal($('#heart-total'),null);
  await submit('#heart-form');assert.equal($('[data-report-panel="measurements"]').hidden,false);
- await click('.mobile-nav [data-route="history"]');await click('[data-action="start-labs"]');assert.equal($('#lab-age').value,'52');
- await click('.mobile-nav [data-route="history"]');await click('[data-action="start-heart"]');assert.equal($('#heart-total').value,'212.685');
- for(let i=0;i<12&&!$('#heart-country');i++)await click('[data-action="heart-back"]');
+ await click('.mobile-nav [data-route="history"]');await click('[data-action="start-labs"]');
+ await click('[data-action="edit-existing-assessment"]');assert.equal($('#lab-age').value,'52');
+ await click('.mobile-nav [data-route="history"]');await click('[data-action="start-heart"]');
+ await click('[data-action="edit-existing-assessment"]');
+ if($('[data-action="heart-review-edit"][data-part="country"]'))await click('[data-action="heart-review-edit"][data-part="country"]');
+ for(let i=0;i<9&&!$('#heart-country');i++)await submit('#heart-form');
  assert.equal($('#heart-country').value,'Germany');
  await enter('#heart-country','Bulgaria','change');for(let i=0;i<9&&!$('#heart-total');i++)await submit('#heart-form');
+ assert.equal($('#heart-total').value,'212.685');
  await submit('#heart-form');
  await enter('#heart-apob','');await enter('#heart-lpa','');assert.match($('#heart-form [type=submit]').textContent,/Continue without these tests/);await submit('#heart-form');
  assert.match($('.heart-estimate').textContent,/14\.0%/);
@@ -268,18 +276,18 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('.mobile-nav [data-route="home"]');
  assert.ok($('.home-workspace .result-instrument'));
  assert.match($('.readout-label').textContent,/APPROXIMATE KIDNEY AGE/);
- assert.match($('.home-workspace .screen-head p').textContent,/Choose an assessment from the menu on the card/);
- assert.deepEqual([...$('#overview-result').options].map(option=>option.value),['kidney','heart-vascular','phenoage']);
- $('#overview-result').focus();
- await enter('#overview-result','phenoage','change');
- assert.equal(document.activeElement,$('#overview-result'));
+ assert.match($('.home-workspace .screen-head p').textContent,/Tap the result name to switch/);
+ await click('#overview-switch');
+ assert.deepEqual([...document.querySelectorAll('.overview-option')].map(option=>option.dataset.type),['kidney','heart-vascular','phenoage']);
+ await click('.overview-option[data-type="phenoage"]');
+ assert.equal(document.activeElement,$('#overview-switch'));
  assert.equal(document.querySelectorAll('.home-workspace .result-instrument').length,1);
  assert.match($('.readout-label').textContent,/CLINICAL PHENOAGE/);
  await click('.instrument-footer [data-action="open-overview-draft"]');
  assert.ok($('#main [data-action="report"]'),'The result link opens the selected draft.');
  await click('.mobile-nav [data-route="home"]');
- assert.equal($('#overview-result').value,'phenoage');
- await enter('#overview-result','kidney','change');
+ assert.match($('#overview-switch').textContent,/Clinical PhenoAge/);
+ await pickOverview('kidney');
  await click('.instrument-footer [data-action="open-overview-draft"]');
  assert.match($('.heart-estimate').textContent,/APPROXIMATE KIDNEY AGE/);
  await click('.mobile-nav [data-route="history"]');
@@ -295,6 +303,27 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('#system-form [data-action="sample"][data-type="fitness"]');
  await click('.system-report [data-action="restore-draft"]');
  assert.match($('#system-prefill-age').parentElement.textContent,/33 years/,'Trying the sample leaves the personal draft available.');
+ await click('.mobile-nav [data-route="history"]');
+ await click('[data-action="start-system"][data-type="kidney"]');
+ assert.match($('.modal').textContent,/Starting over replaces the working answers/);
+ await click('[data-action="edit-existing-assessment"]');
+ assert.ok($('#system-age').value,'Edit opens the completed assessment with its answers.');
+ await click('.mobile-nav [data-route="history"]');
+ await click('[data-action="start-system"][data-type="kidney"]');
+ await click('[data-action="restart-assessment"]');
+ assert.equal($('#consent').checked,false);
+ await click('.consent-screen [data-action="sample"][data-type="kidney"]');
+ assert.match($('.system-report .report-heading').textContent,/ILLUSTRATIVE SAMPLE.*Kidney/s);
+ assert.match($('.heart-estimate').textContent,/APPROXIMATE KIDNEY AGE/);
+ await click('.mobile-nav [data-route="history"]');
+ await click('[data-action="start-system"][data-type="metabolic"]');
+ await click('.consent-screen [data-action="sample"][data-type="metabolic"]');
+ assert.match($('.system-report .report-heading').textContent,/ILLUSTRATIVE SAMPLE.*Metabolic/s);
+ assert.match($('.heart-estimate').textContent,/APPROXIMATE METABOLIC AGE/);
+ await click('.mobile-nav [data-route="reports"]');
+ await click('.reports-screen [data-action="remove-local"]');
+ await click('[data-action="confirm-remove-local"]');
+ assert.ok($('.reports-screen [data-action="sample-report"]'),'Removing an unsaved sample clears the current report.');
  assert.equal(requests,0);
  assert.ok(Object.keys(localStorage).every(key=>['kq-theme-v2','kq-language-v1'].includes(key)));
 });

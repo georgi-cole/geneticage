@@ -19,6 +19,7 @@ export const iconPaths=Object.freeze({
   forward:'<path d="M3 10.5c3 0 3 1.5 6 1.5h11.5M3 13.5c3 0 3-1.5 6-1.5m5.5-5.5 6 5.5-6 5.5"/>',
   reset:'<path d="M4 5v5h5M4.5 9a8 8 0 1 1-.2 6"/>',
   close:'<path d="m6 6 12 12M18 6 6 18"/>',
+  remove:'<path d="M4 7h16M6 7l1 13h10l1-13M9 7V4h6v3M10 10v6m4-6v6"/>',
   check:'<path d="m5 12 4 4L19 6"/>',
   spark:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>',
 });

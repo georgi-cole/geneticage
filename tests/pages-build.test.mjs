@@ -8,7 +8,7 @@ import {buildPages} from '../scripts/build-pages.mjs';
 import {createPagesServer} from '../scripts/serve-pages.mjs';
 import {themeBootstrap} from '../public/theme-system.mjs';
 import {languageBootstrap} from '../public/language-system.mjs';
-import {launchBootstrap} from '../public/launch-screen.mjs';
+import {launchGateStyles} from '../public/launch-screen.mjs';
 
 test('Pages export works under the project path and publishes only static browser resources',async()=>{
  const directory=await mkdtemp(path.join(tmpdir(),'kq-pages-'));
@@ -20,7 +20,9 @@ test('Pages export works under the project path and publishes only static browse
   const html=await readFile(path.join(output,'index.html'),'utf8');
   assert.match(html,/<base href="\/geneticage\/">/);assert.match(html,/data-hosting="pages"/);
   assert.match(html,/connect-src 'none'/);assert.match(html,/form-action 'none'/);
-  for(const script of [themeBootstrap,languageBootstrap,launchBootstrap])assert.ok(html.includes('sha256-'+createHash('sha256').update(script).digest('base64')));
+  assert.match(html,/<html[^>]+data-launch="pending"/);
+  assert.ok(html.indexOf(launchGateStyles)>0&&html.indexOf(launchGateStyles)<html.indexOf('<body>'));
+  for(const script of [themeBootstrap,languageBootstrap])assert.ok(html.includes('sha256-'+createHash('sha256').update(script).digest('base64')));
   assert.ok(!html.includes('src="/assets/'));
   const bundle=await readFile(path.join(output,'app.js'),'utf8');
   assert.ok(!bundle.includes('"/assets/'));assert.ok(!bundle.includes('ASSESSMENT_ENCRYPTION_KEY'));

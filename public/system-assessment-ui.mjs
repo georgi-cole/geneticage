@@ -83,6 +83,11 @@ function reviewPrefill(type, inputs, fields) {
   </div>`;
 }
 
+export function systemSampleButton(type, entry = false) {
+  const spec = systemAssessment(type);
+  return spec ? `<button class="text-btn${entry ? ' system-alternate' : ''}" type="button" data-action="sample" data-type="${esc(type)}">Try a ${esc(spec.title)} sample</button>` : '';
+}
+
 export function renderSystemForm({type, inputs, step, prefilled, errors, mode, touched, prefillUnavailable}) {
   const spec = systemAssessment(type);
   const route = systemRoute(type, inputs, prefilled);
@@ -111,7 +116,7 @@ export function renderSystemForm({type, inputs, step, prefilled, errors, mode, t
       ${prefillUnavailable && current.id === 'age' ? '<p class="hint">Earlier answers could not be loaded. You can enter them here.</p>' : ''}
       ${current.specialist ? specialistHelp() : ''}
       ${current.id === 'creatinine' && !mode ? '<button class="text-btn system-alternate" type="button" data-action="system-partial">I don’t have this result yet</button>' : ''}
-      ${type === 'fitness' && index === 0 && !mode ? '<button class="text-btn system-alternate" type="button" data-action="sample" data-type="fitness">Try a Fitness sample</button>' : ''}
+      ${index === 0 && !mode ? systemSampleButton(type, true) : ''}
       <div class="form-nav">
         <button class="text-btn" type="button" data-action="system-back">${mode === 'report' ? 'Keep current results' : '← Back'}</button>
         <button class="btn" type="submit"><span${skip ? ' data-system-skip="'+esc(skip)+'"' : ''}>${mode === 'review' ? 'Save changes' : skip && !entered ? skip : next}</span>${arrow}</button>

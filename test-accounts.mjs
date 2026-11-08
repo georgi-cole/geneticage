@@ -5,7 +5,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { handleAccountApi, CONSENT_VERSION } from './lib/account-api.mjs';
 import { sampleAnswers, sampleLabs, calculatePhenoAge, normalizeLab } from './public/model.mjs';
 import {REFERENCE_CATALOG_VERSION} from './public/lab-reference-catalog.mjs';
-import {sampleFitnessInputs} from './public/system-assessments.mjs';
+import {systemSampleInputs} from './public/system-assessments.mjs';
 
 const sqlite = new DatabaseSync(':memory:');
 sqlite.exec('PRAGMA foreign_keys=ON');
@@ -14,6 +14,7 @@ function prepared(sql, values = []) { return { bind(...args) { return prepared(s
 const env = { DB: { prepare: prepared, async batch(statements) { sqlite.exec('BEGIN'); try { const result = []; for (const stmt of statements) result.push(await stmt.run()); sqlite.exec('COMMIT'); return result; } catch (error) { sqlite.exec('ROLLBACK'); throw error; } } }, ASSESSMENT_ENCRYPTION_KEY: randomBytes(32).toString('base64') };
 const a = { userId: 'user-a' }, b = { userId: 'user-b' };
 const tokens = {};
+const removeFixture = id => assert.equal(sqlite.prepare('DELETE FROM assessments WHERE id=? AND user_id=?').run(id,a.userId).changes,1);
 async function call(user, path, method = 'GET', data, headers = {}) {
   const request = new Request('https://site.test/api/' + path, { method, headers: { ...(method === 'GET' ? {} : { 'Origin': 'https://site.test', 'Content-Type': 'application/json', 'X-KQ-CSRF': tokens[user?.userId] || '' }), ...headers }, ...(data === undefined ? {} : { body: typeof data === 'string' ? data : JSON.stringify(data) }) });
   const response = await handleAccountApi(request, env, user); return { response, data: await response.json() };
@@ -43,7 +44,9 @@ assert.equal(result.data.assessment.value, calculatePhenoAge(45, normalizeLab(sa
 assert.equal(result.data.report.clinical.value, result.data.assessment.value);
 assert.equal((await call(b, 'assessments')).data.assessments.length, 0);
 for (const path of ['assessments/' + id, 'assessments/' + id + '/report']) assert.equal((await call(b, path)).response.status, 404);
-assert.equal((await call(b, 'assessments/' + id, 'DELETE', { confirm: true })).response.status, 404);
+assert.equal((await call(b, 'assessments/' + id, 'DELETE', { confirm: true })).response.status, 405);
+assert.equal((await call(a, 'assessments/' + id, 'DELETE', { confirm: true })).response.status, 405);
+assert.equal((await call(a, 'assessments/' + id)).response.status, 200);
 assert.equal((await call(a, 'assessments', 'POST', { ...entry, id: randomUUID(), lab: { ...entry.lab, crp: { value: '0', unit: 'mg/L' } } })).response.status, 400);
 assert.equal((await call(a, 'assessments', 'POST', { ...entry, id: randomUUID(), labDate: '2026-02-30' })).response.status, 400);
 assert.equal((await call(a, 'assessments', 'POST', { ...entry, id: randomUUID(), labAge: '17' })).response.status, 400);
@@ -62,7 +65,7 @@ assert.equal(roundTrip.value,result.data.assessment.value,'Reference context doe
 referenced.lab.crp.referenceHigh='10';referenced.labReferenceGroup='male';
 assert.equal((await call(a,'assessments','POST',referenced)).response.status,201);
 assert.deepEqual((await call(a,'assessments/'+referenced.id)).data.assessment,roundTrip,'Retrying an ID cannot rewrite the saved reference context.');
-assert.equal((await call(a,'assessments/'+referenced.id,'DELETE',{confirm:true})).response.status,200);
+removeFixture(referenced.id);
 // Critical entries are saved truthfully as withheld snapshots, never as a supplied age.
 const criticalId=randomUUID(),criticalLab=sampleLabs();criticalLab.glucose={value:'2',unit:'mmol/L',referenceLow:'0',referenceHigh:'100'};
 assert.equal((await call(a,'assessments','POST',{...entry,id:criticalId,lab:criticalLab,value:25,clinical:{value:25}})).response.status,201);
@@ -70,7 +73,7 @@ const criticalStored=(await call(a,'assessments/'+criticalId)).data;
 assert.equal(criticalStored.assessment.value,null);assert.equal(criticalStored.report.clinical.withheld,'critical-values');assert.equal(criticalStored.report.clinical.value,undefined);assert.ok(criticalStored.report.clinical.checks.some(check=>check.warning?.code==='critical-glucose'));
 assert.equal((await call(a,'assessments','POST',{...entry,id:criticalId})).response.status,201);
 assert.deepEqual((await call(a,'assessments/'+criticalId)).data.report.clinical,criticalStored.report.clinical,'An existing snapshot cannot be silently replaced.');
-assert.equal((await call(a,'assessments/'+criticalId,'DELETE',{confirm:true})).response.status,200);
+removeFixture(criticalId);
 // A Heart & Vascular snapshot is recomputed and uses the same ownership rules.
 const heartId=randomUUID(),heartEntry={id:heartId,assessmentType:'heart-vascular',value:42,heart:{
   age:50,country:'Germany',sex:'Male',smoking:'Yes',conditions:'No',treatment:'No',
@@ -103,7 +106,7 @@ assert.equal(savedOlderHeart.model,'score2-op-2021-regional-v1');
 assert.equal(savedOlderHeart.heart.result.method,'SCORE2-OP');
 assert.ok(savedOlderHeart.sources.includes('https://doi.org/10.1093/eurheartj/ehab312'));
 assert.equal(savedOlderHeart.heart.inputs.smokingDays30,8);
-assert.equal((await call(a,'assessments/'+olderHeart.id,'DELETE',{confirm:true})).response.status,200);
+removeFixture(olderHeart.id);
 const youngEntry={...heartEntry,id:randomUUID(),heart:{...heartEntry.heart,
   age:33,country:'Bulgaria',conditions:'Yes',diagnoses:['Diabetes'],diabetesType:'Type 2 diabetes',bpTreatment:'No',
   result:{age:25},
@@ -123,8 +126,8 @@ assert.deepEqual(savedArterial.heart.result,savedYoung.heart.result);
 assert.equal(savedArterial.heart.review.arterialAge.age,50);
 assert.ok(savedArterial.sources.includes('https://doi.org/10.1038/s41598-024-74162-5'));
 assert.deepEqual((await call(a,'assessments/'+youngEntry.id+'/report')).data.report,savedYoung);
-assert.equal((await call(a,'assessments/'+arterialEntry.id,'DELETE',{confirm:true})).response.status,200);
-assert.equal((await call(a,'assessments/'+youngEntry.id,'DELETE',{confirm:true})).response.status,200);
+removeFixture(arterialEntry.id);
+removeFixture(youngEntry.id);
 const teenEntry={...heartEntry,id:randomUUID(),heart:{
   age:19,country:'Bulgaria',sex:'Female',smoking:'No',conditions:'No',bpTreatment:'No',
   systolic:{value:125,unit:'mmHg'},diastolic:{value:80,unit:'mmHg'},total:{value:200,unit:'mg/dL'},hdl:{value:50,unit:'mg/dL'},
@@ -135,8 +138,8 @@ const savedTeen=(await call(a,'assessments/'+teenEntry.id+'/report')).data.repor
 assert.equal(savedTeen.model,'pday-2006-coronary-age-band-v1');
 assert.deepEqual(savedTeen.heart.result.ageBand,{from:17,to:21});
 assert.equal(savedTeen.heart.result.risk,undefined);
-assert.equal((await call(a,'assessments/'+teenEntry.id,'DELETE',{confirm:true})).response.status,200);
-assert.equal((await call(a,'assessments/'+heartId,'DELETE',{confirm:true})).response.status,200);
+removeFixture(teenEntry.id);
+removeFixture(heartId);
 const kidneyId=randomUUID();
 const kidneyEntry={id:kidneyId,assessmentType:'kidney',system:{
   age:{value:'33',unit:'years'},sex:'Male',kidneyHistory:'No known kidney disease',kidneyContext:'Stable health',
@@ -153,9 +156,9 @@ kidneyEntry.system.creatinine.value='0.8';
 assert.equal((await call(a,'assessments','POST',kidneyEntry)).response.status,201);
 assert.deepEqual((await call(a,'assessments/'+kidneyId+'/report')).data.report,savedKidney);
 assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:kidneyId})).response.status,400);
-assert.equal((await call(a,'assessments/'+kidneyId,'DELETE',{confirm:true})).response.status,200);
+removeFixture(kidneyId);
 const fitnessSampleId=randomUUID();
-assert.equal((await call(a,'assessments','POST',{id:fitnessSampleId,assessmentType:'fitness',system:sampleFitnessInputs(),sample:true})).response.status,201);
+assert.equal((await call(a,'assessments','POST',{id:fitnessSampleId,assessmentType:'fitness',system:systemSampleInputs('fitness'),sample:true})).response.status,201);
 const fitnessSampleMeta=(await call(a,'assessments')).data.assessments.find(record=>record.id===fitnessSampleId);
 assert.equal(fitnessSampleMeta.assessmentType,'fitness');
 assert.equal(fitnessSampleMeta.sample,true);
@@ -163,11 +166,11 @@ const fitnessSample=(await call(a,'assessments/'+fitnessSampleId)).data;
 assert.equal(fitnessSample.assessment.sample,true);
 assert.equal(fitnessSample.report.sample,true);
 assert.equal(fitnessSample.report.system.result.status,'ready');
-assert.equal((await call(a,'assessments/'+fitnessSampleId,'DELETE',{confirm:true})).response.status,200);
+removeFixture(fitnessSampleId);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
 sqlite.prepare('UPDATE assessments SET payload=? WHERE id=?').run(stored.payload,withheldId);
 assert.equal((await call(a,'assessments/'+withheldId)).response.status,503);
-assert.equal((await call(a,'assessments/'+withheldId,'DELETE',{confirm:true})).response.status,200);
+removeFixture(withheldId);
 sqlite.prepare('UPDATE mutation_limits SET count=120 WHERE user_id=?').run(b.userId);
 assert.equal((await call(b,'account','POST',registration)).response.status,429);
 assert.equal((await call(a,'account','DELETE',{confirm:'DELETE'})).response.status,200);

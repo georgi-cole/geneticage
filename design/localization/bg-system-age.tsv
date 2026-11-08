@@ -3,7 +3,24 @@ Metabolic	Метаболитно здраве
 Kidney	Бъбречно здраве
 Fitness	Физическа форма
 Try a Fitness sample	Вижте пример за физическа форма
+Try a Metabolic sample	Вижте пример за метаболитно здраве
+Try a Kidney sample	Вижте пример за бъбречно здраве
 Try a PhenoAge sample	Вижте пример за PhenoAge
+Switch result	Смяна на резултата
+Tap the result name to switch.	Докоснете името на резултата, за да го смените.
+Edit existing	Редактирайте текущия анализ
+Start over	Започнете отначало
+Starting over replaces the working answers for this assessment on this device.	Започването отначало заменя текущите отговори за този анализ на устройството.
+Remove from this device	Премахнете от това устройство
+Remove from this device?	Да премахнем ли от това устройство?
+Removed from this device.	Премахнато от това устройство.
+Removed for this session.	Премахнато за тази сесия.
+No saved records on this device.	На това устройство няма показани запазени записи.
+This removes the assessment and its report from this browser. The saved copy is available on your other devices.	Това премахва анализа и доклада му от този браузър. Запазеното копие е достъпно на другите ви устройства.
+This clears the current assessment and its report from this browser.	Това изчиства текущия анализ и доклада му от този браузър.
+You can remove individual records from this browser. The browser stores only the IDs needed to hide those records. In Data & settings you can export your account or delete it and its live records. Provider backups may retain deleted data for a limited period. Downloaded copies remain on your device.	Можете да премахнете отделни записи от този браузър. Той пази само идентификаторите, нужни за скриването им. От „Данни и настройки“ можете да изтеглите данните от профила си или да изтриете профила и записите му. Резервните копия може да запазят изтрити данни за ограничен срок. Изтеглените копия остават на устройството ви.
+Payment records and receipts are also held by Stripe.	Данните за плащанията и разписките се съхраняват и от Stripe.
+For a report purchase, Stripe collects payment and billing details. We store the purchase status, amount, payment references and receipt link. No questionnaire, blood entries or results are sent to Stripe. Stripe retains its own payment records.	При покупка на доклад Stripe събира данни за плащане и фактуриране. Ние съхраняваме статуса, сумата, идентификаторите на плащането и връзката към разписката. Въпросникът, кръвните данни и резултатите остават в приложението. Stripe пази собствените си данни за плащанията.
 Assessment result	Резултат от анализа
 Choose an assessment from the menu on the card.	Изберете анализ от менюто в картата с резултата.
 Complete a different age assessment to switch results.	Завършете друг анализ на възрастта, за да сменяте резултата.

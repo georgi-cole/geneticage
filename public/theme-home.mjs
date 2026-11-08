@@ -10,8 +10,7 @@ export function overviewChoices(drafts,history){
   const type=independent?record.assessmentType:record.labSubmitted||typeof record.value==='number'?'phenoage':null;
   if(type&&!byType.has(type)){
    const title=record.sample&&type==='phenoage'?'PhenoAge':assessmentTitle(record);
-   const label=title+(record.sample?' · Sample':'');
-   byType.set(type,{type,label,[source]:record});
+   byType.set(type,{type,title,sample:record.sample===true,[source]:record});
   }
  };
  for(const draft of drafts)if(draft?.assessment&&!draft.sample)add(draft,'draft');
@@ -44,15 +43,26 @@ export function overviewPresentation(record,{hasProfile=false}={}){
  return {empty:false,hasProfile,profileOnly:!valid,withheld:!!c&&!valid,value:valid?Math.round(c.value):null,age:record.labAge??null,gap:gap===null?'—':gap>0?'+'+gap:String(gap===0?0:gap),sample:record.sample===true,action:record.overviewSaved?'open-saved':'results',recordId:record.overviewSaved?record.id:'',date:record.labDate||'',actionLabel:record.overviewSaved?'Open saved result':'Open your result'};
 }
 
+export function renderOverviewPicker(choices,selected){
+ return `<div class="overview-options">${choices.map(choice=>{
+  const current=choice.type===selected;
+  const icon=choice.type==='phenoage'?'drop':systemAssessment(choice.type)?.icon||'pulse';
+  return `<button class="overview-option" type="button" data-action="show-overview-result" data-type="${escapeHTML(choice.type)}" ${current?'aria-current="true"':''}>
+   <span class="overview-option-icon">${uiIcon(icon)}</span><span>${escapeHTML(choice.title)}</span>
+   ${choice.sample?'<small class="instrument-tag">Sample</small>':''}<span class="overview-option-check">${current?uiIcon('check'):''}</span>
+  </button>`;
+ }).join('')}</div>`;
+}
+
 // One shared screen, with theme identity expressed in materials.
 export function renderThemeHome({age=45,sample=true,...presentation},{choices=[],selected,loadStatus='',loadingTitle,loadingSample=false}={}){
  const {empty=false,profileOnly=false,withheld=false,hasProfile=false}=presentation;
  const welcome=empty&&!loadStatus;
- const picker=choices.length>1?'<select id="overview-result" class="overview-result-select" aria-label="Assessment result">'+choices.map(({type,label})=>`<option value="${escapeHTML(type)}" ${type===selected?'selected':''}>${escapeHTML(label)}</option>`).join('')+'</select>':'';
+ const title=choices.find(choice=>choice.type===selected)?.title??presentation.title??(empty?'Your first assessment':withheld?'Review your assessment':profileOnly?'Your health profile':'A look at the result');
+ const picker=choices.length>1?`<button id="overview-switch" class="overview-switch" type="button" data-action="choose-overview-result" aria-haspopup="dialog"><span>${escapeHTML(title)}</span><span class="overview-switch-icon">${uiIcon('down')}</span><span class="sr-only">Switch result</span></button>`:'';
  const subtitle=welcome
   ? hasProfile?'Your workspace is ready. Start your first assessment.':'Start an assessment. No profile needed.'
-  : picker?'Choose an assessment from the menu on the card.':choices.length?'Complete a different age assessment to switch results.':'A personal perspective, grounded in science.';
- const title=(picker?choices.find(choice=>choice.type===selected)?.label:null)??presentation.title??(empty?'Your first assessment':withheld?'Review your assessment':profileOnly?'Your health profile':'A look at the result');
+  : picker?'Tap the result name to switch.':choices.length?'Complete a different age assessment to switch results.':'A personal perspective, grounded in science.';
  const instrument=loadStatus
   ? `<section class="result-instrument result-surface personal-result" aria-labelledby="result-instrument-title" data-theme-part>
       <div class="instrument-heading"><h2 id="result-instrument-title" ${picker?'class="sr-only"':''}>${escapeHTML(loadingTitle)}</h2>${picker}<span class="instrument-tag">${loadingSample?'SAMPLE':'YOUR RESULT'}</span></div>
