@@ -11,6 +11,8 @@ Review every user-facing string in navigation, onboarding, questions, results, r
 - Replace internal wording such as Private review, Review copy, Purchases deferred and prototype-specific instructions with copy that accurately reflects the beta's enabled features and entitlements.
 - The app account uses email codes. Verify delivery and account creation on the hosted build before store submission. The private Sites preview still has its own access gate.
 - Review privacy, health-storage consent, export/deletion, payment and consultation copy against the actual beta data flows. Do not remove an acknowledgement simply to shorten a screen.
+- Keep the first release ad-free and the basic assessment results free. Verify the one-time US$7.99 web purchase, sample PDF, purchase recovery and refunds in a configured Stripe sandbox. Verify App Store and Google Play purchase and restore paths before store builds.
+- Keep specialist intake off until qualified reviewers and their supported locations, languages, scope and delivery process are confirmed. Review the separate consent, quote, payment and delivery flow using fictional accounts.
 - Keep illustrative/sample labels where sample data remains. Separate a current unsaved assessment from a saved personal record. Do not silently turn samples into apparent personal results.
 - Review the English and Bulgarian product language against enabled release behavior. The prototype now includes an editorial Bulgarian localization, documented in `design/LOCALIZATION.md`; this does not replace scientific/clinical and privacy/legal sign-off for both languages. Check longer copy, numerical sentences and larger accessibility text in the mobile screen layout.
 

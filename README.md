@@ -75,7 +75,8 @@ The **App checks** workflow builds both editions. A maintainer can run it manual
 - A 31-question, six-section questionnaire with conditional questions, optional answers and validation.
 - A health profile, manual blood-entry route, and demo clinical PhenoAge calculation with unit conversions and explicit withholding states.
 - A separate Heart & Vascular assessment with regional SCORE2, SCORE2-OP and SCORE2-Diabetes, age comparisons, and optional ApoB and Lp(a) results.
-- Report preview, Stripe hosted Checkout integration, verified purchased-report access and browser print/save-PDF layout. Charging stays disabled until merchant configuration and webhook delivery are ready.
+- Free assessment reports include the estimate where supported, measurements, reference comparisons, safety flags and methods. The one-time Instant Full Report adds a downloadable PDF, with a fictional example in English and Bulgarian.
+- Specialist Review has a separate quote, consent and written delivery flow. New requests stay closed until reviewers are confirmed.
 - Consultation enquiry preview with selectable sharing categories. No enquiry is transmitted.
 - Email sign-in uses a one-time code. New accounts confirm adult eligibility and health-storage consent before they can save. The app keeps the sign-in email, nickname and consent record. Resend receives the email address and sign-in message.
 - Explicit cloud saving, immutable assessment/report snapshots, cross-device history, a reports tab, same-method progress charts, JSON export and live-record deletion.
@@ -100,7 +101,7 @@ The server validates questionnaire/lab inputs and recomputes clinical results an
 
 ## Payments: current state and activation
 
-The agreed price is **US$7.99 per saved report**, one time, with applicable taxes and final total shown by Stripe. Current deployment configuration sets `PAYMENTS_ENABLED=false` and `PAYMENT_WEBHOOK_READY=false`. No Stripe merchant account, live/test API key, price or webhook signing secret has been provided. No real payment or Stripe-hosted sandbox checkout has been tested. Automated tests use a local provider mock, not a merchant account.
+The Instant Full Report costs **US$7.99 per saved assessment** on the web. Stripe shows applicable taxes and the final total. The default configuration sets `PAYMENTS_ENABLED=false` and `PAYMENT_WEBHOOK_READY=false`. Local tests exercise a simulated provider. Actual Stripe sandbox checkout and webhook delivery are activation requirements.
 
 The current Site remains owner-private. Stripe cannot deliver a webhook through that sign-in boundary. Before live activation, explicitly choose either public access for the calculator (all account/health/report APIs remain authenticated and owner-scoped) or a separately hosted public notification relay that authenticates to this private Site. No audience change or relay is provisioned by this release. Do not mark webhook delivery ready until an actual provider event has reached the final handler successfully. Return-page verification and a manual Purchases refresh are recovery paths, not a substitute for reliable notification delivery.
 
@@ -117,6 +118,16 @@ Activation steps:
 Implementation details: `lib/payments.mjs` creates server-priced card Checkout sessions with an order-specific idempotency key; no card data passes through this application. Database orders are owner-scoped and linked to an immutable assessment. An active-order unique index prevents concurrent duplicate checkouts. A returned success URL grants nothing by itself. Fulfillment retrieves the session and expanded line items/payment/charge directly from Stripe, verifies the order, price, amount, currency and mode, and grants access only for a captured, paid transaction. The raw-body webhook verifies HMAC signatures and a five-minute timestamp tolerance; repeated/out-of-order notifications reconcile current provider state. A verification counter prevents older concurrent results overwriting newer checks. Webhooks retry failures.
 
 Purchases shows payment state, paid report links and Stripe receipts. Account refresh retrieves stored entitlements across devices. Full refunds revoke access; partial refunds retain it. Disputes suspend access, with access restored for a won/closed warning outcome. Payments under review cannot be bought again. Open sessions can be cancelled; pending checkouts block destructive deletion until checked/cancelled. Deleting a paid assessment/account removes its live report/order data and access, without initiating a refund. Stripe keeps its own financial records. The app does not issue refunds or send receipt emails itself.
+
+### Report products
+
+The Instant Full Report renders the dated, immutable assessment and stored result. Its owner can download the English or Bulgarian PDF after verified payment. The public example uses fictional Clinical PhenoAge data and the same layout. Rebuild both examples with `node scripts/build-report-samples.mjs` after copy, font or layout changes. The PDF uses the regular Manrope font with Latin and Cyrillic glyphs. [Font source](https://github.com/google/fonts/tree/b31870aff700ab7a1d74fa0c6887d95beb9e0037/ofl/manrope) · [Manrope license](public/assets/fonts/manrope-OFL.txt)
+
+Specialist requests use separate consent for a single assessment. The customer's request and the reviewer's quote and delivery text are encrypted. An authorized reviewer can see open requests for their confirmed locations and takes ownership when issuing a quote. The customer sees credentials, scope, price, and delivery time before accepting. A verified specialist payment includes the automated PDF for that assessment. Reviewers deliver the written review from Account → Review queue. Customers follow it in Account → Specialist reviews.
+
+Apply `drizzle/0003_paid-report-products.sql` after the earlier migrations. Keep `SPECIALIST_REVIEWS_ENABLED=false` until qualifications, locations, supported languages, delivery and support arrangements are confirmed. Store `SPECIALIST_REVIEWERS_JSON` as a server secret with the shape `[{"email":"reviewer@example.test","name":"Reviewer display name","qualifications":"Verified qualifications","countries":["BG"]}]`. Match each email to a verified app account. Set `STRIPE_SPECIALIST_PRODUCT_ID` to a generic Specialist Review product in the configured Stripe mode. Each accepted quote uses its own server-priced checkout. A reviewer must confirm they can deliver in the customer's requested language before quoting. Keep test and live fulfillment environments separate.
+
+The web checkout uses Stripe. Before creating store builds, configure and verify native billing for digital report entitlements under the applicable storefront terms. [Apple App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/#payments) · [Google Play Payments policy](https://support.google.com/googleplay/android-developer/answer/9858738?hl=en)
 
 References: https://docs.stripe.com/checkout/fulfillment, https://docs.stripe.com/webhooks, https://docs.stripe.com/api/checkout/sessions/create, https://docs.stripe.com/api/disputes/list.
 

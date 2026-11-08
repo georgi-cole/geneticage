@@ -95,7 +95,7 @@ assert.equal(savedHeart.report.access.purchased,false);
 assert.equal((await call(a,'assessments')).data.assessments.find(x=>x.id===heartId).assessmentType,'heart-vascular');
 assert.equal((await call(a,'assessments')).data.assessments.find(x=>x.id===entry.id).hasProfile,true);
 assert.equal((await call(b,'assessments/'+heartId)).response.status,404);
-assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:heartId})).response.status,400);
+assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:heartId})).response.status,503);
 const olderHeart={...heartEntry,heart:{...heartEntry.heart,age:75,country:'Bulgaria',smoking:'Some days',smokingDays30:8,cigarettes:3}};
 assert.equal((await call(a,'assessments','POST',olderHeart)).response.status,201);
 assert.deepEqual((await call(a,'assessments/'+heartId+'/report')).data.report,savedHeart.report);
@@ -155,7 +155,7 @@ assert.equal((await call(b,'assessments/'+kidneyId+'/report')).response.status,4
 kidneyEntry.system.creatinine.value='0.8';
 assert.equal((await call(a,'assessments','POST',kidneyEntry)).response.status,201);
 assert.deepEqual((await call(a,'assessments/'+kidneyId+'/report')).data.report,savedKidney);
-assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:kidneyId})).response.status,400);
+assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:kidneyId})).response.status,503);
 removeFixture(kidneyId);
 const fitnessSampleId=randomUUID();
 assert.equal((await call(a,'assessments','POST',{id:fitnessSampleId,assessmentType:'fitness',system:systemSampleInputs('fitness'),sample:true})).response.status,201);
@@ -165,6 +165,7 @@ assert.equal(fitnessSampleMeta.sample,true);
 const fitnessSample=(await call(a,'assessments/'+fitnessSampleId)).data;
 assert.equal(fitnessSample.assessment.sample,true);
 assert.equal(fitnessSample.report.sample,true);
+assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:fitnessSampleId})).response.status,400);
 assert.equal(fitnessSample.report.system.result.status,'ready');
 removeFixture(fitnessSampleId);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.

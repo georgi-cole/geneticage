@@ -54,10 +54,36 @@ export const mutationLimits = sqliteTable("mutation_limits", {
   count: integer("count").notNull(),
 });
 
+export const specialistReviews = sqliteTable("specialist_reviews", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => profiles.userId, { onDelete: "cascade" }),
+  assessmentId: text("assessment_id").notNull().references(() => assessments.id, { onDelete: "cascade" }),
+  createdAt: text("created_at").notNull(),
+  status: text("status").notNull(),
+  consentVersion: text("consent_version").notNull(),
+  country: text("country").notNull(),
+  language: text("language").notNull(),
+  request: text("request").notNull(),
+  reviewerUserId: text("reviewer_user_id"),
+  quote: text("quote"),
+  quoteAmount: integer("quote_amount"),
+  quoteCurrency: text("quote_currency"),
+  quoteExpiresAt: text("quote_expires_at"),
+  quotedAt: text("quoted_at"),
+  delivery: text("delivery"),
+  deliveredAt: text("delivered_at"),
+  closedAt: text("closed_at"),
+}, table => [
+  index("specialist_reviews_owner").on(table.userId, table.createdAt),
+  index("specialist_reviews_queue").on(table.status, table.country, table.createdAt),
+  uniqueIndex("specialist_reviews_active").on(table.userId, table.assessmentId).where(sql`${table.status} IN ('requested','quoted','delivered')`),
+]);
+
 export const reportOrders = sqliteTable("report_orders", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => profiles.userId, { onDelete: "cascade" }),
   assessmentId: text("assessment_id").notNull().references(() => assessments.id, { onDelete: "cascade" }),
+  reviewRequestId: text("review_request_id").references(() => specialistReviews.id, { onDelete: "cascade" }),
   liveMode: integer("live_mode").notNull(),
   priceId: text("price_id").notNull(),
   amount: integer("amount").notNull(),
@@ -74,5 +100,6 @@ export const reportOrders = sqliteTable("report_orders", {
   uniqueIndex("report_orders_session").on(table.sessionId),
   index("report_orders_owner").on(table.userId, table.createdAt),
   index("report_orders_intent").on(table.paymentIntentId),
-  uniqueIndex("report_orders_active").on(table.userId, table.assessmentId, table.liveMode).where(sql`${table.status} IN ('creating','open','processing','paid')`),
+  uniqueIndex("report_orders_active").on(table.userId, table.assessmentId, table.liveMode).where(sql`${table.reviewRequestId} IS NULL AND ${table.status} IN ('creating','open','processing','paid')`),
+  uniqueIndex("report_orders_review_active").on(table.reviewRequestId, table.liveMode).where(sql`${table.reviewRequestId} IS NOT NULL AND ${table.status} IN ('creating','open','processing','paid')`),
 ]);

@@ -214,6 +214,7 @@ function ageReadout(type, result) {
 
 const row = (label, value) => `<div class="answer-row"><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`;
 const filtrationText = value => (value < 60 && value >= 59.95 ? '<60' : value.toFixed(1)) + ' mL/min/1.73 m²';
+export {nextSteps as systemReviewSteps,filtrationText};
 function derivedRows(type, inputs, result, review) {
   if (type === 'kidney') return [
     review.egfr !== undefined ? row('eGFR from creatinine', filtrationText(review.egfr)) : '',
@@ -303,7 +304,7 @@ export function renderSystemReport({type, system, saved, sample, hasDraftBackup,
   const selected = Object.hasOwn(panels, tab) ? tab : 'summary';
   return `<div class="wrap app-screen report-workspace system-report">
     <header class="report-heading" data-theme-part><div><span class="eyebrow">${sample ? 'ILLUSTRATIVE SAMPLE' : 'ASSESSMENT REPORT'}</span><h1>${esc(spec.title)}</h1>${saved ? '<p>Saved assessment</p>' : ''}</div>
-    <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print">${uiIcon('report')}<span>PDF</span></button></div></header>
+    <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print">${uiIcon('report')}<span>Print</span></button></div></header>
     ${sample && hasDraftBackup ? '<button class="text-link no-print" data-action="restore-draft">Return to your assessment</button>' : ''}
     <nav class="report-tabs heart-report-tabs no-print" aria-label="Report sections">${tabs.map(([id, label]) => `<button type="button" data-action="report-tab" data-tab="${id}"${id === selected ? ' aria-current="page"' : ''}>${label}</button>`).join('')}</nav>
     <article class="report-paper">${tabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}

@@ -46,11 +46,13 @@ test('empty and earlier stored reports remain explicit instead of substituting n
  assert.equal(withheld.querySelector('.report-age-line'),null);assert.match(withheld.body.textContent,/Fictional collection review reason/);
 });
 
-test('server preview access still gates the detailed answers, all findings and blood comparisons',()=>{
+test('free reports keep answers, safety checks, reference comparisons and basic printing available',()=>{
  const doc=render(state,{full:false,reviewing:false,pagesPreview:false});
- assert.equal(doc.querySelectorAll('.finding-card').length,1);assert.equal(doc.querySelectorAll('.answer-row dt').length,4,'Collection metadata remains visible, not the full questionnaire.');
- assert.equal(doc.querySelectorAll('.blood-review-item').length,0);assert.equal(doc.querySelector('[data-action="print"]'),null);
- assert.ok(doc.querySelector('[data-action="save"]'));assert.ok(doc.querySelector('[data-action="checkout"]'));
+ assert.equal(doc.querySelectorAll('.finding-card').length,1);
+ assert.ok([...doc.querySelectorAll('.answer-row dt')].some(row=>row.textContent==='How old are you?'));
+ assert.equal(doc.querySelectorAll('.blood-review-item').length,9);
+ assert.ok(doc.querySelector('[data-action="print"]'));assert.ok(doc.querySelector('[data-action="save"]'));
+ assert.equal(doc.querySelector('[data-action="checkout"]'),null);
 });
 
 test('the report translates its explanations and statuses without translating measurement units',()=>{
