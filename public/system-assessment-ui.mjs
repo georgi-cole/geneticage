@@ -4,11 +4,11 @@ import {setMeasurementUnit} from './lab-review.mjs';
 import {escapeHTML as esc, reportArtwork, screenHeading, specialistHelp, uiIcon} from './ui-components.mjs';
 
 const arrow = ' ' + uiIcon('forward');
-const activeFields = (type, inputs) => systemSteps(type, inputs).flatMap(({fields}) => fields);
 
 export function systemRoute(type, inputs, prefilled = []) {
-  const fields = prefilled.filter(id => inputs[id] !== undefined && activeFields(type, inputs).includes(id));
-  const route = systemSteps(type, inputs).map(step => ({...step, fields:step.fields.filter(id => !fields.includes(id))}))
+  const steps = systemSteps(type, inputs);
+  const fields = steps.flatMap(step => step.fields).filter(id => prefilled.includes(id) && inputs[id] !== undefined);
+  const route = steps.map(step => ({...step, fields:step.fields.filter(id => !fields.includes(id))}))
     .filter(step => step.fields.length);
   return fields.length ? [{id:'review', title:'Review your details', fields}, ...route] : route;
 }
@@ -76,8 +76,9 @@ function reviewPrefill(type, inputs, fields) {
     <p class="hint">These details came from your earlier assessments. Check that they still apply.</p>
     ${fields.map(id => {
       const field = systemField(type, id);
-      return `<div class="heart-prefill-row"><div><span id="system-prefill-${id}">${esc(field.label)}</span><br><strong>${esc(valueText(field, inputs[id]))}</strong></div>
-        <button type="button" class="text-btn" data-action="system-review-edit" data-part="${id}" aria-describedby="system-prefill-${id}">Edit</button></div>`;
+      const key = esc(field.id);
+      return `<div class="heart-prefill-row"><div><span id="system-prefill-${key}">${esc(field.label)}</span><br><strong>${esc(valueText(field, inputs[id]))}</strong></div>
+        <button type="button" class="text-btn" data-action="system-review-edit" data-part="${key}" aria-describedby="system-prefill-${key}">Edit</button></div>`;
     }).join('')}
   </div>`;
 }

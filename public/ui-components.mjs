@@ -7,7 +7,7 @@ import {systemAssessment, systemAssessments} from './system-assessments.mjs';
 export const screenHeading=(eyebrow,title,subtitle='',action='')=>`<header class="screen-head" data-theme-part><div><span class="eyebrow">${eyebrow}</span><h1>${title}</h1>${subtitle?`<p>${subtitle}</p>`:''}</div>${action}</header>`;
 export const specialistHelp=()=>`<details class="specialist-help">
   <summary>Need help finding this test?</summary>
-  <a class="text-link" href="https://kolequant.xyz/en/index.html" target="_blank" rel="noopener noreferrer">Ask KoleQuant about access ↗</a>
+  <a class="text-link" href="https://kolequant.xyz/en/about.html#contact" target="_blank" rel="noopener noreferrer">Ask KoleQuant about access ↗</a>
 </details>`;
 
 // Accessible text always contains the final value. Only the hidden visual copy counts.

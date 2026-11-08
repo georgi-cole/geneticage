@@ -87,6 +87,7 @@ test('prefill keeps the age at the blood draw and skips only matching confirmed 
   const carried = systemPrefill('kidney', answers, {sex:'Male'}, blood);
   assert.deepEqual(carried.age,reading(48,'years'));
   assert.equal(systemRoute('kidney', carried, Object.keys(carried))[0].id, 'review');
+  assert.deepEqual(systemRoute('kidney', {...carried,'<extra>':'value'}, ['<extra>','age'])[0].fields, ['age']);
   assert.ok(!systemRoute('kidney',carried,Object.keys(carried)).some(step => step.id === 'creatinine'));
   assert.equal(systemPrefill('kidney', answers).age, undefined);
   const habits = systemPrefill('metabolic', answers);
