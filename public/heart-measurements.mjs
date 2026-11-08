@@ -2,7 +2,8 @@ import {compareLabReference, validateReferenceLimits} from './lab-review.mjs';
 import {referenceCatalog} from './lab-reference-catalog.mjs';
 
 export const HEART_MEASUREMENT_REVIEW = 'heart-measurement-review-v1';
-const cholesterolFactor = unit => unit === 'mg/dL' ? 1 / 38.67 : 1;
+export const cholesterolMgDlPerMmol = 38.67;
+const cholesterolFactor = unit => unit === 'mg/dL' ? 1 / cholesterolMgDlPerMmol : 1;
 const upperGuide = (high, page) => ({high, highExclusive:true, unit:'mg/dL', page});
 export const arterialMeasurement = {id:'cfpwv', label:'Carotid–femoral pulse wave velocity (cfPWV)', units:['m/s'], group:'arterial', optional:true, coverage:[3, 25]};
 export const heartMeasurements = [
@@ -69,7 +70,7 @@ function compareHeartLipid(field, entry, context) {
     highExclusive:guide.highExclusive, sourceKind:'published', sourceLabel:referenceCatalog.label, sourceUrl:referenceCatalog.url+'#page='+guide.page};
 }
 
-const mmol = entry => entry ? Number(entry.value) / (entry.unit === 'mg/dL' ? 38.67 : 1) : null;
+const mmol = entry => entry ? Number(entry.value) / (entry.unit === 'mg/dL' ? cholesterolMgDlPerMmol : 1) : null;
 export function hba1cMmol(entry) {
   const value = Number(entry?.value);
   // NGSP/IFCC master equation, with the result in mmol/mol.

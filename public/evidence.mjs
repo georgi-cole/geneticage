@@ -1,5 +1,7 @@
 export const CONTENT_VERSION='2026-11-07-assessment-v5';
 export const references=[
+ {id:'framingham-vascular-age',label:'D’Agostino et al. (2008) · Framingham vascular age',url:'https://pubmed.ncbi.nlm.nih.gov/18212285/'},
+ {id:'framingham-equation',label:'Framingham Heart Study · Published cardiovascular equation',url:'https://www.framinghamheartstudy.org/fhs-for-researchers/fhs-risk-functions/cardiovascular-disease-10-year-risk/'},
  {id:'score2',label:'SCORE2 Working Group (2021) · 10-year cardiovascular risk',url:'https://doi.org/10.1093/eurheartj/ehab309'},
  {id:'score2-coefficients',label:'SCORE2 · Published model coefficients and calibration',url:'https://doi.org/10.1093/eurheartj/ehab761'},
  {id:'score2-op',label:'SCORE2-OP Working Group (2021) · 10-year risk in older adults',url:'https://doi.org/10.1093/eurheartj/ehab312'},

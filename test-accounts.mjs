@@ -103,16 +103,27 @@ assert.equal(savedOlderHeart.heart.result.method,'SCORE2-OP');
 assert.ok(savedOlderHeart.sources.includes('https://doi.org/10.1093/eurheartj/ehab312'));
 assert.equal(savedOlderHeart.heart.inputs.smokingDays30,8);
 assert.equal((await call(a,'assessments/'+olderHeart.id,'DELETE',{confirm:true})).response.status,200);
-const arterialEntry={...heartEntry,id:randomUUID(),heart:{...heartEntry.heart,
-  age:33,country:'Bulgaria',conditions:'Yes',diagnoses:['Diabetes'],
+const youngEntry={...heartEntry,id:randomUUID(),heart:{...heartEntry.heart,
+  age:33,country:'Bulgaria',conditions:'Yes',diagnoses:['Diabetes'],diabetesType:'Type 2 diabetes',bpTreatment:'No',
+  result:{age:25},
+}};
+assert.equal((await call(a,'assessments','POST',youngEntry)).response.status,201);
+const savedYoung=(await call(a,'assessments/'+youngEntry.id+'/report')).data.report;
+assert.equal(savedYoung.model,'framingham-2008-lipids-age-v1');
+assert.equal(savedYoung.heart.result.age,54);
+assert.equal(savedYoung.heart.result.risk,undefined);
+assert.ok(savedYoung.sources.includes('https://pubmed.ncbi.nlm.nih.gov/18212285/'));
+const arterialEntry={...youngEntry,id:randomUUID(),heart:{...youngEntry.heart,
   cfpwv:{value:'8.3',unit:'m/s',method:'direct-80'},review:{arterialAge:{age:25}},
 }};
 assert.equal((await call(a,'assessments','POST',arterialEntry)).response.status,201);
 const savedArterial=(await call(a,'assessments/'+arterialEntry.id+'/report')).data.report;
-assert.equal(savedArterial.heart.result.issue,'young');
+assert.deepEqual(savedArterial.heart.result,savedYoung.heart.result);
 assert.equal(savedArterial.heart.review.arterialAge.age,50);
 assert.ok(savedArterial.sources.includes('https://doi.org/10.1038/s41598-024-74162-5'));
+assert.deepEqual((await call(a,'assessments/'+youngEntry.id+'/report')).data.report,savedYoung);
 assert.equal((await call(a,'assessments/'+arterialEntry.id,'DELETE',{confirm:true})).response.status,200);
+assert.equal((await call(a,'assessments/'+youngEntry.id,'DELETE',{confirm:true})).response.status,200);
 assert.equal((await call(a,'assessments/'+heartId,'DELETE',{confirm:true})).response.status,200);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
 sqlite.prepare('UPDATE assessments SET payload=? WHERE id=?').run(stored.payload,withheldId);

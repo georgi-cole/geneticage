@@ -1,20 +1,22 @@
-import {heartMeasurements, heartDecimal as decimal, heartPressureMessage, reviewHeartMeasurements, hba1cMmol} from './heart-measurements.mjs';
+import {heartMeasurements, heartDecimal as decimal, heartPressureMessage, reviewHeartMeasurements, hba1cMmol, cholesterolMgDlPerMmol} from './heart-measurements.mjs';
 
 export const HEART_ASSESSMENT = 'heart-vascular';
 const SCORE2 = 'SCORE2';
 const SCORE2_OP = 'SCORE2-OP';
 export const SCORE2_DIABETES = 'SCORE2-Diabetes';
+export const FRAMINGHAM = 'Framingham';
 const coverageSources = ['score2-regions', 'score2-scope'];
 export const arterialReference = {minAge:18, maxAge:80, method:'direct-80'};
 
 export function heartSources(result, review) {
   const labs = Object.values(review?.fields || {}).some(field => field.comparison?.sourceKind === 'published') ? ['adult-intervals'] : [];
   if (review?.pressureFollowUp || review?.pressureWarning) labs.push('esc-blood-pressure');
+  if (result.method === FRAMINGHAM || result.issue === 'framingham-data') return ['framingham-vascular-age', 'framingham-equation', 'arterial-reference', ...labs];
   if (result.issue) {
     const extras = [result.issue === 'pressure' && !labs.includes('esc-blood-pressure') && 'esc-blood-pressure', result.issue === 'young' && 'life-cvd2',
       (result.issue.startsWith('diabetes') || result.historyIssue === 'diabetes') && 'score2-diabetes',
-      result.dial2 && 'dial2'].filter(Boolean);
-    return ['score2', 'score2-op', ...coverageSources, ...extras, ...labs, ...(result.issue === 'young' ? ['arterial-reference'] : [])];
+      result.dial2 && 'dial2', (result.issue === 'young' || review?.arterialAge) && 'arterial-reference'].filter(Boolean);
+    return ['score2', 'score2-op', ...coverageSources, ...extras, ...labs];
   }
   if (result.method === SCORE2_DIABETES) return ['score2', 'score2-diabetes', 'score2-diabetes-coefficients', 'hba1c-units', ...coverageSources, 'vascular-age', ...labs];
   return result.method === SCORE2_OP
@@ -56,6 +58,7 @@ const diagnosesByIssue = {
 };
 export const heartDiagnosisQuestion = {id:'diagnoses', label:'Which apply to you?', hint:'Select all that apply.', options:[...Object.keys(diagnosesByIssue), 'Not sure which'], multiple:true};
 export const heartDiagnosisActive = inputs => inputs.conditions === 'Yes';
+export const heartBpTreatmentQuestion = {id:'bpTreatment', label:'Do you take medicine for high blood pressure?', options:yesNo};
 export const heartDiabetesTypeQuestion = {id:'diabetesType', label:'Which type of diabetes were you diagnosed with?', options:['Type 2 diabetes', 'Type 1 diabetes', 'Another type or not sure']};
 export const heartDiabetesDamageQuestion = {id:'diabetesDamage', label:'Has a clinician identified complications from diabetes?',
   hint:'For example, kidney disease, protein in your urine, diabetic eye disease, or nerve damage.', options:yesNo};
@@ -111,9 +114,56 @@ const score2Diabetes = {...score2, name:SCORE2_DIABETES, version:'score2-diabete
 }};
 const models = [score2, score2Op];
 const modelForAge = age => models.find(model => age >= model.minAge && age <= model.maxAge);
+const framingham = {name:FRAMINGHAM, version:'framingham-2008-lipids-age-v1', minAge:30, maxAge:74};
+// D'Agostino et al. (2008), Table 2, general CVD model with lipids.
+const framinghamCoefficients = {
+  Male:{age:3.06117, total:1.12370, hdl:-0.93263, untreated:1.93303, treated:1.99881, smoking:0.65451, diabetes:0.57367},
+  Female:{age:2.32888, total:1.20904, hdl:-0.70833, untreated:2.76157, treated:2.82263, smoking:0.52873, diabetes:0.69154},
+};
+const knownSmoking = value => currentSmoking.includes(value) || ['No', 'Used to smoke', 'Never smoked'].includes(value);
+
+export function heartFraminghamAge(value) {
+  const age = Number(decimal(value));
+  return Number.isInteger(age) && age >= framingham.minAge && age < score2.minAge;
+}
 
 function reportedDiabetes(inputs) {
   return heartDiagnosisActive(inputs) && Array.isArray(inputs.diagnoses) && inputs.diagnoses.includes('Diabetes');
+}
+
+const onlyDiabetes = inputs => reportedDiabetes(inputs) && inputs.diagnoses.every(diagnosis => diagnosis === 'Diabetes');
+
+export function heartNeedsBpTreatment(inputs) {
+  return heartFraminghamAge(inputs.age) && inputs.sex !== 'Prefer not to say' && !['Not sure', 'Prefer not to say'].includes(inputs.smoking) &&
+    (!inputs.conditions || inputs.conditions === 'No' || onlyDiabetes(inputs) && (!inputs.diabetesType || inputs.diabetesType === 'Type 2 diabetes'));
+}
+
+function framinghamCandidate(inputs) {
+  return heartNeedsBpTreatment(inputs) && ['Female', 'Male'].includes(inputs.sex) && knownSmoking(inputs.smoking) &&
+    (inputs.conditions === 'No' || onlyDiabetes(inputs));
+}
+
+export function heartFraminghamMissing(inputs) {
+  if (!framinghamCandidate(inputs)) return [];
+  return [
+    ...(onlyDiabetes(inputs) && !inputs.diabetesType ? ['diabetesType'] : []),
+    ...(!['Yes', 'No'].includes(inputs.bpTreatment) ? ['bpTreatment'] : []),
+    ...['systolic', 'total', 'hdl'].filter(id => !inputs[id]?.value),
+  ];
+}
+
+// Solve for the age at which the study's reference profile has the same
+// linear predictor. Baseline survival and centering cancel in the match.
+export function framinghamVascularAge({age, sex, smoking, diabetes, treated, systolic, total, hdl}) {
+  const coefficients = framinghamCoefficients[sex];
+  const pressure = coefficients[treated ? 'treated' : 'untreated'] * Math.log(systolic) - coefficients.untreated * Math.log(125);
+  const difference = pressure
+    + coefficients.total * Math.log(total / (180 / cholesterolMgDlPerMmol))
+    + coefficients.hdl * Math.log(hdl / (45 / cholesterolMgDlPerMmol))
+    + coefficients.smoking * Number(smoking) + coefficients.diabetes * Number(diabetes);
+  const referenceAge = age * Math.exp(difference / coefficients.age);
+  const ageRange = referenceAge < framingham.minAge ? 'below' : referenceAge > framingham.maxAge ? 'above' : null;
+  return {method:framingham.name, version:framingham.version, age:ageRange ? null : Math.round(referenceAge), ageRange};
 }
 
 function dial2Scope(inputs) {
@@ -122,25 +172,26 @@ function dial2Scope(inputs) {
 }
 
 export function heartDiabetesCandidate(inputs) {
-  return reportedDiabetes(inputs) && inputs.diagnoses.every(diagnosis => diagnosis === 'Diabetes') &&
+  return onlyDiabetes(inputs) &&
     inputs.diabetesType === 'Type 2 diabetes' && modelForAge(Number(inputs.age)) === score2 && regionsByCountry.has(inputs.country);
 }
 
 export const heartNeedsDiabetesDamage = inputs => heartDiabetesCandidate(inputs) && inputs.treatment === 'No';
 
 export function heartNeedsDiabetesType(inputs) {
-  return reportedDiabetes(inputs) && inputs.diagnoses.every(diagnosis => diagnosis === 'Diabetes') &&
-    (modelForAge(Number(inputs.age)) === score2 && regionsByCountry.has(inputs.country) || dial2Scope(inputs));
+  return onlyDiabetes(inputs) &&
+    (heartFraminghamAge(inputs.age) || modelForAge(Number(inputs.age)) === score2 && regionsByCountry.has(inputs.country) || dial2Scope(inputs));
 }
 
 export function heartUsesDiabetesLabs(inputs) {
   return heartDiabetesCandidate(inputs) && inputs.diabetesDamage === 'No' && inputs.treatment === 'No' &&
-    ['Female', 'Male'].includes(inputs.sex) && (currentSmoking.includes(inputs.smoking) || ['No','Used to smoke','Never smoked'].includes(inputs.smoking));
+    ['Female', 'Male'].includes(inputs.sex) && knownSmoking(inputs.smoking);
 }
 
 export function heartModelForReport(result) {
   if (result.reason) return null;
-  const {name, minAge, maxAge} = result.method === SCORE2_DIABETES ? score2Diabetes : result.method === SCORE2_OP ? score2Op : score2;
+  const {name, minAge, maxAge} = result.method === FRAMINGHAM ? framingham
+    : result.method === SCORE2_DIABETES ? score2Diabetes : result.method === SCORE2_OP ? score2Op : score2;
   return {name, minAge, maxAge};
 }
 
@@ -182,6 +233,8 @@ function riskEquivalentAge(logHazard, sex, region, model) {
 const reviewMeasurements = 'Review your blood pressure and cholesterol with a clinician to find the assessment that fits your situation.';
 export const heartLimitations = {
   young:{reason:'The European 10-year risk estimates in this assessment start at age 40.', next:'Review your blood pressure, cholesterol and family history with a clinician to discuss risk at your age.', edit:'age'},
+  'framingham-data':{reason:'Add the remaining details to calculate your vascular age.'},
+  'framingham-diabetes':{reason:'This vascular age comparison covers adults without diabetes and adults with type 2 diabetes.', next:'Ask your diabetes care team which cardiovascular assessment fits your history.', edit:'diabetes-type'},
   older:{reason:'The European 10-year risk estimates in this assessment cover ages 40–89.', next:reviewMeasurements, edit:'age'},
   region:{reason:'The country selected is outside the SCORE2 regions covered here.', next:'Check your country of residence or ask a clinician which risk assessment is used where you live.', edit:'country'},
   cvd:{reason:'These equations estimate the chance of a first cardiovascular event. Risk with established disease uses a separate assessment.', next:'Ask the clinician who manages your heart or blood vessel condition about a follow-up risk assessment.'},
@@ -231,12 +284,20 @@ function historyIssue(inputs) {
     const known = ['pregnancy', 'cvd', 'diabetes', 'kidney', 'inherited'].find(issue => issues.includes(issue));
     if (known) return known;
   }
-  if (inputs.treatment === 'Yes') return 'treatment';
+  if (!heartFraminghamAge(inputs.age) && inputs.treatment === 'Yes') return 'treatment';
   return null;
 }
 
 function scopeIssue(inputs, region, history) {
   const startIssue = heartStartIssue(inputs);
+  if (heartFraminghamAge(inputs.age)) {
+    if (history && history !== 'diabetes') return history;
+    if (inputs.conditions === 'Not sure' || inputs.diagnoses?.includes('Not sure which')) return 'conditions';
+    if (inputs.sex === 'Prefer not to say') return 'sex';
+    if (['Not sure', 'Prefer not to say'].includes(inputs.smoking)) return 'smoking';
+    if (onlyDiabetes(inputs) && inputs.diabetesType && inputs.diabetesType !== 'Type 2 diabetes') return 'framingham-diabetes';
+    if (history === 'diabetes' && !onlyDiabetes(inputs)) return 'diabetes';
+  }
   if (startIssue) return startIssue;
   if (!region) return 'region';
   if (history === 'diabetes') {
@@ -281,6 +342,10 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   const startIssue = heartStartIssue({age:inputs.age, country:raw?.country});
   for (const {id, options} of heartQuestions) {
     const value = raw?.[id];
+    if (id === 'treatment' && heartFraminghamAge(inputs.age)) {
+      if (options.includes(value)) inputs[id] = value;
+      continue;
+    }
     // Earlier clients could send only age, country and measurements outside model coverage.
     if (startIssue && !requireHistory && id !== 'country' && value === undefined) continue;
     if (options.includes(value) || (id === 'smoking' && typeof value === 'string' && Object.hasOwn(heartLegacySmoking, value))) inputs[id] = value;
@@ -294,6 +359,8 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
     else inputs.diagnoses = choices;
   }
   readDiabetesInputs(inputs, raw, errors, requireHistory);
+  if (heartBpTreatmentQuestion.options.includes(raw.bpTreatment)) inputs.bpTreatment = raw.bpTreatment;
+  else if (heartNeedsBpTreatment(inputs) && raw.bpTreatment != null && raw.bpTreatment !== '') errors.bpTreatment = 'Choose an answer.';
 
   for (const {id, min, max, integer} of heartSmokingFields(inputs)) {
     const entry = raw?.[id];
@@ -333,7 +400,15 @@ export function assessHeartVascular(raw = {}, {requireHistory = false} = {}) {
   }
   if (Object.keys(errors).length) return {inputs, errors, review, result:null};
   if (highPressure) return {inputs, errors, review, result:unavailable('pressure')};
-  if (issue) return {inputs, errors, review, result:{...unavailable(issue), ...(startIssue && history ? {historyIssue:history} : {}),
+  if (framinghamCandidate(inputs)) {
+    if (outsideCoverage) return {inputs, errors, review, result:unavailable('measurements')};
+    const missing = heartFraminghamMissing(inputs);
+    const result = missing.length ? {...unavailable('framingham-data'), missing}
+      : framinghamVascularAge({age:inputs.age, sex:inputs.sex, smoking:currentSmoking.includes(inputs.smoking),
+        diabetes:onlyDiabetes(inputs), treated:inputs.bpTreatment === 'Yes', systolic, total, hdl});
+    return {inputs, errors, review, result};
+  }
+  if (issue) return {inputs, errors, review, result:{...unavailable(issue), ...(issue === startIssue && history ? {historyIssue:history} : {}),
     ...(inputs.diabetesType === 'Type 2 diabetes' && dial2Scope(inputs) ? {dial2:true} : {})}};
   if (outsideCoverage) return {inputs, errors, review, result:unavailable('measurements')};
 

@@ -1,4 +1,4 @@
-import {heartQuestions, heartRegionLabels, heartDiagnosisQuestion, heartDiagnosisActive, heartSmokingFields, heartLegacySmoking, heartStartIssue, heartLimitations, heartModelForReport, heartSources, HEART_UNSPECIFIED_CVD, SCORE2_DIABETES, heartDiabetesTypeQuestion, heartDiabetesDamageQuestion, heartNeedsDiabetesType, heartNeedsDiabetesDamage, heartUsesDiabetesLabs, heartCanCompareArterialAge, arterialReference} from './heart-vascular.mjs';
+import {heartQuestions, heartRegionLabels, heartDiagnosisQuestion, heartDiagnosisActive, heartSmokingFields, heartLegacySmoking, heartStartIssue, heartLimitations, heartModelForReport, heartSources, HEART_UNSPECIFIED_CVD, SCORE2_DIABETES, heartDiabetesTypeQuestion, heartDiabetesDamageQuestion, heartNeedsDiabetesType, heartNeedsDiabetesDamage, heartUsesDiabetesLabs, heartCanCompareArterialAge, arterialReference, FRAMINGHAM, heartFraminghamAge, heartNeedsBpTreatment, heartBpTreatmentQuestion, heartFraminghamMissing} from './heart-vascular.mjs';
 import {arterialMeasurement, heartDecimal, heartMeasurements, reviewHeartMeasurements} from './heart-measurements.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
 import {measurementFeedbackMarkup, safetyMarkup} from './lab-feedback.mjs';
@@ -15,10 +15,20 @@ const diagnosisAge = {id:'diagnosisAge', label:'Age at diabetes diagnosis'};
 const diabetesFields = [diagnosisAge, ...diabetesLabs];
 const pressures = heartMeasurements.filter(field => field.group === 'pressure');
 const [topPressure, bottomPressure] = pressures;
+const framinghamFields = [
+  {id:'diabetesType', label:'Type of diabetes', step:'diabetes-type'},
+  {id:'bpTreatment', label:'Blood pressure medicine', step:'bp-treatment'},
+  {...topPressure, step:'blood-pressure'},
+  ...routine.map(field => ({...field, step:'measurements'})),
+];
 const measurementSteps = [
   {id:'blood-pressure', phase:2, fields:pressures},
   {id:'measurements', phase:2, fields:[...routine, ...specialist]},
 ];
+
+export function heartFraminghamStep(missing) {
+  return framinghamFields.find(field => missing.includes(field.id))?.step;
+}
 
 function offerDiabetesLabs(inputs) {
   if (!heartUsesDiabetesLabs(inputs)) return false;
@@ -33,7 +43,8 @@ export function heartSteps(inputs) {
     {id:'conditions', fields:[conditions]},
     {id:'diagnoses', fields:heartDiagnosisActive(inputs) ? [heartDiagnosisQuestion] : []},
     {id:'diabetes-type', fields:heartNeedsDiabetesType(inputs) ? [heartDiabetesTypeQuestion] : []},
-    {id:'treatment', fields:[treatment]},
+    {id:'treatment', fields:heartFraminghamAge(inputs.age) ? [] : [treatment]},
+    {id:'bp-treatment', fields:heartNeedsBpTreatment(inputs) ? [heartBpTreatmentQuestion] : []},
     {id:'diabetes-damage', fields:heartNeedsDiabetesDamage(inputs) ? [heartDiabetesDamageQuestion] : []},
   ].filter(step => step.fields.length).map(step => ({...step, phase:1}));
   const steps = [...aboutYou, ...history, ...measurementSteps];
@@ -84,7 +95,7 @@ const answerText = (id, value) => id === 'smoking' ? heartLegacySmoking[value] |
 function prefillReview(inputs, errors, prefilled) {
   const groups = heartSteps(inputs).filter(step => step.fields.some(field => prefilled.includes(field.id) && hasAnswer(inputs[field.id])));
   const labels = {country:'Country of residence', age:'Age in years', smoking:'Cigarette smoking', 'smoking-history':'Smoking history',
-    conditions:'Health history', diagnoses:'Reported health history', treatment:'Cholesterol-lowering medicine'};
+    conditions:'Health history', diagnoses:'Reported health history', treatment:'Cholesterol-lowering medicine', 'bp-treatment':'Blood pressure medicine'};
   return `<fieldset class="question heart-prompt heart-prefill" data-theme-part>
     <legend>Review your answers</legend>
     <p class="hint">We started with your Health & lifestyle answers. Update anything that has changed.</p>
@@ -233,7 +244,8 @@ function measurementStep(step, inputs, errors, showOptional, touched) {
   if (step === 'blood-pressure') {
     const issue = heartStartIssue(inputs);
     return `<div class="lab-fields heart-measurements">
-      ${issue ? `<aside class="heart-scope-note"><p><span>${esc(heartLimitations[issue].reason)}</span> <span>Your readings will appear in a prevention review.</span></p></aside>` : ''}
+      ${heartNeedsBpTreatment(inputs) ? '<aside class="heart-scope-note"><p>Blood pressure and a routine cholesterol panel can give you a vascular age comparison.</p></aside>'
+        : issue ? `<aside class="heart-scope-note"><p>${heartFraminghamAge(inputs.age) ? '' : `<span>${esc(heartLimitations[issue].reason)}</span> `}<span>Your readings will appear in a prevention review.</span></p></aside>` : ''}
       <fieldset class="question heart-pressure" data-theme-part aria-describedby="heart-bp-hint">
         <legend>Blood pressure</legend>
         <p id="heart-bp-hint" class="hint">For 150/90, enter 150 in the first box and 90 in the second. The estimate uses the top number.</p>
@@ -285,21 +297,30 @@ export function refreshHeartFeedback(form, inputs, touched) {
   }
 }
 
-function arterialSummary({inputs, result, review}) {
-  if (result.issue !== 'young' || !heartCanCompareArterialAge(inputs)) return '';
+function arterialSummary({inputs, result, review}, secondary) {
+  if (result.issue === 'pressure' || !heartCanCompareArterialAge(inputs)) return '';
   const comparison = review?.arterialAge;
+  if (secondary) return `<details class="report-answer-group"${comparison ? ' open' : ''}>
+    <summary>Optional pulse-wave comparison</summary>
+    ${comparison ? arterialAgeReading(comparison) : `<p>A clinic pulse-wave measurement can give you a separate arterial stiffness age.</p>
+      <button class="text-btn no-print" data-action="heart-arterial">Add pulse-wave result ${arrow}</button>`}
+  </details>`;
   if (!comparison) return `<section class="report-explanation heart-arterial">
     <h2>Compare your arterial stiffness</h2>
-    <p><span>${esc(result.reason)}</span> <span>If you have a pulse-wave result, you can use it for a separate age comparison.</span></p>
+    <p><span>If you have a pulse-wave result, you can use it for a separate age comparison.</span></p>
     <button class="btn no-print" data-action="heart-arterial">Add pulse-wave result ${arrow}</button>
   </section>`;
+  return arterialAgeReading(comparison);
+}
+
+function arterialAgeReading(comparison) {
   const {minAge, maxAge} = arterialReference;
   const age = comparison.ageRange === 'above' ? `<span>Above</span> ${maxAge}`
     : comparison.ageRange === 'below' ? `<span>Below</span> ${minAge}` : esc(comparison.age);
   return `<section class="report-estimate result-surface heart-arterial" data-theme-part>
     <span class="eyebrow">ARTERIAL STIFFNESS AGE</span>
     <div class="report-age-line"><strong>${age}</strong>${comparison.ageRange ? '' : '<span>years</span>'}</div>
-    <p>Your pulse-wave measurement is compared with adult reference values. The 10-year risk estimate starts at age 40.</p>
+    <p>Your clinic pulse-wave measurement is compared with adult reference values for arterial stiffness.</p>
     <button class="text-btn no-print" data-action="heart-arterial">Edit pulse-wave result ${arrow}</button>
   </section>`;
 }
@@ -367,18 +388,19 @@ function riskSummary({inputs, result, review}) {
   const model = heartModelForReport(result);
   const age = result.ageRange === 'above' ? `<span>Above</span> ${model.maxAge}`
     : result.ageRange === 'below' ? `<span>Below</span> ${model.minAge}` : esc(result.age);
-  const risk = result.risk < 0.1 ? '&lt;0.1%' : `${result.risk.toFixed(1)}%`;
+  const isFramingham = result.method === FRAMINGHAM;
+  const risk = isFramingham ? '' : result.risk < 0.1 ? '&lt;0.1%' : `${result.risk.toFixed(1)}%`;
   return `<section class="report-estimate result-surface heart-estimate" data-theme-part>
     <div class="heart-result-main">
       ${reportArtwork()}
-      <span class="eyebrow">VASCULAR RISK AGE</span>
+      <span class="eyebrow">${isFramingham ? 'VASCULAR AGE' : 'VASCULAR RISK AGE'}</span>
       <div class="report-age-line${result.ageRange ? ' heart-age-bound' : ''}"><strong>${age}</strong>${result.ageRange ? '' : '<span>years</span>'}</div>
-      <p>Approximate age comparison</p>
+      <p>${isFramingham ? 'Framingham reference · U.S. study' : 'Approximate age comparison'}</p>
     </div>
-    <div class="heart-result-meta">
+    ${isFramingham ? '' : `<div class="heart-result-meta">
       <div><strong>${risk}</strong><span>${model.name === SCORE2_DIABETES ? '10-year SCORE2-Diabetes risk' : model.name === 'SCORE2-OP' ? '10-year SCORE2-OP risk' : '10-year SCORE2 risk'}</span></div>
       <div><strong>${esc(inputs.country)}</strong><span>${esc(heartRegionLabels[result.region])}</span></div>
-    </div>
+    </div>`}
   </section>`;
 }
 
@@ -418,7 +440,10 @@ function measurementsPanel(inputs, review) {
 
 function methodsPanel(inputs, result, review, sourceLinks) {
   const model = heartModelForReport(result);
-  const coverage = model?.name === SCORE2_DIABETES
+  const isFramingham = model?.name === FRAMINGHAM || result.issue === 'framingham-data';
+  const coverage = isFramingham
+    ? 'For ages 30–39, this assessment uses the Framingham general cardiovascular model with routine cholesterol results.'
+    : model?.name === SCORE2_DIABETES
     ? 'SCORE2-Diabetes estimates 10-year risk for eligible adults aged 40–69 with type 2 diabetes.'
     : model?.name === 'SCORE2-OP'
     ? 'SCORE2-OP estimates 10-year risk for eligible adults aged 70–89.'
@@ -427,7 +452,8 @@ function methodsPanel(inputs, result, review, sourceLinks) {
   return `<h2>Details & methods</h2>
     <details class="report-answer-group" open><summary>How the estimate works</summary>
       <p>${esc(coverage)}</p>
-      <p>The risk models use age, sex, current cigarette smoking, systolic blood pressure, total cholesterol and HDL cholesterol. The country of residence selects the regional calibration.</p>
+      <p>${isFramingham ? 'The model uses age, sex, smoking, systolic blood pressure, blood pressure medicine, diabetes, and total and HDL cholesterol. Its outcome includes coronary disease, stroke, peripheral artery disease and heart failure.'
+        : 'The risk models use age, sex, current cigarette smoking, systolic blood pressure, total cholesterol and HDL cholesterol. The country of residence selects the regional calibration.'}</p>
       ${model?.name === SCORE2_DIABETES ? '<p>SCORE2-Diabetes also uses age at diagnosis, HbA1c and eGFR. This assessment uses exact HbA1c from 20 to 140 mmol/mol and eGFR from 60 to 150 mL/min/1.73 m². The study used the CKD-EPI 2009 equation for eGFR.</p>' : ''}
       <p>Health history helps determine eligibility. Smoking frequency and history, diastolic blood pressure, ApoB and Lp(a) appear in the report for context.</p>
       <p>Calculation coverage is systolic blood pressure from 100 to under 180 mmHg, total cholesterol 2.5–8 mmol/L and HDL cholesterol 0.5–3 mmol/L.</p>
@@ -437,11 +463,14 @@ function methodsPanel(inputs, result, review, sourceLinks) {
       <p>The published HDL comparison uses the sex entered for the estimate. Lp(a) stays in the unit printed on your report.</p>
       <p>Reference comparisons describe the measurement. Eligibility and calculation checks determine whether the risk estimate can be shown.</p>
     </details>` : ''}
-    ${model ? `<details class="report-answer-group"><summary>The reference age</summary>
+    ${isFramingham ? `<details class="report-answer-group"><summary>The reference age</summary>
+      <p>The comparison matches your modeled risk to a nonsmoker of the same sex with no diabetes, untreated systolic pressure of 125 mmHg, total cholesterol of 180 mg/dL and HDL cholesterol of 45 mg/dL. Reference ages span 30–74.</p>
+      <p>The model was developed in the United States. The report shows the comparison age. SCORE2 provides country-calibrated percentages for eligible adults starting at age 40.</p>
+    </details>` : model ? `<details class="report-answer-group"><summary>The reference age</summary>
       <p>Vascular risk age is an app comparison. It matches your risk to a nonsmoker of the same sex and region with systolic blood pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. Reference ages stay within the model’s age range.</p>
       ${model.name === SCORE2_DIABETES ? '<p>The comparison matches the SCORE2-Diabetes risk to the standard SCORE2 reference profile.</p>' : ''}
     </details>` : ''}
-    ${result.issue === 'young' && heartCanCompareArterialAge(inputs) ? `<details class="report-answer-group"><summary>Arterial stiffness age</summary>
+    ${result.issue !== 'pressure' && heartCanCompareArterialAge(inputs) ? `<details class="report-answer-group"><summary>Arterial stiffness age</summary>
       <p>The comparison finds the age at which the median carotid–femoral pulse wave velocity in the Austrian LEAD study matches your result. It uses the reference curve for your sex and stays within ages 18–80.</p>
       <p>The measurement uses 80% of the direct carotid–femoral distance. Blood pressure at the time of the test can affect the reading. This age describes arterial stiffness. A 10-year event risk uses a separate calculation.</p>
     </details>` : ''}
@@ -449,6 +478,7 @@ function methodsPanel(inputs, result, review, sourceLinks) {
       <dl>${row('Age in years', inputs.age)}
         ${heartQuestions.filter(({id}) => inputs[id]).map(({id, label}) => row(label, id === 'smoking' && Object.hasOwn(heartLegacySmoking, inputs[id]) ? heartLegacySmoking[inputs[id]] : inputs[id])).join('')}
         ${heartDiagnosisActive(inputs) && inputs.diagnoses?.length ? inputs.diagnoses.map(diagnosis => row('Reported health history', diagnosis)).join('') : ''}
+        ${inputs.bpTreatment ? row('Blood pressure medicine', inputs.bpTreatment) : ''}
         ${[heartDiabetesTypeQuestion, heartDiabetesDamageQuestion, diagnosisAge].filter(field => inputs[field.id] !== undefined).map(field => row(field.label, inputs[field.id])).join('')}
         ${heartSmokingFields(inputs).filter(field => inputs[field.id] !== undefined).map(field => row(smokingLabel(field, inputs), inputs[field.id])).join('')}
       </dl>
@@ -469,7 +499,8 @@ function nextStep(result, inputs, review) {
   </section>`;
   const issue = heartLimitations[result.issue];
   const needsType = (result.issue === 'diabetes' || result.historyIssue === 'diabetes') && heartNeedsDiabetesType(inputs) && !inputs.diabetesType;
-  const edit = needsType ? 'diabetes-type' : result.issue === 'young' ? null : issue?.edit;
+  const pressureOutsideRange = result.issue === 'measurements' && review?.fields.systolic?.check.status === 'review';
+  const edit = needsType ? 'diabetes-type' : pressureOutsideRange ? 'blood-pressure' : result.issue === 'young' ? null : issue?.edit;
   const label = {age:'Edit age', measurements:'Edit measurements', 'blood-pressure':'Edit blood pressure',
     'diabetes-type':'Add diabetes type', 'diabetes-labs':'Edit diabetes measurements'}[edit] || 'Review answers';
   const history = heartLimitations[result.historyIssue];
@@ -478,12 +509,12 @@ function nextStep(result, inputs, review) {
     next = 'A clinician can check whether DIAL2, a longer-term risk model for type 2 diabetes, fits your situation.';
   } else if (!history && result.issue === 'young' && inputs.age >= 35) {
     next = 'Ask a clinician whether a longer-term risk assessment such as LIFE-CVD2 is appropriate for you.';
-  } else if (result.issue === 'diabetes' && inputs.age <= 69 && inputs.diabetesType !== 'Type 1 diabetes') {
+  } else if (result.issue === 'diabetes' && inputs.age >= 40 && inputs.age <= 69 && inputs.diabetesType !== 'Type 1 diabetes') {
     next = 'If you have type 2 diabetes, ask whether SCORE2-Diabetes fits your history. Bring your latest HbA1c and eGFR results and your age at diagnosis if available.';
   }
   return `<section class="report-explanation">
     <h2>What you can do next</h2>
-    ${result.issue === 'young' && heartCanCompareArterialAge(inputs) ? '' : `<p class="heart-limit-reason">${esc(result.reason)}</p>`}
+    <p class="heart-limit-reason">${esc(result.reason)}</p>
     ${history && !result.dial2 ? `<p>${esc(history.reason)}</p>` : ''}
     ${review?.pressureWarning ? '' : `<p>${esc(next)}</p>`}
     <div class="actions no-print">
@@ -495,17 +526,30 @@ function nextStep(result, inputs, review) {
   </section>`;
 }
 
+function finishVascularAge(missing) {
+  return `<section class="report-explanation heart-missing">
+    <h2>Finish your vascular age estimate</h2>
+    <ul>${framinghamFields.filter(field => missing.includes(field.id)).map(field => `<li>${esc(field.label)}</li>`).join('')}</ul>
+    <button class="btn no-print" data-action="heart-edit" data-part="${heartFraminghamStep(missing)}" data-complete-age>Add missing details ${arrow}</button>
+  </section>`;
+}
+
 export function renderHeartReport({heart, saved, pagesPreview, sourceLinks, tab = 'summary'}) {
   const {inputs, result, review} = heart;
   const selected = reportTabs.some(([id]) => id === tab) ? tab : 'summary';
   const summary = riskSummary(heart);
   const next = result.reason ? nextStep(result, inputs, review) : '';
+  const isFramingham = result.method === FRAMINGHAM;
+  const missing = result.issue === 'framingham-data' ? result.missing : result.issue === 'young' ? heartFraminghamMissing(inputs) : [];
+  const arterial = arterialSummary(heart, isFramingham || missing.length > 0);
   const panels = {
-    summary: result.reason ? (result.issue === 'diabetes-data' ? next + summary : arterialSummary(heart) + summary + next)
+    summary: result.reason ? (missing.length ? finishVascularAge(missing) + summary + arterial
+      : result.issue === 'diabetes-data' ? next + summary : arterial + summary + next)
       : `${summary}<section class="report-explanation">
         <h2>What this tells you</h2>
-        <p>The percentage estimates the chance of a first heart attack, stroke, or cardiovascular death over 10 years. Vascular risk age expresses that risk as a comparison with a reference profile.</p>
-      </section>`,
+        <p>${isFramingham ? 'Your answers and readings match the modeled risk of someone this age with the study’s reference readings.'
+          : 'The percentage estimates the chance of a first heart attack, stroke, or cardiovascular death over 10 years. Vascular risk age expresses that risk as a comparison with a reference profile.'}</p>
+      </section>${isFramingham && review?.pressureFollowUp ? `<section class="heart-reading"><dl>${pressureRow(inputs, review)}</dl></section>` : ''}${arterial}`,
     measurements: measurementsPanel(inputs, review),
     methods: methodsPanel(inputs, result, review, sourceLinks),
   };

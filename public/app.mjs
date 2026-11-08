@@ -13,8 +13,8 @@ import {freshAssessment,continueAssessment,assessmentProgress} from './assessmen
 import {validateLabReferences,setLabEntryUnit} from './lab-review.mjs';
 import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 import {renderAssessmentReport} from './report-ui.mjs';
-import {assessHeartVascular, HEART_ASSESSMENT} from './heart-vascular.mjs';
-import {heartSteps, heartRoute, readHeartForm, refreshHeartFeedback, changeHeartUnit, renderHeartForm, renderHeartOverview, renderHeartReport, renderHeartArterialForm, readHeartArterialForm} from './heart-vascular-ui.mjs';
+import {assessHeartVascular, HEART_ASSESSMENT, heartCanCompareArterialAge} from './heart-vascular.mjs';
+import {heartSteps, heartRoute, readHeartForm, refreshHeartFeedback, changeHeartUnit, renderHeartForm, renderHeartOverview, renderHeartReport, renderHeartArterialForm, readHeartArterialForm, heartFraminghamStep} from './heart-vascular-ui.mjs';
 import {heartPrefill} from './heart-prefill.mjs';
 import {resultInstrument,screenHeading,uiIcon,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,assessmentTitle,statusMessage,unmeasuredMark} from './ui-components.mjs';
 import {questionContext,questionChoices,questionDestination,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
@@ -76,7 +76,7 @@ function insightSources(i){const refs=references.filter(r=>(i.sources||[]).inclu
 function displayGap(gap){const n=Math.round(gap);return n>0?'+'+n:String(n===0?0:n);}
 function ageComparison(c,age){const n=Math.round(c.value)-Number(age);return n===0?'Rounded to the nearest year, the estimate matches your age at the blood draw.':'The estimate is about '+Math.abs(n)+' '+(Math.abs(n)===1?'year':'years')+' '+(n>0?'higher':'lower')+' than your age at the blood draw.';}
 
-function method(){modal('About the assessments',`<p>Biological age is an estimate of aspects of health and aging. Different methods measure different features, so their results are not interchangeable.</p><details open><summary>Health and lifestyle profile</summary><p>Your answers are compared with selected health guidance to identify topics for review. This is an educational profile, not a validated age clock or a clinical risk score. It does not calculate an age in years.</p></details><details><summary>Blood-based age: clinical PhenoAge</summary><p>The published formula combines your age with nine blood measurements. It was developed using US population data and expresses a pattern associated with health outcomes on an age scale.</p><p>This version reports estimates for ages 20–84, using confirmed fasting samples and a collection-history check. These are the app’s interpretation rules. They do not establish accuracy for every person or country.</p><p>The displayed difference is clinical PhenoAge minus age at the blood draw. It is not the study’s age-adjusted PhenoAgeAccel measure, a measure of aging speed, or a forecast of years left to live.</p></details><details><summary>Heart & Vascular</summary><p>SCORE2 and SCORE2-Diabetes cover eligible adults aged 40–69. SCORE2-OP covers ages 70–89. The 10-year risk estimate uses the region for your country of residence.</p><p>Younger adults can add a clinical pulse-wave result for a separate arterial stiffness age comparison.</p></details><details><summary>Epigenetic laboratory tests</summary><p>These use DNA methylation: chemical marks on DNA. They require a suitable laboratory assay and a defined calculation. Routine blood chemistry and lifestyle answers cannot substitute for those measurements.</p><div class="clock-list">${clockComparison.slice(1).map(c=>`<article><h3>${c.name}</h3><p>${c.meaning}</p><p class="small muted">${c.availability}</p></article>`).join('')}</div><p>Laboratory clocks also produce estimates. A test cannot establish one exact biological or “genetic” age. KoleQuant can advise which question a test may help answer and whether it is available.</p></details><details><summary>Mortality risk and progress over time</summary><p>Some clocks are associated with mortality in research populations. That association does not, by itself, provide your probability of death. A personal risk estimate needs a model with a defined time period and evidence that it applies to the relevant population.</p><p>Repeated clinical age estimates can be compared as a history. Changes may reflect illness, sampling conditions, measurement variation or a change in health. A falling result is not proof of reversed aging.</p></details><details><summary>Research and health guidance</summary>${sourceLinks(references.map(r=>r.id))}</details>`);}
+function method(){modal('About the assessments',`<p>Biological age is an estimate of aspects of health and aging. Different methods measure different features, so their results are not interchangeable.</p><details open><summary>Health and lifestyle profile</summary><p>Your answers are compared with selected health guidance to identify topics for review. This is an educational profile, not a validated age clock or a clinical risk score. It does not calculate an age in years.</p></details><details><summary>Blood-based age: clinical PhenoAge</summary><p>The published formula combines your age with nine blood measurements. It was developed using US population data and expresses a pattern associated with health outcomes on an age scale.</p><p>This version reports estimates for ages 20–84, using confirmed fasting samples and a collection-history check. These are the app’s interpretation rules. They do not establish accuracy for every person or country.</p><p>The displayed difference is clinical PhenoAge minus age at the blood draw. It is not the study’s age-adjusted PhenoAgeAccel measure, a measure of aging speed, or a forecast of years left to live.</p></details><details><summary>Heart & Vascular</summary><p>For eligible adults aged 30–39, the Framingham model compares vascular age using blood pressure and routine cholesterol results.</p><p>SCORE2 and SCORE2-Diabetes cover eligible adults aged 40–69. SCORE2-OP covers ages 70–89. The 10-year risk estimate uses the region for your country of residence.</p><p>Younger adults can add a clinical pulse-wave result for a separate arterial stiffness age comparison.</p></details><details><summary>Epigenetic laboratory tests</summary><p>These use DNA methylation: chemical marks on DNA. They require a suitable laboratory assay and a defined calculation. Routine blood chemistry and lifestyle answers cannot substitute for those measurements.</p><div class="clock-list">${clockComparison.slice(1).map(c=>`<article><h3>${c.name}</h3><p>${c.meaning}</p><p class="small muted">${c.availability}</p></article>`).join('')}</div><p>Laboratory clocks also produce estimates. A test cannot establish one exact biological or “genetic” age. KoleQuant can advise which question a test may help answer and whether it is available.</p></details><details><summary>Mortality risk and progress over time</summary><p>Some clocks are associated with mortality in research populations. That association does not, by itself, provide your probability of death. A personal risk estimate needs a model with a defined time period and evidence that it applies to the relevant population.</p><p>Repeated clinical age estimates can be compared as a history. Changes may reflect illness, sampling conditions, measurement variation or a change in health. A falling result is not proof of reversed aging.</p></details><details><summary>Research and health guidance</summary>${sourceLinks(references.map(r=>r.id))}</details>`);}
 function privacy(){if(PAGES_PREVIEW){modal('Privacy & data','<p>Your answers stay in this page’s memory. Reloading or closing the page clears them. Only theme and language preferences are stored on this device.</p><p>This preview does not send your answers to an account database or payment service. GitHub delivers the static app files.</p>');return;}modal('Your account & information',`<p>You can explore an assessment without saving it. Unsaved questionnaire and blood entries stay in this page’s memory.</p><p>Sign-in is handled by ChatGPT. KoleQuant does not receive or store your password. Your account uses a site-specific identifier and a nickname; this application does not store your sign-in email or real name.</p><p>When you explicitly save, your questionnaire, blood entries, results and educational report are sent over HTTPS and stored in the hosted account database. Health records are encrypted by the application before database storage. Authorized service operators can administer the service; this is not end-to-end encryption.</p><p>Saving is optional and is not permission for research, marketing or sharing with a consultation team. Those uses are not enabled. Hosting providers may process ordinary connection logs.</p><p>You can export or delete individual assessments, or delete your KoleQuant account and its live records in Data & settings. Provider backups may retain deleted data for a limited period. Downloaded copies remain on your device. Deleting this account does not delete your ChatGPT account.</p><p>For a report purchase, Stripe collects payment and billing details. We store the purchase status, amount, payment references and receipt link. No questionnaire, blood entries or results are sent to Stripe. Deleting a purchased report removes account access; this does not request a refund. Stripe retains its own payment records.</p><p>Legacy demo accounts remain in their original browser storage unless you remove them. They are not uploaded automatically.</p><p class="small muted">The age calculation and consultation enquiry remain prototype features. A clinician has not reviewed results. Report purchases use Stripe when enabled; purchase availability is shown before checkout.</p>`);}
 
 function home(){
@@ -308,10 +308,14 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
  if(state.view==='questionnaire')captureQuestion();else if(state.view==='labs')captureLabs();
  if(act==='pages-info'){pagesInfo();return;}
  if(act==='report-tab'){state.reportTab=b.dataset.tab;goto('report');return;}
- if(act==='heart-arterial'&&state.heart.result?.issue==='young'){
+ if(act==='heart-arterial'&&state.heart?.result&&state.heart.result.issue!=='pressure'&&heartCanCompareArterialAge(state.heart.inputs)){
   modal('Pulse-wave measurement',renderHeartArterialForm(state.heart.inputs));language.refresh();return;
  }
  if(act==='heart-back'){
+  if(state.heartCompleteVascularAge){
+   state.heartCompleteVascularAge=false;
+   if(state.heart.result){goto('report');return;}
+  }
   if(state.heartReviewEdit){returnToHeartReview();return;}
   const steps=heartRoute(state.heart.inputs,state.heartPrefilled);
   const index=steps.findIndex(step=>step.id===state.heartStep);
@@ -325,9 +329,10 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-acti
  if(act==='heart-edit'){
   const part=b.dataset.part;
   state.heartStep=part==='answers'?(state.heartPrefilled?.length?'review':'country'):part==='specialist'?'measurements':part;
-  state.heartReviewEdit=!heartRoute(state.heart.inputs,state.heartPrefilled).some(step=>step.id===state.heartStep);
+  state.heartCompleteVascularAge=b.hasAttribute('data-complete-age');
+  state.heartReviewEdit=!state.heartCompleteVascularAge&&!heartRoute(state.heart.inputs,state.heartPrefilled).some(step=>step.id===state.heartStep);
   state.heartOptional=part==='specialist';
-  state.reportTab=['measurements','blood-pressure'].includes(state.heartStep)?'measurements':'summary';
+  state.reportTab=!state.heartCompleteVascularAge&&['measurements','blood-pressure'].includes(state.heartStep)?'measurements':'summary';
   goto('heart');
   if(state.heartOptional)$('#heart-apob')?.focus();
   return;
@@ -383,7 +388,8 @@ document.addEventListener('change',e=>{const t=e.target;clearContactFeedback(t);
 document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target;if(f.id==='questions'){captureQuestion();const choices=questionChoices(state);if(choices.page<choices.pages-1){state.optionPage=choices.page+1;render();return;}const q=questionContext(state).question,errors=validateQuestionnaire(state.answers);state.errors=errors[q.id]?{[q.id]:errors[q.id]}:{};if(Object.keys(state.errors).length){render();return;}Object.assign(state,questionDestination(state));goto(state.view);}
  if(f.id==='heart-form'){
   captureHeart(f);
-  const steps=state.heartReviewEdit?heartSteps(state.heart.inputs).filter(step=>step.id===state.heartStep):heartRoute(state.heart.inputs,state.heartPrefilled);
+  const directEdit=state.heartReviewEdit||state.heartCompleteVascularAge;
+  const steps=directEdit?heartSteps(state.heart.inputs).filter(step=>step.id===state.heartStep):heartRoute(state.heart.inputs,state.heartPrefilled);
   const index=steps.findIndex(step=>step.id===state.heartStep);
   const {inputs,errors,result,review}=assessHeartVascular(state.heart.inputs,{requireHistory:!state.saved});
   const errorIndex=steps.findIndex(step=>step.fields.some(field=>errors[field.id]||errors[field.id+'Reference']));
@@ -393,6 +399,11 @@ document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target
    return;
   }
   if(state.heartReviewEdit){returnToHeartReview();return;}
+  if(state.heartCompleteVascularAge){
+   const next=result?.issue==='framingham-data'?heartFraminghamStep(result.missing):null;
+   if(next&&next!==state.heartStep){state.heartStep=next;goto('heart');return;}
+   state.heartCompleteVascularAge=false;
+  }
   if(index<steps.length-1){
    state.heartStep=steps[index+1].id;goto('heart');return;
   }
@@ -411,7 +422,9 @@ document.addEventListener('submit',async e=>{e.preventDefault();const f=e.target
    $('#heart-arterial-form [aria-invalid="true"]')?.focus();
    return;
   }
-  dirty();state.heart={inputs,result,review};state.reportTab='summary';close();goto('report');return;
+  dirty();state.heart={inputs,result,review};state.reportTab='summary';close();goto('report');
+  if(review.arterialAge)$('.heart-arterial')?.scrollIntoView?.({block:'nearest'});
+  return;
  }
  if(f.id==='drink-form'){if(!f.reportValidity())return;const draft={type:$('#drink-type').value,count:$('#drink-count').value,ml:$('#drink-ml').value,abv:$('#drink-abv').value},index=Number(f.dataset.index);state.answers.drinks??=[];if(index<0)state.answers.drinks.push(draft);else state.answers.drinks[index]=draft;dirty();close();render();return;}
  if(f.id==='labs-form'){

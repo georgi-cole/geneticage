@@ -1,4 +1,4 @@
-import {heartQuestions, HEART_UNSPECIFIED_CVD} from './heart-vascular.mjs';
+import {heartFraminghamAge, heartQuestions, HEART_UNSPECIFIED_CVD} from './heart-vascular.mjs';
 import {heartDecimal} from './heart-measurements.mjs';
 import {BG} from './locales/bg.mjs';
 
@@ -37,5 +37,9 @@ export function heartPrefill(answers = {}) {
   const medicines = Array.isArray(answers.medicines) ? answers.medicines : [];
   if (medicines.includes('Cholesterol-lowering medicine')) inputs.treatment = 'Yes';
   else if (medicines.includes('None')) inputs.treatment = 'No';
+  if (heartFraminghamAge(inputs.age)) {
+    if (medicines.includes('Blood-pressure medicine')) inputs.bpTreatment = 'Yes';
+    else if (medicines.includes('None')) inputs.bpTreatment = 'No';
+  }
   return inputs;
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {assessHeartVascular, heartQuestions} from '../public/heart-vascular.mjs';
+import {assessHeartVascular, framinghamVascularAge, heartQuestions} from '../public/heart-vascular.mjs';
 import {heartPrefill} from '../public/heart-prefill.mjs';
 import {heartRoute} from '../public/heart-vascular-ui.mjs';
 import {BG} from '../public/locales/bg.mjs';
@@ -99,23 +99,52 @@ test('earlier measurement-only submissions stay supported and new younger drafts
   assert.ok(assessHeartVascular({country:'Germany',age:33}, {requireHistory:true}).errors.smoking);
   const younger = assessHeartVascular({...example, age:33, conditions:'Yes', diagnoses:['Diabetes'], diabetesType:'Type 2 diabetes'}, {requireHistory:true});
   assert.deepEqual(younger.errors, {});
-  assert.equal(younger.result.issue, 'young');
-  assert.equal(younger.result.historyIssue, 'diabetes');
-  assert.equal(younger.result.dial2, true);
+  assert.equal(younger.result.issue, 'framingham-data');
+  assert.deepEqual(younger.result.missing, ['bpTreatment']);
   assert.equal(younger.result.risk, undefined);
   assert.deepEqual(younger.inputs.diagnoses, ['Diabetes']);
   assert.ok(heartRoute(younger.inputs).some(step => step.id === 'diagnoses'));
+  assert.ok(heartRoute(younger.inputs).some(step => step.id === 'bp-treatment'));
   assert.ok(!heartRoute({...younger.inputs,country:'Bulgaria'}).some(step => step.id === 'diabetes-labs'));
 });
 
+test('Framingham reproduces the published male age example and uses the original reference for both sexes', () => {
+  const reference = {systolic:125,total:180/38.67,hdl:45/38.67,smoking:false,diabetes:false,treated:false};
+  for (const sex of ['Male', 'Female']) {
+    assert.equal(framinghamVascularAge({...reference, sex, age:33}).age, 33);
+  }
+  // D’Agostino et al. 2008, Appendix case 2. The continuous equation gives 64.03.
+  const example = {...reference, sex:'Male', age:53,total:161/38.67,hdl:55/38.67,treated:true,diabetes:true};
+  assert.equal(framinghamVascularAge(example).age, 64);
+  assert.equal(framinghamVascularAge({...reference, age:33, sex:'Female', systolic:100}).ageRange, 'below');
+});
+
+test('age 33 uses routine values without pulse-wave data and asks for only the missing inputs', () => {
+  const profile = {...example,age:33,country:'Bulgaria',sex:'Male',smoking:'No',conditions:'Yes',diagnoses:['Diabetes'],diabetesType:'Type 2 diabetes',bpTreatment:'No'};
+  const {errors, result, review} = assessHeartVascular(profile, {requireHistory:true});
+  assert.deepEqual(errors, {});
+  assert.deepEqual(result, {method:'Framingham', version:'framingham-2008-lipids-age-v1', age:44, ageRange:null});
+  assert.equal(review.arterialAge, undefined);
+  assert.deepEqual(assessHeartVascular({...profile,country:'Germany'}).result, result);
+  assert.equal(assessHeartVascular({...profile,bpTreatment:'Yes'}).result.age, 49);
+  assert.equal(assessHeartVascular({...profile,sex:'Female',smoking:'Some days',
+    systolic:{value:150,unit:'mmHg'},hdl:{value:1.4,unit:'mmol/L'}}).result.age, 71);
+  assert.deepEqual(assessHeartVascular({...profile,total:{value:5.5*38.67,unit:'mg/dL'}}).result, result);
+  assert.deepEqual(assessHeartVascular({...profile,bpTreatment:'Not sure',hdl:undefined}).result.missing, ['bpTreatment','hdl']);
+  assert.deepEqual(assessHeartVascular({...profile,diabetesType:undefined,bpTreatment:undefined}).result.missing, ['diabetesType','bpTreatment']);
+  assert.equal(assessHeartVascular({...profile,diabetesType:'Type 1 diabetes'}).result.issue, 'framingham-diabetes');
+  assert.equal(assessHeartVascular({...profile,age:29}).result.issue, 'young');
+  assert.equal(assessHeartVascular({...profile,systolic:{value:180,unit:'mmHg'}}).result.issue, 'pressure');
+});
+
 test('measured arterial stiffness gives a separate age comparison at 33', () => {
-  const profile = {...example, age:33, country:'Bulgaria', conditions:'Yes', diagnoses:['Diabetes']};
+  const profile = {...example, age:33, country:'Bulgaria', conditions:'Yes', diagnoses:['Diabetes'], diabetesType:'Type 2 diabetes', bpTreatment:'No'};
   const cfpwv = {value:'8.3', unit:'m/s', method:'direct-80'};
   for (const [sex, age] of [['Male',50], ['Female',56]]) {
     const {inputs, errors, result, review} = assessHeartVascular({...profile, sex, cfpwv});
     assert.deepEqual(errors, {});
     assert.deepEqual(inputs.cfpwv, cfpwv);
-    assert.equal(result.issue, 'young');
+    assert.equal(result.method, 'Framingham');
     assert.equal(result.risk, undefined);
     assert.deepEqual(review.arterialAge, {version:'lead-cfpwv-2024-v1', age, ageRange:null});
   }
@@ -175,7 +204,7 @@ test('lifestyle prefill carries matching facts forward and leaves narrower heart
     conditions:['Diabetes', 'Kidney disease', 'Heart or blood-vessel disease'], context:['None'], medicines:['None'],
   });
   assert.deepEqual(overlap, {age:33, country:'Germany', smoking:'Some days', cigarettes:3.5, smokingDays30:8,
-    conditions:'Yes', diagnoses:['Diabetes','Heart or blood vessel disease (type unsure)'], treatment:'No'});
+    conditions:'Yes', diagnoses:['Diabetes','Heart or blood vessel disease (type unsure)'], treatment:'No', bpTreatment:'No'});
   assert.deepEqual(heartRoute(overlap,Object.keys(overlap)).map(step=>step.id),
     ['review','sex','smoking-history','diagnoses','blood-pressure','measurements']);
   assert.deepEqual(heartPrefill({country:'Unrecognized country', smoking:'Not at all', smokingEver100:'No',
@@ -183,6 +212,7 @@ test('lifestyle prefill carries matching facts forward and leaves narrower heart
   assert.deepEqual(heartPrefill({smoking:'Not at all', smokingRegular:'Yes', context:['Pregnant']}), {
     smoking:'Used to smoke', conditions:'Yes', diagnoses:['Currently pregnant'],
   });
+  assert.deepEqual(heartPrefill({age:'33',medicines:['Blood-pressure medicine']}), {age:33,bpTreatment:'Yes'});
 });
 
 test('lipid reviews separate own intervals, educational guides and calculation coverage', () => {
