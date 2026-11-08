@@ -2,7 +2,7 @@ import {
   heartQuestions, heartRegionLabels, heartDiagnosisQuestion, heartDiagnosisActive, heartSmokingFields, heartLegacySmoking,
   heartStartIssue, heartLimitations, heartModelForReport, heartSources, HEART_UNSPECIFIED_CVD, SCORE2_DIABETES, FRAMINGHAM,
   heartDiabetesTypeQuestion, heartDiabetesDamageQuestion, heartNeedsDiabetesType, heartNeedsDiabetesDamage, heartUsesDiabetesLabs,
-  heartOffersArterialAge, arterialReference, heartRoutineAge, heartNeedsBpTreatment, heartBpTreatmentQuestion, heartRoutineAgeMissing,
+  heartOffersArterialAge, heartCanCompareArterialAge, arterialReference, heartRoutineAge, heartNeedsBpTreatment, heartBpTreatmentQuestion, heartRoutineAgeMissing,
   heartDiabetesMedicineQuestion, heartNeedsPdayMedicine, heartNeedsPdayBody, heartUsesPdayGlucose,
 } from './heart-vascular.mjs';
 import {arterialMeasurement, heartDecimal, heartMeasurements, reviewHeartMeasurements, pdayBodyFields, fastingGlucose} from './heart-measurements.mjs';
@@ -34,8 +34,8 @@ const routineAgeFields = [
 const measurementSteps = [
   {id:'blood-pressure', phase:2, fields:pressures},
   {id:'measurements', phase:2, fields:routine},
-  {id:'specialist', phase:2, fields:specialist},
 ];
+const specialistStep = {id:'specialist', phase:2, fields:specialist};
 
 export function heartRoutineAgeStep(missing) {
   return routineAgeFields.find(field => missing.includes(field.id))?.step;
@@ -64,7 +64,7 @@ export function heartSteps(inputs) {
   if (heartNeedsPdayBody(inputs)) steps.push({id:'pday-body', phase:2, fields:pdayBodyFields});
   if (offerPdayGlucose(inputs)) steps.push({id:'pday-glucose', phase:2, fields:[fastingGlucose]});
   if (offerDiabetesLabs(inputs)) steps.push({id:'diabetes-labs', phase:2, fields:diabetesFields});
-  return steps;
+  return [...steps, specialistStep];
 }
 
 function hasAnswer(value) {
@@ -73,7 +73,7 @@ function hasAnswer(value) {
   return answer != null && answer !== '';
 }
 export function heartRoute(inputs, prefilled = []) {
-  const steps = heartSteps(inputs).filter(step => step.id !== 'specialist');
+  const steps = heartSteps(inputs);
   if (!prefilled.length) return steps;
   const reused = field => prefilled.includes(field.id) && hasAnswer(inputs[field.id]);
   if (!steps.some(step => step.fields.some(reused))) return steps;
@@ -113,7 +113,7 @@ const answerText = (id, value) => id === 'smoking' ? heartLegacySmoking[value] |
 
 function prefillReview(inputs, errors, prefilled) {
   const groups = heartSteps(inputs).filter(step => step.fields.some(field => prefilled.includes(field.id) && hasAnswer(inputs[field.id])));
-  const labels = {country:'Country of residence', age:'Age in years', smoking:'Cigarette smoking', 'smoking-history':'Smoking history',
+  const labels = {country:'Country of residence', age:'Age in years', sex:'Sex used by the equation', smoking:'Cigarette smoking', 'smoking-history':'Smoking history',
     conditions:'Health history', diagnoses:'Reported health history', treatment:'Cholesterol-lowering medicine', 'bp-treatment':'Blood pressure medicine',
     'diabetes-medicine':'Diabetes medicine', 'pday-body':'Height and weight'};
   return `<fieldset class="question heart-prompt heart-prefill" data-theme-part>
@@ -302,6 +302,8 @@ function measurementStep(step, inputs, errors, touched) {
         <p class="hint">Lp(a) is largely inherited and can raise cardiovascular risk.</p>
       </div>
     </fieldset>
+    ${heartCanCompareArterialAge(inputs) && !review.pressureWarning && !review.fields.glucose?.check.warning
+      ? `<button class="text-btn system-alternate" type="button" data-action="heart-arterial">${inputs.cfpwv ? 'Edit pulse-wave measurement' : 'Add pulse-wave measurement'} ${arrow}</button>` : ''}
     ${specialistHelp()}
   </div>`;
   return `<div class="lab-fields heart-measurements">
@@ -310,7 +312,6 @@ function measurementStep(step, inputs, errors, touched) {
       <p class="hint">Use total and HDL cholesterol from the same lipid panel.</p>
       <div class="heart-measurement-list">${routine.map(definition => field(definition)).join('')}</div>
     </fieldset>
-    <button class="text-btn system-alternate" type="button" data-action="heart-edit" data-part="specialist">Add ApoB or Lp(a) ↗</button>
   </div>`;
 }
 
@@ -388,13 +389,14 @@ export function changeHeartUnit(control, entry = {}) {
   editor.open = true;
 }
 
-export function renderHeartForm({inputs = {}, errors = {}, step = 'country', specialistInFlow = false, prefilled = [], touched = {}, prefillUnavailable = false}) {
+export function renderHeartForm({inputs = {}, errors = {}, step = 'country', specialistEdit = false, prefilled = [], touched = {}, prefillUnavailable = false}) {
   const steps = heartSteps(inputs);
   const {phase, fields} = step === 'review' ? {phase:0} : steps.find(item => item.id === step) || steps[0];
   const phases = ['About you', 'Health history', 'Your measurements'];
   const measures = phase === 2;
   const extra = step === 'specialist';
-  const last = extra ? !specialistInFlow : heartRoute(inputs, prefilled).at(-1).id === step;
+  const last = heartRoute(inputs, prefilled).at(-1).id === step;
+  const specialistEntered = specialist.some(field => hasAnswer(inputs[field.id])) || hasAnswer(inputs.cfpwv);
   return `<div class="wrap app-screen task-screen question-screen heart-entry${measures ? ' lab-screen' : ''}">
     ${screenHeading(extra ? 'SPECIALIST TESTS' : 'CARDIOVASCULAR ASSESSMENT', 'Heart & Vascular', '', pulseMark())}
     ${extra ? '' : `<div class="task-caption"><span>${phases[phase]}</span><span>${phase + 1} / ${phases.length}</span></div>
@@ -407,8 +409,8 @@ export function renderHeartForm({inputs = {}, errors = {}, step = 'country', spe
         : step === 'review' ? prefillReview(inputs, errors, prefilled)
         : step === 'smoking-history' ? smokingHistory(fields, inputs, errors) : promptField(fields[0], inputs, errors)}
       <div class="form-nav">
-        <button class="text-btn" type="button" data-action="heart-back">${extra ? 'Continue with current results' : '← Back'}</button>
-        <button class="btn" type="submit">${last ? 'View report' : 'Continue'} ${arrow}</button>
+        <button class="text-btn" type="button" data-action="heart-back">${specialistEdit ? 'Keep current results' : '← Back'}</button>
+        <button class="btn" type="submit"><span${extra && !specialistEdit ? ' data-heart-specialist-next' : ''}>${specialistEdit ? 'Save changes' : extra && !specialistEntered ? 'Continue without these tests' : last ? 'View report' : 'Continue'}</span> ${arrow}</button>
       </div>
     </form>
   </div>`;

@@ -243,7 +243,10 @@ test('lifestyle prefill carries matching facts forward and leaves narrower heart
   assert.deepEqual(overlap, {age:33, country:'Germany', smoking:'Some days', cigarettes:3.5, smokingDays30:8,
     conditions:'Yes', diagnoses:['Diabetes','Heart or blood vessel disease (type unsure)'], treatment:'No', bpTreatment:'No'});
   assert.deepEqual(heartRoute(overlap,Object.keys(overlap)).map(step=>step.id),
-    ['review','sex','smoking-history','diagnoses','blood-pressure','measurements']);
+    ['review','sex','smoking-history','diagnoses','blood-pressure','measurements','specialist']);
+  const withSex = heartPrefill({age:'33',sex:'Female'});
+  assert.equal(withSex.sex,'Female');
+  assert.ok(!heartRoute(withSex,Object.keys(withSex)).some(step=>step.id==='sex'));
   assert.deepEqual(heartPrefill({country:'Unrecognized country', smoking:'Not at all', smokingEver100:'No',
     conditions:['None'], medicines:['Another regular prescription']}), {smoking:'No'});
   assert.deepEqual(heartPrefill({smoking:'Not at all', smokingRegular:'Yes', context:['Pregnant']}), {

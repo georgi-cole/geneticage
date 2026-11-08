@@ -73,7 +73,7 @@ function choice(field, entry, errors, alone) {
 
 function reviewPrefill(type, inputs, fields) {
   return `<div class="heart-prefill-list">
-    <p class="hint">These details came from your earlier assessments. Check that they still apply.</p>
+    <p class="hint">${type === 'kidney' && fields.includes('age') ? 'Check that the age matches the day of your blood draw.' : 'We’ve filled in details you shared earlier. Update anything that has changed.'}</p>
     ${fields.map(id => {
       const field = systemField(type, id);
       const key = esc(field.id);
@@ -91,9 +91,9 @@ export function renderSystemForm({type, inputs, step, prefilled, errors, mode, t
   const {review:measurements} = assessSystem(type, inputs);
   const last = mode || current === route.at(-1);
   const skip = !mode && current.skip;
+  const next = last ? 'View report' : 'Continue';
   const entered = current.fields.some(id => inputs[id]?.value || typeof inputs[id] === 'string' && inputs[id]);
   const index = route.findIndex(item => item.id === current.id);
-  const canAddTest = type === 'fitness' && current.id === 'fitness-context' && !mode;
   return `<div class="wrap app-screen task-screen question-screen heart-entry system-entry">
     <div class="system-heading">${screenHeading(current.specialist ? 'SPECIALIST TEST' : 'ASSESSMENT', spec.title)}<span aria-hidden="true">${uiIcon(spec.icon)}</span></div>
     ${!mode ? `<div class="task-caption"><span>${esc(current.title)}</span><span>${index + 1} / ${route.length}</span></div>
@@ -104,17 +104,16 @@ export function renderSystemForm({type, inputs, step, prefilled, errors, mode, t
         ${current.hint ? `<p class="hint">${esc(current.hint)}</p>` : ''}
         ${current.fields.map(id => {
           const field = systemField(type, id);
-          return field.options ? choice(field, inputs[id], errors, current.fields.length === 1)
+          return field.options ? choice(field, inputs[id], errors, current.fields.length === 1 && !field.select)
             : measurement(field, inputs[id], errors, touched[id] === false || errors[id] || errors[id+'Reference'] ? null : measurements.fields[id], mode && field.label === current.title);
         }).join('')}
       </div>`}
       ${prefillUnavailable && current.id === 'age' ? '<p class="hint">Earlier answers could not be loaded. You can enter them here.</p>' : ''}
       ${current.specialist ? specialistHelp() : ''}
-      ${canAddTest ? '<button class="text-btn system-alternate" type="button" data-action="system-extra" data-part="fitness-test">Use a supervised test result ↗</button>' : ''}
       ${current.id === 'creatinine' && !mode ? '<button class="text-btn system-alternate" type="button" data-action="system-partial">I don’t have this result yet</button>' : ''}
       <div class="form-nav">
-        <button class="text-btn" type="button" data-action="system-back">${current.specialist ? 'Keep current results' : '← Back'}</button>
-        <button class="btn" type="submit"><span${skip ? ' data-system-skip="'+esc(skip)+'"' : ''}>${mode === 'review' ? 'Save changes' : skip && !entered ? skip : last ? 'View report' : 'Continue'}</span>${arrow}</button>
+        <button class="text-btn" type="button" data-action="system-back">${mode === 'report' ? 'Keep current results' : '← Back'}</button>
+        <button class="btn" type="submit"><span${skip ? ' data-system-skip="'+esc(skip)+'"' : ''}>${mode === 'review' ? 'Save changes' : skip && !entered ? skip : next}</span>${arrow}</button>
       </div>
     </form>
   </div>`;
@@ -169,11 +168,13 @@ const resultCopy = {
   'gdrs-2022-a1c-age-v1': ['HbA1c included', 'This is the age at which the reference profile has a similar modeled 10-year risk of type 2 diabetes.'],
   'ckd-epi-2021-europe-age-v1': ['Creatinine-based filtration', 'Your estimated filtration is matched to typical values from healthy European adults.'],
   'hunt-nonexercise-fitness-age-v1': ['Estimated oxygen uptake', 'Your estimated oxygen uptake is closest to the average for this age group in the Norwegian HUNT study.'],
+  'bradshaw-fitness-age-v1': ['Estimated oxygen uptake', 'Your movement and body measurements estimate oxygen uptake. The age compares that estimate with adult treadmill reference values.'],
+  'blsa-fitness-age-v1': ['Estimated oxygen uptake', 'Your activity, health and body measurements estimate oxygen uptake. The age compares that estimate with adult treadmill reference values.'],
   'friend-2022-fitness-age-v1': ['Measured oxygen uptake', 'Your result is closest to the typical oxygen uptake for this age group and exercise test in the FRIEND registry.'],
 };
 
 const nextSteps = {
-  'metabolic-age':['This diabetes risk model covers adults aged 18–79.', 'Review age', 'age'],
+  'metabolic-age':['The age equation was tested through age 79. If you have an HbA1c or fasting glucose result, you can review it here and discuss any follow-up with your clinician.', 'Review glucose tests', 'metabolic-labs'],
   'diabetes-known':['The model estimates the chance of developing type 2 diabetes. If you already have diabetes, ask your care team which HbA1c target fits your situation.', 'Review diabetes history', 'diabetes'],
   'metabolic-pregnancy':['Pregnancy changes how blood sugar is assessed. Ask your care team about the glucose testing that applies during pregnancy.', 'Review health context', 'pregnancy'],
   'glucose-review':['A reading reaches a diabetes testing threshold. Check the units and ask your clinician whether to repeat the test before using a risk age.', 'Review glucose tests', 'metabolic-labs'],
@@ -183,9 +184,9 @@ const nextSteps = {
   'kidney-filtration':['The filtration estimate is below 60. Ask your clinician about repeat eGFR and urine ACR to understand what is causing the change.', 'Review kidney results', 'creatinine'],
   'kidney-albumin':['The urine ACR reaches the threshold for raised urine albumin. Ask your clinician whether to repeat it.', 'Review urine ACR', 'kidney-urine'],
   'kidney-history':['A filtration age can hide the significance of known kidney disease. Repeat filtration and urine albumin results help your clinician assess changes over time.', 'Review kidney history', 'kidney-history'],
-  'fitness-age':['The adult fitness references used here cover ages 20–89. A clinician can interpret fitness measurements with an age-appropriate reference.', 'Review age', 'age'],
+  'fitness-age':['The questionnaire equations were studied through age 96. If you have a supervised fitness result, you can compare it with the adult study groups.', 'Add supervised test', 'fitness-test'],
   'fitness-context':['A health condition or medicine can change resting pulse and the estimate. A compatible supervised test can provide a comparison if you have one.', 'Review health context', 'fitness-context'],
-  'fitness-values':['The estimated oxygen uptake is outside the comparison range. Check the resting pulse, waist and units you entered.', 'Review resting measurements', 'resting'],
+  'fitness-values':['The estimated oxygen uptake is outside the calculation range. Check your measurements and units.', 'Review measurements', 'resting'],
 };
 
 function ageReadout(type, result) {
@@ -211,7 +212,7 @@ function derivedRows(type, inputs, result, review) {
     review.egfr !== undefined ? row('eGFR from creatinine', filtrationText(review.egfr)) : '',
     review.egfrCombined !== undefined ? row('eGFR from creatinine and cystatin C', filtrationText(review.egfrCombined)) : '',
   ].join('');
-  if (type === 'fitness' && result.method === 'HUNT') return row('Estimated VO₂peak', review.estimatedVo2.toFixed(1) + ' mL/kg/min');
+  if (type === 'fitness' && result.status === 'ready' && review.estimatedVo2 !== undefined) return row('Estimated VO₂peak', review.estimatedVo2.toFixed(1) + ' mL/kg/min');
   if (type === 'fitness' && result.method === 'FRIEND') return row('Measured VO₂peak', inputs.vo2peak.value + ' mL/kg/min');
   if (type === 'metabolic' && result.method === 'GDRS with HbA1c') return row('HbA1c used', valueText(systemField(type, 'hba1c'), inputs.hba1c));
   return '';
@@ -256,15 +257,18 @@ const methodCopy = {
     'The German Diabetes Risk Score estimates the 10-year chance of developing type 2 diabetes in adults aged 18–79. The published HbA1c equation uses the same outcome. Blood sugar readings at diabetes testing thresholds prompt review.',
     'The app matches the predicted risk to the same lower-risk reference at different ages. The reference uses your height, waist equal to half that height, no known hypertension or family history, no smoking, five hours of activity per week, 100 g of whole grain bread or muesli, one coffee and no red meat per day.',
     'The equations come from German cohorts. The age is a comparison using that reference. A laboratory HbA1c can change the estimate. Fasting glucose adds context, and recent blood loss, transfusion or some blood conditions can affect HbA1c.',
+    'Your lab interval comes first. If it is missing, the app uses the ADA HbA1c screening threshold and the ABIM fasting glucose guide when applicable.',
   ],
   kidney:[
     'CKD-EPI 2021 uses blood creatinine, age at the draw and sex to estimate filtration (eGFR). The app matches it to same-sex European reference medians from ages 20–79 using the same equation.',
     'This age describes a filtration comparison. A single result cannot establish whether a change is persistent. Estimated filtration is less precise at higher values, and a clinician may use more than one equation for ages 18–25.',
     'Cystatin C from the same draw adds a combined CKD-EPI estimate. The age comparison stays on the creatinine reference. Urine ACR helps check for kidney damage and can prompt review at any eGFR.',
+    'Your lab interval comes first. Published comparisons use ABIM for creatinine, Mayo Clinic Laboratories for cystatin C and KDIGO for urine ACR.',
   ],
   fitness:[
-    'HUNT estimates peak oxygen uptake from age, sex, waist, resting pulse and usual activity. The app compares it with the closest HUNT age group and displays the midpoint when the group has an upper age limit.',
-    'A supervised treadmill or cycle gas exchange test can use the corresponding FRIEND reference for ages 20–89. The comparison uses the typical value for that test and sex, with peak RER of at least 1.0.',
+    'For ages 20–89, HUNT estimates oxygen uptake from waist, resting pulse and activity. The app matches the estimate to HUNT age-group averages.',
+    'Ages 18–19 use Bradshaw’s equation with body measurements, comfortable pace and activity. Ages 90–96 use the equation recalibrated in the Baltimore Longitudinal Study of Aging. Both estimates are matched to FRIEND treadmill references. Evidence is thinner at the oldest ages.',
+    'A supervised treadmill or cycle test can be matched to the adult FRIEND comparison groups aged 20–89. We use typical values for the same test and sex when peak RER is at least 1.0.',
     'The age describes aerobic fitness. Estimated and measured oxygen uptake use different reference groups, so adding a test can move the comparison.',
   ],
 };

@@ -15,6 +15,13 @@
       "when": 1793782376314,
       "tag": "0001_same_captain_universe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794156770013,
+      "tag": "0002_clumsy_silver_samurai",
+      "breakpoints": true
     }
   ]
 }

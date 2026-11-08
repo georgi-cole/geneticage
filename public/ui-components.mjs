@@ -69,7 +69,7 @@ export function renderAssessments({profile,history=[],loading=false,error='',pag
   <div class="assessment-routes"><button class="assessment-route" data-action="start" data-theme-part><span class="route-icon">${uiIcon('person')}</span><span><strong>Health & lifestyle</strong><small>Guided profile · One question at a time</small></span>${uiIcon('arrow')}</button><button class="assessment-route" data-action="start-labs" data-theme-part><span class="route-icon">${uiIcon('drop')}</span><span><strong>Blood-based age</strong><small>9 measurements · Guided entry</small></span>${uiIcon('arrow')}</button></div>
   <section class="system-routes" aria-labelledby="system-routes-title"><div class="section-caption"><h2 id="system-routes-title">System assessments</h2></div>
     <div class="system-route-grid">
-      ${systemRouteCard('Heart & Vascular', 'pulse', heartDraft ? 'Continue your assessment' : 'Blood pressure and cholesterol', 'start-heart')}
+      ${systemRouteCard('Heart & Vascular', 'pulse', heartDraft ? 'Continue your assessment' : 'Circulation and everyday health', 'start-heart')}
       ${Object.entries(systemAssessments).map(([type, spec])=>systemRouteCard(spec.title,spec.icon,systemDrafts[type]?'Continue your assessment':spec.caption,'start-system',type)).join('')}
     </div>
   </section>
@@ -90,9 +90,9 @@ export function renderReportLibrary({profile,history=[],loading=false,error='',a
 export function renderAccount({profile,authenticated,loading,error}){
  const row=(name,sub,action,extra='',symbol='report')=>`<button class="account-setting" data-action="${action}" ${extra}><span class="setting-symbol">${uiIcon(symbol)}</span><span class="setting-copy"><strong>${name}</strong><small>${sub}</small></span>${uiIcon('external')}</button>`;
  return `<div class="wrap app-screen account-screen">${screenHeading('YOUR WORKSPACE','Account','Your profile, preferences and information.')}
- <section class="profile-card" data-theme-part><span class="profile-avatar">${uiIcon('person')}</span><div><h2${profile?' data-no-translate':''}>${escapeHTML(profile?.name||'Your private workspace')}</h2><p>${profile?'Connected with ChatGPT':authenticated?'ChatGPT connected · Profile not created':'Sign in to keep assessments across devices'}</p></div>${!profile?'<button class="btn" data-action="signup">'+(authenticated?'Create profile':'Sign in')+' →</button>':''}</section>
+ <section class="profile-card" data-theme-part><span class="profile-avatar">${uiIcon('person')}</span><div><h2${profile?' data-no-translate':''}>${escapeHTML(profile?.name||'Your private workspace')}</h2><p>${profile?'Signed in with email':'Keep your assessments across devices'}</p></div>${!profile?'<button class="btn" data-action="signup">Sign in / Create account →</button>':''}</section>
  ${statusMessage({loading,error})}<section class="account-settings" data-theme-part>${row('Privacy & data','Your information and choices','privacy','','shield')}${row('Assessment methods','Evidence and interpretation','method','','science')}${row('Purchases','Report access and payments','account-tab','data-tab="purchases"')}${profile?row('Manage saved data','Export and account controls','account-tab','data-tab="data"','history'):row('Saving assessments',authenticated?'Choose which assessments to save':'Sign in to save assessments','signup','','shield')}${row('About this app','Information and support','account-tab','data-tab="about"','spark')}</section>
- ${profile?'<a class="account-signout text-btn" href="/signout-with-chatgpt?return_to=%2F" target="_top">Sign out</a>':''}
+ ${profile?'<button class="account-signout text-btn" type="button" data-action="sign-out">Sign out</button>':''}
  <p class="account-footnote">${uiIcon('shield')}<span>You choose what to save.</span></p></div>`;
 }
 

@@ -9,6 +9,36 @@ export const profiles = sqliteTable("profiles", {
   createdAt: text("created_at").notNull(),
 });
 
+export const authAccounts = sqliteTable("auth_accounts", {
+  userId: text("user_id").primaryKey().references(() => profiles.userId, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  createdAt: text("created_at").notNull(),
+}, table => [uniqueIndex("auth_accounts_email").on(table.email)]);
+
+export const emailAuthCodes = sqliteTable("email_auth_codes", {
+  email: text("email").primaryKey(),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  verifiedAt: integer("verified_at"),
+  proofHash: text("proof_hash"),
+  proofExpiresAt: integer("proof_expires_at"),
+  createdAt: integer("created_at").notNull(),
+});
+
+export const authSessions = sqliteTable("auth_sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  userId: text("user_id").notNull().references(() => profiles.userId, { onDelete: "cascade" }),
+  createdAt: integer("created_at").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+}, table => [index("auth_sessions_owner").on(table.userId), index("auth_sessions_expiry").on(table.expiresAt)]);
+
+export const authRateLimits = sqliteTable("auth_rate_limits", {
+  keyHash: text("key_hash").primaryKey(),
+  bucket: integer("bucket").notNull(),
+  count: integer("count").notNull(),
+});
+
 export const assessments = sqliteTable("assessments", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => profiles.userId, { onDelete: "cascade" }),

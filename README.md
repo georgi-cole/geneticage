@@ -2,7 +2,7 @@
 
 The product owner selected **GeneticAge** on 6 November 2026. KoleQuant remains the publisher and the opening brand signature.
 
-Mobile-friendly full-stack Site with ChatGPT sign-in, per-user managed D1 storage and application-encrypted health records. The existing Site identity and owner-private audience are preserved.
+Mobile-friendly full-stack Site with email-code accounts, per-user managed D1 storage and application-encrypted health records. The existing Site is owner-private.
 
 Current priority: scientific content, design and core functionality. Payment activation is deferred. The private review release enables full report reading without payment through the server setting `REPORT_REVIEW_MODE=true`; this does not create orders or purchased entitlements, and is disabled whenever `PAYMENTS_ENABLED=true`.
 
@@ -77,7 +77,7 @@ The **App checks** workflow builds both editions. A maintainer can run it manual
 - A separate Heart & Vascular assessment with regional SCORE2, SCORE2-OP and SCORE2-Diabetes, age comparisons, and optional ApoB and Lp(a) results.
 - Report preview, Stripe hosted Checkout integration, verified purchased-report access and browser print/save-PDF layout. Charging stays disabled until merchant configuration and webhook delivery are ready.
 - Consultation enquiry preview with selectable sharing categories. No enquiry is transmitted.
-- Real sign-in via ChatGPT; separate adult account registration and versioned health-storage consent. The application stores a site-specific user ID and nickname, without persisting a sign-in email or full name.
+- Email sign-in uses a one-time code. New accounts confirm adult eligibility and health-storage consent before they can save. The app keeps the sign-in email, nickname and consent record. Resend receives the email address and sign-in message.
 - Explicit cloud saving, immutable assessment/report snapshots, cross-device history, a reports tab, same-method progress charts, JSON export and live-record deletion.
 - Sample and personal progress are separated. Optional explicit import of old browser-local demo history; original copies are retained.
 - Responsive layouts, labeled controls, keyboard focus, dialog focus containment and sample data.
@@ -88,7 +88,13 @@ Account storage is real. Unsaved questionnaire/lab entries remain in page memory
 
 Health payloads and report snapshots use AES-256-GCM with a fresh nonce, bound to their owner, record ID and record kind. The encryption key is a hosted runtime secret, separate from the database and source. This is application encryption, not end-to-end encryption. Site operators with runtime administration access can administer stored data.
 
-All API access requires platform-verified identity. Every record query includes the server-derived owner ID; supplied owner/result/report fields are ignored. Mutations require same-origin requests, JSON and an account-bound HMAC CSRF token. Writes are rate-limited (120/hour per identity), request size is capped at 48 KiB, and account history is capped at 500 snapshots. SQL uses parameter binding. Account responses are private/no-store. Application code does not log health bodies, identities or decrypted records.
+Account data APIs require a verified email session. The Sites audience gate applies separately at the hosting layer. Every record query uses the server-derived owner ID. Mutations require same-origin requests, JSON and an account-bound HMAC CSRF token. Writes are rate-limited (120/hour per identity), request size is capped at 48 KiB, and account history is capped at 500 snapshots. SQL uses parameter binding. Account responses are private/no-store. The app stores keyed digests of one-time codes and session tokens, limits delivery requests and verification attempts, and uses HttpOnly session cookies.
+
+### Enable email sign-in on Sites
+
+1. Verify the sending domain in Resend and use a sending-only key for that domain. The default sender is `KoleQuant <support@kolequant.xyz>`. Set `AUTH_EMAIL_FROM` if the verified sender is different. [Resend domain setup](https://resend.com/docs/dashboard/domains/introduction)
+2. Set `RESEND_API_KEY` as a Sites secret. Keep the existing `ASSESSMENT_ENCRYPTION_KEY` so existing encrypted data remains readable.
+3. Publish the verified build through Sites so the email-auth D1 migration is applied. Check delivery, registration, re-entry and account deletion in the hosted app.
 
 The server validates questionnaire/lab inputs and recomputes clinical results and report content before encrypting a snapshot. Saved reports retain their generated clinical interpretation and priorities. Full-report access is derived from a verified server-side order, or the explicitly enabled private review mode described above. Client-supplied unlock flags and old simulated unlocks are ignored. Outside private review mode, unpurchased report responses and exports include a preview; user-entered health records remain exportable.
 
@@ -124,7 +130,7 @@ Use Node.js 24.15+ in the 24.x line (see `.nvmrc`), or Node.js 26+, and install 
 
 Source assets are in `public/`, the app shell in `app/`, account routes in `app/api/[...path]/route.ts`, the backend in `lib/account-api.mjs`, and migrations in `db/` and `drizzle/`. `dist/` is generated output.
 
-For local saved-record testing, generate a separate 32-byte base64 key in ignored `.dev.vars` as `ASSESSMENT_ENCRYPTION_KEY`. Hosted keys remain Sites runtime secrets. A key used for existing records requires a re-encryption/rotation plan before replacement. The local preview simulates platform sign-in; hosted identity must be verified separately.
+For local saved-record testing, use an isolated D1 database with all migrations and a separate 32-byte base64 `ASSESSMENT_ENCRYPTION_KEY` in ignored `.dev.vars`. The email-auth test uses an isolated SQLite store and a simulated sender. Use a verified delivery setup to test actual email delivery.
 
 Build with `npm run build`; stop a running local preview before building on Windows. Follow the Sites helper workflow for actual publication, preserving the existing project ID and bindings. GitHub checks and merges do not deploy the hosted app. Append migrations instead of editing applied migrations.
 

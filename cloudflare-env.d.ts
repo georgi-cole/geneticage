@@ -3,6 +3,8 @@ declare namespace Cloudflare {
     DB?: D1Database;
     BUCKET?: R2Bucket;
     ASSESSMENT_ENCRYPTION_KEY?: string;
+    RESEND_API_KEY?: string;
+    AUTH_EMAIL_FROM?: string;
     PAYMENTS_ENABLED?: string;
     PAYMENT_WEBHOOK_READY?: string;
     PUBLIC_SITE_ORIGIN?: string;

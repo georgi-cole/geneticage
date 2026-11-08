@@ -13,6 +13,7 @@ export function heartPrefill(answers = {}) {
   const inputs = {};
   const age = Number(heartDecimal(answers.age));
   if (Number.isInteger(age) && age >= 18 && age <= 120) inputs.age = age;
+  if (['Female','Male'].includes(answers.sex)) inputs.sex = answers.sex;
   const country = countries.get(countryKey(answers.country));
   if (country) inputs.country = country;
 

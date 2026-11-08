@@ -258,7 +258,7 @@ export const heartLimitations = {
   'pday-data':{reason:'Add the remaining details to estimate your early vascular age.'},
   'pday-body':{reason:'Height or weight is outside the calculation range.', next:'Check the measurements and units you entered.', edit:'pday-body'},
   'glucose-alert':{reason:'The fasting glucose result needs attention before an age comparison.', edit:'pday-glucose'},
-  older:{reason:'The European 10-year risk estimates in this assessment cover ages 40–89.', next:reviewMeasurements, edit:'age'},
+  older:{reason:'The SCORE2-OP risk charts end at age 89.', next:reviewMeasurements, edit:'measurements'},
   region:{reason:'The country selected is outside the SCORE2 regions covered here.', next:'Check your country of residence or ask a clinician which risk assessment is used where you live.', edit:'country'},
   cvd:{reason:'These equations estimate the chance of a first cardiovascular event. Risk with established disease uses a separate assessment.', next:'Ask the clinician who manages your heart or blood vessel condition about a follow-up risk assessment.'},
   diabetes:{reason:'A diabetes-specific assessment can account for blood sugar control, kidney function and how long you have had diabetes.', next:'Bring your latest HbA1c and kidney function results if available. Ask which cardiovascular assessment fits your age and medical history.'},

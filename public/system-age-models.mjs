@@ -77,6 +77,22 @@ export function estimatedFitness({age, sex, waist, pulse, moderate, vigorous}) {
   return 105.91 - 0.334 * age - 0.402 * waist - 0.144 * pulse + 3.102 * active;
 }
 
+// Bradshaw et al. (2005), using the sum of the two comfortable-pace ratings.
+export function youngAdultFitness({age, sex, height, weight, milePace, threeMilePace, activityRating}) {
+  const bmi = weight / (height / 100) ** 2;
+  const perceivedAbility = Number(milePace) + Number(threeMilePace);
+  return 48.073 + 6.178 * (sex === 'Male') - 0.246 * age - 0.619 * bmi
+    + 0.712 * perceivedAbility + 0.671 * Number(activityRating);
+}
+
+// Baltimore Longitudinal Study of Aging, recalibrated Bradshaw equation, Table 2.
+export function olderAdultFitness({age, sex, height, weight, selfRatedHealth, weeklyExercise}) {
+  const bmi = weight / (height / 100) ** 2;
+  const healthScore = {Poor:1, Fair:2, Good:3, 'Very good':4, Excellent:5}[selfRatedHealth];
+  const exerciseScore = [30, 75, 150].filter(minutes => weeklyExercise >= minutes).length;
+  return 46.61 + 4.82 * (sex === 'Male') - 0.31 * age - 0.46 * bmi + 1.58 * healthScore + 0.57 * exerciseScore;
+}
+
 // HUNT3 reference means (NTNU) for the no-exercise estimate. FRIEND 2022
 // Table 3 medians (RER >= 1.0) are specific to the measured test modality.
 const fitnessReference = {

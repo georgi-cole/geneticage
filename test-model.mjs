@@ -10,7 +10,7 @@ assert.ok(Math.abs(calculatePhenoAge(age,normalizeLab(alt))-value)<1e-9);
 assert.equal(Object.keys(validateLabs({})).length,9);assert.ok(validateLabs({...raw,crp:{value:'0',unit:'mg/L'}}).crp);assert.ok(validateLabs({...raw,lymphocytes:{value:'101',unit:'%'}}).lymphocytes);assert.ok(validateLabs({...raw,rdw:{value:'40',unit:'fL'}}).rdw);
 assert.ok(eligibility({},18));assert.equal(eligibility({illness:'Yes'},45),null);assert.equal(eligibility({illness:'No'},45),null);
 assert.equal(insights({})[0].key,'context');assert.equal(insights({moderate:'0',vigorous:'0',limitations:'Often'})[0].tag,'Adapt activity to your health');assert.equal(insights({smoking:'Smoke now'})[0].key,'tobacco');assert.equal(alcoholGrams([]),null);assert.ok(Math.abs(alcoholGrams([{count:1,ml:150,abv:12}])-14.202)<1e-6);
-assert.equal(sections.reduce((n,s)=>n+s.questions.length,0),31);
+assert.equal(sections.reduce((n,s)=>n+s.questions.length,0),32);
 assert.equal(hasLargeRecentWeightLoss({weight:'70',weightUnit:'kg',weightYearAgo:'75',weightYearAgoUnit:'kg'}),true);
 assert.equal(hasLargeRecentWeightLoss({weight:'154',weightUnit:'lb',weightYearAgo:'164',weightYearAgoUnit:'lb'}),true);
 assert.equal(hasLargeRecentWeightLoss({weight:'66.4',weightUnit:'kg',weightYearAgo:'70',weightYearAgoUnit:'kg'}),true);
@@ -20,7 +20,7 @@ assert.ok(insights({weight:'66.4',weightUnit:'kg',weightYearAgo:'70',weightYearA
 assert.ok(!insights({weight:'70',weightUnit:'kg',weightYearAgo:'75',weightYearAgoUnit:'kg',weightChangeIntent:'Yes'}).some(item=>item.key==='weight-change'));
 assert.ok(validateQuestionnaire({age:'45',smokingRegular:'Yes',smokingStartAge:'46'}).smokingStartAge);
 assert.ok(validateQuestionnaire({age:'45',smoking:'Some days',smokingDays30:'4.5'}).smokingDays30);
-console.log(JSON.stringify({clinicalAge:value,formulaAndConversions:'passed',missingAndInvalidInputs:'passed',eligibilityAndUnknowns:'passed',weightHistory:'passed',smokingInputs:'passed',questionCount:31}));
+console.log(JSON.stringify({clinicalAge:value,formulaAndConversions:'passed',missingAndInvalidInputs:'passed',eligibilityAndUnknowns:'passed',weightHistory:'passed',smokingInputs:'passed',questionCount:32}));
 
 assert.equal(eligibility({},84),null);assert.ok(eligibility({},85));
 assert.ok(assessClinical({age:45,lab:raw,contextConfirmed:true,fasting:'Not sure'}).reason);
