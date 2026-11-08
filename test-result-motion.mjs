@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {counterText,dialFrame,initializeResultMotion,RESULT_MOTION_DURATION} from './public/result-motion.mjs';
-import {overviewPresentation,renderThemeHome} from './public/theme-home.mjs';
+import {overviewChoices,overviewPresentation,renderOverviewPicker,renderThemeHome} from './public/theme-home.mjs';
 import {resultInstrument,libraryMotif} from './public/ui-components.mjs';
 
 // No guest, questionnaire or withheld estimate can silently become a sample age.
@@ -20,6 +20,29 @@ assert.equal(saved.value,42);assert.equal(saved.gap,'-3');assert.equal(saved.act
 assert.equal(frozen.clinical.value,41.99,'Presentation must not mutate or recalculate a stored estimate.');
 const sample=renderThemeHome(overviewPresentation({...frozen,sample:true}));
 assert.match(sample,/>SAMPLE</);assert.match(sample,/Not your result/);
+const fitness={assessmentType:'fitness',system:{inputs:{age:{value:'33',unit:'years'}},result:{status:'ready',method:'HUNT',age:25,ageBand:{from:20,to:29}}}};
+const savedSample={...frozen,id:'saved-sample',labSubmitted:true,sample:true};
+const choices=overviewChoices([], [savedSample,fitness]);
+assert.deepEqual(choices.map(({type,title,sample})=>[type,title,sample]),[['fitness','Fitness',false],['phenoage','PhenoAge',true]]);
+const sampleOverview=renderThemeHome(overviewPresentation(savedSample),{choices,selected:'phenoage'});
+assert.match(sampleOverview,/data-overview-swipe.*<h2 id="result-instrument-title" >PhenoAge<\/h2>.*>SAMPLE</s);
+assert.match(sampleOverview,/instrument-footer.*id="overview-switch".*Illustrative data · Not your result.*Slide to switch between results/s);
+assert.match(renderOverviewPicker(choices,'phenoage'),/data-type="phenoage" aria-current="true".*PhenoAge.*>Sample</s);
+assert.match(renderThemeHome(welcome,{choices,selected:'phenoage',loadStatus:'loading',loadingTitle:'Clinical PhenoAge',loadingSample:true}),/>SAMPLE</);
+const personal={...frozen,labSubmitted:true};
+assert.equal(overviewChoices([], [personal,savedSample,fitness]).find(item=>item.type==='phenoage').saved,personal,'A newer sample cannot replace the personal result.');
+assert.equal(overviewChoices([{...savedSample,assessment:true}], []).length,0,'An unsaved sample is still a preview.');
+assert.ok(overviewChoices([], [savedSample,{...fitness,sample:true}]).every(item=>item.sample));
+const fitnessHome=renderThemeHome(overviewPresentation(fitness));
+assert.match(fitnessHome,/home-workspace.*result-instrument.*APPROXIMATE FITNESS AGE/s);
+assert.match(fitnessHome,/Study age group.*20–29.*Open your report/s);
+assert.doesNotMatch(fitnessHome,/Simple difference/);
+const bound=renderThemeHome(overviewPresentation({...fitness,system:{...fitness.system,result:{status:'ready',method:'HUNT',ageRange:'at-least',boundary:70}}}));
+assert.match(bound,/age-bound-label">At least<\/small>70/);
+assert.doesNotMatch(bound,/ESTIMATE UNAVAILABLE/);
+const vascular=overviewPresentation({assessmentType:'heart-vascular',heart:{inputs:{age:19},result:{method:'PDAY',ageBand:{from:24,to:28}}}});
+assert.equal(vascular.value,26);
+assert.equal(vascular.comparison.value,'24–28');
 assert.ok(!libraryMotif().includes('<span'),'The unlabelled decorative dot is removed.');
 assert.match(resultInstrument({value:50}),/class="sr-only">50<\/span><span aria-hidden="true" data-count-to="50"/);
 

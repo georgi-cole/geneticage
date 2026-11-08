@@ -41,7 +41,7 @@ env.PAYMENTS_ENABLED='false';assert.equal((await call('a','payments/checkout','P
 const purchase=await call('a','payments/checkout','POST',{assessmentId:id,confirm:true});assert.equal(purchase.status,200);assert.equal(new URL(purchase.data.url).origin,'https://checkout.stripe.com');
 const orderId=purchase.data.orderId,session=[...sessions.values()][0];
 const second=await call('a','payments/checkout','POST',{assessmentId:id,confirm:true});assert.equal(second.data.orderId,orderId);assert.equal(sessions.size,1);
-assert.equal((await call('a','assessments/'+id,'DELETE',{confirm:true})).status,409);
+assert.equal((await call('a','account','DELETE',{confirm:'DELETE'})).status,409);
 assert.equal((await call('b','payments/refresh','POST',{orderId})).status,404);
 assert.equal((await call('a','payments/refresh','POST',{orderId})).data.purchases[0].status,'open');
 assert.equal((await webhook('checkout.session.completed',session,{badSignature:true})).status,400);

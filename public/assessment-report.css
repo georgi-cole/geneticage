@@ -40,6 +40,9 @@
 .reference-editor>summary>span {margin-left:auto}
 .reference-settings-content {border-top:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:8px}
 .reference-settings-content label,.assay-label {font-size:11px}.reference-settings-content select,#crp-assay {min-height:40px!important;font-size:12px!important;padding:8px 10px}
+.lab-reference-choice {display:grid;gap:6px;margin-top:12px}
+.lab-reference-choice select {min-height:40px!important;font-size:12px!important;padding:8px 10px}
+.lab-reference-choice .hint {margin:0}
 .reference-settings-content .hint {font-size:10px;margin:0 0 6px}.reference-settings-content .text-link {font-size:10px}
 .reference-editor .assay-label {display:block;margin:12px 0 6px}.reference-editor .assay-hint {font-size:10px;margin:8px 0 14px}
 .current-assessment {display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
@@ -82,6 +85,51 @@
 .report-estimate p {font-size:11px;color:var(--result-muted)}
 .report-estimate h2 {color:var(--result-ink);margin:7px 0 13px}
 .report-estimate .text-btn {font-size:12px;color:var(--result-ink);margin-top:14px}
+.heart-report-tabs {grid-template-columns:repeat(3,minmax(0,1fr))}
+.heart-estimate {--cover-art-size:clamp(86px,26vw,172px)}
+.heart-estimate .heart-result-main {position:relative;min-height:clamp(130px,23vw,184px);display:flex;flex-direction:column;justify-content:center;padding-inline-end:calc(var(--cover-art-size) + 10px)}
+.heart-estimate .report-artwork {right:0;top:50%;transform:translateY(-50%)}
+.heart-estimate .report-age-line {margin:4px 0 6px}
+.heart-estimate .report-age-line>strong {font-size:clamp(54px,11vw,83px)}
+.heart-estimate .heart-age-band>strong {font-size:clamp(35px,9vw,56px);letter-spacing:-.04em}
+.heart-estimate .heart-age-bound>strong {font-size:clamp(26px,6vw,40px);letter-spacing:-.8px;line-height:1.14}
+.heart-estimate .heart-result-meta {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;border-top:1px solid var(--result-line);padding-top:12px;margin-top:12px}
+.heart-result-meta strong,.heart-result-meta span {display:block;overflow-wrap:anywhere}
+.heart-result-meta strong {font-size:17px;font-weight:500;color:var(--result-ink);line-height:1.15}
+.heart-result-meta span {font-size:10px;line-height:1.4;color:var(--result-muted);margin-top:4px}
+.heart-result-meta>div:last-child {text-align:right}
+.heart-reading dl {margin:0}
+.system-extras {display:grid;gap:7px}
+.system-extras .record-summary {min-height:46px;padding:8px 12px;text-align:left}
+.system-extras .record-summary strong {font-size:12px}
+.system-extras .record-summary small {line-height:1.4}
+.system-report .report-explanation dl {margin:8px 0 0}
+.heart-reading .text-btn {margin-top:6px;font-size:11px}
+.heart-measurement-row {row-gap:0}
+.heart-measurement-row .heart-measurement-review {grid-column:1/-1;text-align:left}
+.heart-measurement-review .lab-comparison a {display:block;margin-top:3px;color:var(--muted);text-decoration:underline}
+.heart-reading-context {margin:7px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
+.heart-prevention h2 {margin:0 0 8px}
+.heart-limit-reason {font-weight:550}
+.heart-missing ul {padding-left:19px;margin:8px 0 12px;font-size:12px;line-height:1.55}
+.heart-missing .btn {margin-top:5px}
+.heart-arterial .btn {margin-top:8px}
+.heart-arterial .text-btn {margin-top:10px}
+.heart-arterial .report-age-line {margin:7px 0}
+#heart-arterial-form {display:grid;gap:13px}
+#heart-arterial-form p,#heart-arterial-form .checkline {margin:0}
+#heart-arterial-form .checkline {align-items:flex-start}
+#heart-arterial-form .checkline input {flex-shrink:0;margin-top:3px}
+@media print {.heart-measurement-review .lab-comparison,.heart-measurement-review .lab-comparison a {color:#222}}
+@media (max-width:480px) {
+ .heart-estimate .report-age-line {gap:6px}
+ .heart-estimate .report-age-line>strong {letter-spacing:-2px}
+ .heart-estimate .report-age-line>span {font-size:10px}
+}
+@media print {
+ .heart-estimate .report-artwork {display:none}
+ .heart-estimate .heart-result-main {min-height:0;padding:0}
+}
 .report-explanation>h2 {font-size:15px;margin-bottom:9px}
 .report-explanation p {color:var(--muted)}
 .report-explanation>h3 {font-size:13px;margin:14px 0 6px}

@@ -1,9 +1,11 @@
 // Source-pinned educational adult guide, separate from the PhenoAge formula.
 // Updating this catalogue requires a new version; retain old versions for saved records.
-export const REFERENCE_CATALOG_VERSION='abim-2026-01-v1';
+const ABIM_REFERENCE_VERSION='abim-2026-01-v1';
+export const REFERENCE_CATALOG_VERSION='adult-lab-2026-11-v2';
+export const referenceVersions=[ABIM_REFERENCE_VERSION,REFERENCE_CATALOG_VERSION];
 export const REFERENCE_CATALOG_SOURCE='https://www.abim.org/media/e2wdwdqu/laboratory-reference-ranges.pdf';
 export const referenceCatalog=Object.freeze({
- version:REFERENCE_CATALOG_VERSION,label:'ABIM · January 2026',url:REFERENCE_CATALOG_SOURCE,
+ version:ABIM_REFERENCE_VERSION,label:'ABIM · January 2026',url:REFERENCE_CATALOG_SOURCE,
  intervals:Object.freeze({
   albumin:{low:3.5,high:5.5,unit:'g/dL',page:1},
   creatinine:{female:{low:0.5,high:1.1},male:{low:0.7,high:1.3},unit:'mg/dL',page:5},
@@ -15,6 +17,11 @@ export const referenceCatalog=Object.freeze({
   alp:{low:30,high:120,unit:'U/L',page:1},
   wbc:{low:4000,high:11000,unit:'cells/µL',page:7}
  })
+});
+export const hsCrpGuide=Object.freeze({
+ low:null,high:2,highExclusive:true,unit:'mg/L',assay:'hs-crp',
+ version:'mayo-hscrp-2026-11-v1',label:'Mayo Clinic Laboratories · hs-CRP',
+ url:'https://www.mayocliniclabs.com/test-catalog/Overview/800024',
 });
 
 export const referenceModes=['published','lab-only'];

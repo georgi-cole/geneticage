@@ -1594,6 +1594,9 @@ details p {
   color: var(--muted);
   line-height: 1.75;
 }
+.modal [data-auth-error] {
+  color: var(--error);
+}
 .modal .close {
   display: grid;
   place-items: center;

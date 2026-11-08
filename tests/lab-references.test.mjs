@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {validateLabReferences,compareLabReference,reviewLabReference,setLabEntryUnit} from '../public/lab-review.mjs';
-import {REFERENCE_CATALOG_VERSION} from '../public/lab-reference-catalog.mjs';
+import {referenceCatalog,REFERENCE_CATALOG_VERSION} from '../public/lab-reference-catalog.mjs';
 import {freshAssessment,continueAssessment,assessmentProgress} from '../public/assessment-flow.mjs';
 import {sampleLabs,assessClinical} from '../public/model.mjs';
 import {validateSnapshot} from '../lib/account-api.mjs';
@@ -26,7 +26,7 @@ test('own lab bounds take complete precedence, including one-sided and exclusive
 test('published guide preserves original source units and compares converted values at boundaries',()=>{
  const entry={value:'55',unit:'g/L'},original=structuredClone(entry),albumin=review('albumin',entry);
  assert.equal(albumin.status,'within');assert.equal(albumin.unit,'g/dL');assert.equal(albumin.comparisonValue,5.5);
- assert.equal(albumin.sourceVersion,REFERENCE_CATALOG_VERSION);assert.match(albumin.sourceUrl,/#page=1$/);assert.deepEqual(entry,original);
+ assert.equal(albumin.sourceVersion,referenceCatalog.version);assert.match(albumin.sourceUrl,/#page=1$/);assert.deepEqual(entry,original);
  assert.equal(review('glucose',{value:'99',unit:'mg/dL'}).status,'within');
  assert.equal(review('glucose',{value:'5.5',unit:'mmol/L'}).status,'above','The published upper limit is 99 mg/dL, not a rounded 5.5 mmol/L.');
  assert.equal(review('glucose',{value:String(99/18.0182),unit:'mmol/L'}).status,'within');
@@ -48,8 +48,23 @@ test('fallback requires explicit version, adult collection context and marker-sp
  assert.equal(review('creatinine',{value:'1.2',unit:'mg/dL'}).status,'above');
  assert.equal(review('creatinine',{value:'1.2',unit:'mg/dL'},{labReferenceGroup:'male'}).status,'within');
  assert.equal(review('glucose',{value:'90',unit:'mg/dL'},{labFasting:'Not sure'}).status,'unknown');
- for(const assay of ['hs-crp','unspecified',undefined])assert.equal(review('crp',{value:'2',unit:'mg/L',assay}).status,'unknown');
+ for(const assay of ['unspecified',undefined])assert.equal(review('crp',{value:'2',unit:'mg/L',assay}).status,'unknown');
  assert.equal(review('albumin',{value:'',unit:'g/L'}).status,'missing');
+});
+
+test('profile creatinine group and identified hs-CRP get separate published comparisons',()=>{
+ const creatinine={value:'1.2',unit:'mg/dL'},profile={labReferenceGroup:undefined,answers:{sex:'Male'}};
+ assert.equal(review('creatinine',creatinine,profile).status,'within');
+ assert.equal(review('creatinine',creatinine,{...profile,labReferenceGroup:'unspecified'}).label,'Reference group needed');
+ const hs={value:'0.2',unit:'mg/dL',assay:'hs-crp'},threshold=review('crp',hs);
+ assert.equal(threshold.comparisonValue,2);
+ assert.equal(threshold.status,'above');
+ assert.equal(threshold.threshold,true);
+ assert.equal(threshold.highExclusive,true);
+ assert.equal(review('crp',{...hs,value:'0.199'}).status,'within');
+ assert.equal(review('crp',{...hs,referenceHigh:'0.3'}).sourceKind,'lab');
+ assert.equal(review('crp',hs,{labReferenceVersion:referenceCatalog.version}).status,'unknown');
+ assert.equal(review('crp',hs,{labContext:false}).status,'unknown');
 });
 
 test('reference settings are validated metadata and cannot alter the clinical formula',()=>{

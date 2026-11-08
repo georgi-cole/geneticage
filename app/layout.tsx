@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import {themeBootstrap} from '../public/theme-system.mjs';
 import {languageBootstrap} from '../public/language-system.mjs';
-import {launchBootstrap} from '../public/launch-screen.mjs';
+import {launchGateStyles} from '../public/launch-screen.mjs';
 import {APP_NAME} from '../public/brand.mjs';
 
 export const metadata: Metadata = {
@@ -15,13 +15,13 @@ export const viewport: Viewport = {width:'device-width',initialScale:1,viewportF
 // Resolve appearance before the stylesheet paints, including returning visitors.
 
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
-  return <html lang="en" suppressHydrationWarning>
+  return <html lang="en" data-launch="pending" suppressHydrationWarning>
     <head>
       <meta name="application-name" content={APP_NAME} />
       <meta name="apple-mobile-web-app-title" content={APP_NAME} />
+      <style dangerouslySetInnerHTML={{__html: launchGateStyles}} />
       <script dangerouslySetInnerHTML={{__html: themeBootstrap}} />
       <script dangerouslySetInnerHTML={{__html: languageBootstrap}} />
-      <script dangerouslySetInnerHTML={{__html: launchBootstrap}} />
       <link rel="stylesheet" href="/styles.css" />
       <link rel="stylesheet" href="/fonts.css" />
       <link rel="stylesheet" href="/themes.css" />

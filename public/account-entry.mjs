@@ -1,0 +1,41 @@
+import {escapeHTML as esc} from './ui-components.mjs';
+
+export function accountEntry({email = '', stage = 'email'} = {}) {
+  const error = '<p class="error" data-auth-error role="alert" hidden></p>';
+  const changeEmail = '<button class="text-btn" type="button" data-action="auth-change-email">Use a different email</button>';
+  if (stage === 'register') return {
+    title:'Create your account',
+    body:`<p>Choose a nickname for your private health journal.</p>
+      <form id="signup-form" class="form-stack">
+        <label for="account-name">Account nickname</label>
+        <input id="account-name" name="name" type="text" required maxlength="40" autocomplete="nickname">
+        <label class="checkline"><input name="adult" type="checkbox" required><span>I am 18 or older.</span></label>
+        <details class="reference-editor">
+          <summary>Account storage notice</summary>
+          <p>We keep your email for sign-in. Resend delivers the code. Assessments are encrypted and stored only when you choose to save them. You can export or delete them in Data & settings.</p>
+        </details>
+        <label class="checkline"><input name="consent" type="checkbox" required><span>I consent to storing health information when I choose to save an assessment.</span></label>
+        ${error}<button class="btn" type="submit">Create my account →</button>
+        <button class="text-btn" type="button" data-action="auth-change-email">Start sign-in again</button>
+      </form>`,
+  };
+  if (stage === 'code') return {
+    title:'Enter your sign-in code',
+    body:`<p>We sent an 8-digit code to <strong data-no-translate>${esc(email)}</strong>. It expires in 10 minutes.</p>
+      <form id="auth-code-form" class="form-stack">
+        <label for="auth-code">Sign-in code</label>
+        <input id="auth-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" required pattern="[0-9]{8}" maxlength="8">
+        ${error}<button class="btn" type="submit">Verify code →</button>
+        <div class="actions"><button class="text-btn" type="button" data-action="auth-resend">Send a new code</button>${changeEmail}</div>
+      </form>`,
+  };
+  return {
+    title:'Sign in or create an account',
+    body:`<p>We’ll email you a one-time code to open your private health journal.</p>
+      <form id="auth-email-form" class="form-stack">
+        <label for="auth-email">Email address</label>
+        <input id="auth-email" name="email" type="email" autocomplete="email" required maxlength="254" value="${esc(email)}">
+        ${error}<button class="btn" type="submit">Send sign-in code →</button>
+      </form>`,
+  };
+}

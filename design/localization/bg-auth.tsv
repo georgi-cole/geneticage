@@ -1,0 +1,38 @@
+# Email sign-in and registration
+Email sign-in is not configured yet.	Входът с имейл още не е настроен.
+Please use this website to sign in.	Използвайте този уебсайт, за да влезете.
+Enter a valid email address.	Въведете валиден имейл адрес.
+Too many sign-in requests. Please try again later.	Има твърде много заявки за вход. Опитайте отново по-късно.
+We could not send a sign-in code. Please try again later.	Не успяхме да изпратим код за вход. Опитайте отново по-късно.
+Enter the 8-digit code from your email.	Въведете 8-цифрения код от имейла си.
+That code is incorrect or expired. Request a new one and try again.	Кодът е грешен или е изтекъл. Поискайте нов и опитайте отново.
+Confirm that you are an adult and agree to the account storage notice.	Потвърдете, че сте пълнолетни и сте съгласни с известието за съхранение на данните.
+Verify your email address before creating an account.	Потвърдете имейл адреса си, преди да създадете профил.
+Your email verification expired. Request a new code.	Потвърждението на имейла е изтекло. Поискайте нов код.
+Could not finish account registration. Please request a new sign-in code.	Регистрацията не завърши. Поискайте нов код за вход.
+Sign in or create an account	Влезте или създайте профил
+Email address	Имейл адрес
+We’ll email you a one-time code to open your private health journal.	Ще изпратим еднократен код по имейл за достъп до личния ви здравен дневник.
+Send sign-in code →	Изпратете код за вход →
+Enter your sign-in code	Въведете кода за вход
+We sent an 8-digit code to	Изпратихме 8-цифрен код на
+. It expires in 10 minutes.	. Кодът изтича след 10 минути.
+Sign-in code	Код за вход
+Verify code →	Потвърдете кода →
+Send a new code	Изпратете нов код
+Use a different email	Използвайте друг имейл
+Create your account	Създайте профил
+Choose a nickname for your private health journal.	Изберете име за личния си здравен дневник.
+We keep your email for sign-in. Resend delivers the code. Assessments are encrypted and stored only when you choose to save them. You can export or delete them in Data & settings.	Пазим имейла ви за вход. Resend доставя кода. Анализите се криптират и съхраняват само когато ги запазите. Можете да ги изтеглите или изтриете от „Данни и настройки“.
+I consent to storing health information when I choose to save an assessment.	Давам съгласие за съхранение на здравна информация, когато избера да запазя анализ.
+Start sign-in again	Започнете входа отначало
+Your session could not be opened. Try signing in again.	Сесията не се отвори. Опитайте да влезете отново.
+Signed in with email	Влезли сте с имейл
+Keep your assessments across devices	Отваряйте анализите си на различни устройства
+Sign in / Create account →	Вход / Създаване на профил →
+KoleQuant stores your sign-in email, nickname and consent record. Resend delivers a one-time code to your email address. Sign-in emails contain no health information.	KoleQuant съхранява имейла ви за вход, името на профила и съгласието ви. Resend изпраща еднократен код на имейла ви. Писмата за вход не съдържат здравна информация.
+This removes your profile, email sign-in, sessions, and saved reports from the live database. Provider backups, downloads and Stripe payment records have separate lifecycles.	Това премахва профила, имейла за вход, сесиите и запазените доклади от активната база данни. Резервните копия, изтеглените файлове и записите за плащания в Stripe се съхраняват отделно.
+This preview is offline for accounts	Профилите изискват хостваното приложение
+Account creation needs the hosted app. You can use assessments in this preview, and your entries stay on this page.	За да създадете профил, отворете хостваното приложение. Можете да правите анализи в този преглед, като въведените данни остават на страницата.
+Email sign-in is temporarily unavailable.	Входът с имейл временно не е достъпен.
+Add pulse-wave measurement	Добавете измерване на пулсовата вълна

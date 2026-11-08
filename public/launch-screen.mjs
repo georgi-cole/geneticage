@@ -8,7 +8,10 @@ export const LAUNCH_BRAND_HOLD=LAUNCH_DURATION-2200/LAUNCH_TRANSFORM_SPEED;
 export const launchTime=milliseconds=>Math.max(0,milliseconds-LAUNCH_BRAND_HOLD)*LAUNCH_TRANSFORM_SPEED;
 export const CODONS=['ATG','CAG','GGC','TCC','AAC','GCT'];
 export const complement=sequence=>sequence.replace(/[ATGC]/g,base=>({A:'T',T:'A',G:'C',C:'G'}[base]));
-export const launchBootstrap="document.documentElement.dataset.launch='pending'";
+export const launchGateStyles=`
+ html[data-launch="pending"] :is(.app-frame,.skip),
+ html[data-launch="playing"] :is(.app-sidebar,.header,.mobile-nav,.skip) { visibility:hidden }
+`;
 
 const clamp=value=>Math.max(0,Math.min(1,value));
 const ease=value=>{const t=clamp(value);return t*t*(3-2*t);};

@@ -34,6 +34,27 @@ footer {display:none}
 .instrument-heading {display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;z-index:2}
 .instrument-heading h2 {font-size:14px;font-weight:500;letter-spacing:-.2px;margin:0}
 .instrument-tag {border:1px solid color-mix(in srgb,var(--result-accent) 35%,transparent);border-radius:20px;padding:3px 8px;font:8px var(--font-mono);letter-spacing:1px;color:var(--result-accent);background:color-mix(in srgb,var(--result-base) 82%,transparent)}
+[data-overview-swipe] {touch-action:pan-y pinch-zoom}
+.overview-switch {display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:3px;min-width:0;max-width:59%;min-height:44px;padding:0;border:0;background:transparent;color:var(--result-accent);font-size:9px;text-align:left;line-height:1.35}
+.overview-switch:hover :is(.overview-slide-hint,.overview-desktop-hint) {text-decoration:underline}
+.overview-slide-hint {display:none}
+@media(max-width:760px),(any-pointer:coarse) {
+ .overview-slide-hint {display:block}
+ .overview-desktop-hint {display:none}
+}
+.modal.overview-picker {max-width:390px;padding:20px 18px;border-radius:22px;background:var(--paper)}
+.overview-picker h2 {margin:0 0 12px;font-size:20px}
+.overview-options {display:grid;gap:6px;clear:both}
+.overview-option {display:flex;align-items:center;gap:10px;min-height:50px;padding:7px 10px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);font-size:14px;text-align:left}
+.overview-option:hover,.overview-option[aria-current] {border-color:var(--line);background:var(--field-bg)}
+.overview-option-icon,.overview-option-check {display:grid;place-items:center;flex:none;width:22px;color:var(--accent)}
+.overview-option-icon svg,.overview-option-check svg {width:17px;height:17px}
+.overview-option>span:nth-child(2) {flex:1}
+@media(max-width:600px) {
+ .overview-picker-overlay {align-items:flex-end;padding:10px 10px calc(10px + env(safe-area-inset-bottom))}
+}
+.overview-load-state {display:grid;justify-items:center;gap:4px;text-align:center}
+.overview-load-state p {margin:0;color:var(--muted)}
 .instrument-stage {position:relative;flex:1;min-height:220px;display:grid;place-items:center;isolation:isolate}
 .instrument-atmosphere {position:absolute;inset:-25px -24px -30px;overflow:hidden;z-index:-1;pointer-events:none;mask-image:linear-gradient(transparent,#000 15%,#000 80%,transparent)}
 .instrument-atmosphere:before {content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,color-mix(in srgb,var(--result-accent) 12%,transparent),transparent 65%)}
@@ -51,15 +72,18 @@ footer {display:none}
 .instrument-number .readout-label {display:block;font:8px var(--font-mono);letter-spacing:1.6px;color:var(--result-accent);line-height:1.5}
 .instrument-number .age-value {display:block;font-size:84px;font-weight:300;line-height:1;letter-spacing:-5px;margin:7px 0 3px;color:var(--result-ink);font-variant-numeric:tabular-nums}
 .instrument-number .age-value>[data-count-to] {font:inherit;letter-spacing:inherit;color:inherit;margin:0}
+.instrument-number .age-bound-label {display:block;text-align:center;font:11px var(--font-mono);letter-spacing:0;margin-bottom:3px}
 .instrument-unit {font-size:11px;color:var(--result-muted)}
 .dial-caption {position:absolute;bottom:8%;font:6.5px var(--font-mono);letter-spacing:1.1px;color:var(--result-muted)}
 .instrument-comparison {display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;gap:18px;max-width:390px;width:100%;margin:0 auto 16px;text-align:center;position:relative;z-index:2}
 .instrument-comparison>div>span {display:block;font-size:10px;color:var(--result-muted);margin-bottom:4px}
 .instrument-comparison strong {display:block;font-size:26px;font-weight:400;line-height:1.15;letter-spacing:-.7px}
+.instrument-comparison .comparison-method {font-size:clamp(13px,4.5vw,22px);overflow-wrap:anywhere;letter-spacing:0}
 .instrument-comparison small {font-size:10px;font-weight:400;letter-spacing:0;margin-left:5px;color:var(--result-muted)}
 .comparison-line {height:1px;background:linear-gradient(90deg,transparent,var(--result-accent),transparent);opacity:.5}
 .instrument-footer {display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--result-accent) 18%,transparent);position:relative;z-index:2}
-.instrument-footer>span {font-size:9px;color:var(--result-muted);max-width:48%}
+.instrument-footer-caption {font-size:9px;color:var(--result-muted)}
+.instrument-footer>.instrument-footer-caption {max-width:48%}
 .instrument-footer .text-btn {display:flex;gap:18px;align-items:center;min-height:30px;font-size:10px;color:var(--result-ink);text-align:left}
 .instrument-footer .text-btn span {color:var(--result-accent)}
 :root[data-theme=black-metal] .instrument-atmosphere {background:linear-gradient(110deg,#111113da,#11111377),var(--material-diamond);background-size:cover;background-position:center;opacity:.7}
@@ -101,6 +125,65 @@ footer {display:none}
 .assessment-route:first-child .route-icon {color:var(--warm)}
 .assessment-route>svg {width:22px;height:22px;color:var(--muted);flex-shrink:0}
 .assessment-route:hover {border-color:var(--accent)}
+.assessments-screen .assessment-routes .assessment-route {min-height:58px;padding-block:10px}
+.system-routes {display:grid;gap:8px}
+.system-route-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.system-route-grid .assessment-route {flex-wrap:nowrap;min-height:68px;padding:10px 12px;gap:9px}
+.system-route-grid .assessment-route>span:nth-child(2) {min-width:0}
+.system-route-grid .route-icon {width:22px;color:var(--accent)}
+.system-route-grid .route-icon svg {width:22px;height:22px}
+.system-route-grid .assessment-route strong {font-size:clamp(12px,3.5vw,15px);line-height:1.2}
+.system-route-grid .assessment-route small {margin-top:3px}
+
+.heart-pulse-mark {width:clamp(58px,18vw,106px);height:auto;flex:none;color:var(--accent);opacity:.8}
+.heart-pulse-mark path {stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.heart-pulse-mark .pulse-guide {opacity:.22;stroke-dasharray:2 4}
+.heart-pulse-mark .pulse-trace {stroke-width:1.35}
+.heart-pulse-mark circle {fill:var(--bg);stroke:currentColor;opacity:.85}
+.heart-progress {display:flex;gap:5px;flex-shrink:0}
+.heart-progress i {flex:1;height:2px;border-radius:2px;background:var(--line)}
+.heart-progress .complete {background:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.heart-progress .current {background:var(--accent)}
+.heart-entry .question.heart-prompt>legend {padding-top:clamp(18px,5vh,42px)}
+.heart-entry .heart-prompt>select,.heart-entry .heart-prompt>input {width:100%;max-width:370px}
+.heart-entry .question .heart-choices {grid-template-columns:minmax(0,1fr);max-width:370px}
+.heart-entry .heart-choices .option {min-height:46px}
+.heart-entry .heart-choices .option>input {width:100%;height:100%;margin:0}
+.heart-entry .question .heart-diagnoses {max-width:unset;grid-template-columns:repeat(2,minmax(0,1fr))}
+.heart-entry .heart-prompt:has(.heart-diagnoses)>legend {padding-top:14px}
+.heart-entry .heart-diagnoses .option {min-height:40px}
+.heart-prefill-list {max-width:520px}
+.heart-prefill-row {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.heart-prefill-row .text-btn {min-height:36px;font-size:11px}
+.heart-entry .heart-measurements {gap:16px;padding-top:8px}
+.heart-entry .heart-measurements .question>legend {font-size:20px;margin:0 0 7px}
+.heart-measurement-list {display:grid;gap:12px}
+.heart-pressure-inputs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+.heart-scope-note {border-left:2px solid var(--accent);padding:3px 0 3px 12px}
+.heart-scope-note p {color:var(--muted);font-size:12px;line-height:1.5;margin:4px 0 0}
+.heart-measurement {min-width:0}
+.heart-measurement label {display:block;font-size:12px;font-weight:500;margin:0 0 5px}
+.heart-entry .heart-measurement .input-row {max-width:370px}
+.heart-measurement .input-row select {width:auto;max-width:46%}
+.heart-entry .heart-measurement .reference-bounds>label>.reference-bound-input {display:flex;margin:0}
+.system-heading {display:flex;align-items:center;justify-content:space-between;gap:14px}
+.system-heading>span {color:var(--accent)}
+.system-heading>span svg {width:38px;height:38px}
+.system-fields {display:grid;align-content:start;gap:12px}
+.system-fields h2 {font-size:20px;margin:0;font-weight:500}
+.system-fields>.hint,.system-fields .heart-measurement>.hint {margin:0 0 5px}
+.system-fields .heart-measurement>select {width:100%;max-width:370px}
+.system-alternate {align-self:flex-start;color:var(--accent);text-align:left}
+.specialist-help {font-size:11px;color:var(--muted)}
+.specialist-help summary {cursor:pointer;min-height:36px;display:list-item;align-content:center}
+.specialist-help .text-link {display:inline-flex;align-items:center}
+@media (max-width:374px) {
+ .assessments-screen .assessment-intro {--intro-art-size:70px}
+ .assessments-screen .assessment-intro p {max-width:calc(100% - var(--intro-art-size))}
+}
+@media (max-width:599px) {
+ .heart-diagnoses .option:not(.heart-compact-choice) {grid-column:1/-1}
+}
 .saved-records {min-height:0}
 .section-caption {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .section-caption h2 {font-size:12px;margin:0;font-weight:500}
@@ -122,6 +205,12 @@ footer {display:none}
 .record-end strong {font-size:19px;font-weight:400}
 .record-end strong small {font-size:9px}
 .record-end button {display:block;font-size:10px;min-height:24px}
+.record-row>div:nth-child(2) {min-width:0;overflow-wrap:anywhere}
+.record-remove {display:grid;place-items:center;flex:none;width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:var(--muted)}
+.record-remove:hover {background:var(--field-bg);color:var(--ink)}
+.record-remove svg {width:15px;height:15px}
+.assessment-controls {display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px}
+.assessment-controls .text-btn {font-size:11px;color:var(--muted);text-align:left}
 .compact-pager {display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted)}
 .compact-pager .text-btn {font-size:10px}
 .report-feature {display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-height:260px;text-align:left;color:var(--ink);width:100%}
@@ -168,8 +257,7 @@ footer {display:none}
 .question-screen .option input {width:14px;height:14px;flex-shrink:0}
 .task-screen input[type=number],.task-screen input[type=text],.task-screen input[type=date],.task-screen select {min-height:46px;font-size:15px;border-radius:9px}
 .task-screen .input-row {max-width:100%;margin:0}
-.task-screen .form-nav {margin:20px 0 0;padding:12px 0 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-shrink:0}
-.task-screen .form-nav .text-btn {font-size:11px}
+.task-screen .form-nav {margin:20px 0 0;padding:12px 0 0;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:12px;flex-shrink:0}
 .question-optional {font-size:10px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;margin-top:14px}
 .question-optional .text-link {font-size:10px}
 .task-screen .sample-badge {margin:0;font-size:9px;padding:7px 10px}
@@ -185,7 +273,9 @@ footer {display:none}
 .lab-fields details {border:0;padding:0}
 .lab-fields summary {font-size:10px;color:var(--muted)}
 .lab-fields details p {font-size:10px;line-height:1.5}
-.task-back {font-size:11px;color:var(--muted);min-height:36px;align-self:flex-start}
+.task-back {display:inline-flex;align-items:center;gap:6px;align-self:flex-start;min-height:36px;flex-shrink:0;font-size:12px;color:var(--muted);text-align:left}
+.app-screen>.task-back:first-child {margin-bottom:-6px}
+.task-back .kq-icon {flex-shrink:0}
 .review-screen .card {padding:6px 16px}
 .review-screen .row {padding:10px 0!important;font-size:12px}
 .review-screen .row .small {display:block;font-size:10px}
@@ -320,7 +410,7 @@ footer {display:none}
  .instrument-comparison strong {font-size:25px}
  .instrument-comparison small {font-size:9px}
  .instrument-footer {gap:10px;padding-top:9px}
- .instrument-footer>span {font-size:8px;line-height:1.5}
+ .instrument-footer-caption {font-size:8px;line-height:1.5}
  .instrument-footer .text-btn {font-size:9px;gap:10px}
  .overview-actions {flex-direction:column;gap:4px}
  .overview-actions .btn {width:100%;min-height:44px}

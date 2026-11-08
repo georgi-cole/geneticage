@@ -1,7 +1,7 @@
 Test checkout ·	Тестово плащане ·
 Testing depends on your question, the sample required and local availability. Laboratory clocks are estimates; they do not establish an exact age.	Изборът на изследване зависи от целта ви, необходимата проба и услугите, достъпни там, където живеете. Лабораторните часовници дават приблизителна, а не точна възраст.
 The account connection took too long. Your current assessment is safe on this screen.	Свързването с профила се забави. Данните от текущия анализ остават на този екран.
-The age calculation and consultation enquiry remain prototype features. A clinician has not reviewed results. Report purchases use Stripe when enabled; purchase availability is shown before checkout.	Изчисляването на възраст и формулярът за консултация все още са част от прототипа. Резултатите не са прегледани от медицински специалист. Когато покупките са активни, плащането се извършва чрез Stripe. Преди плащане ще видите дали покупката е достъпна.
+Reports are generated automatically. Consultation enquiries are previews. Stripe handles checkout when report purchases are available.	Докладите се изготвят автоматично. Формулярът за консултация е за преглед. Когато покупката на доклад е достъпна, плащането се извършва чрез Stripe.
 The app converts supported units before calculating. Review an abnormal laboratory result using the laboratory’s reference range and your clinician’s advice, regardless of the age estimate.	Приложението преобразува поддържаните единици преди изчислението. Независимо от оценката на възрастта, обсъдете отклоненията в лабораторните резултати според референтните граници на лабораторията и съвета на лекаря си.
 The complete report includes all findings supported by your answers, up to three suggested next steps and the full input summary.	Пълният доклад включва всички наблюдения от отговорите ви, до три предложения за следващи стъпки и всички въведени данни.
 The displayed difference is clinical PhenoAge minus age at the blood draw. It is not the study’s age-adjusted PhenoAgeAccel measure, a measure of aging speed, or a forecast of years left to live.	Показаната разлика е клиничният PhenoAge минус възрастта при вземане на пробата. Тя не е коригираният спрямо възрастта показател PhenoAgeAccel от проучването, не измерва скоростта на стареене и не прогнозира оставащи години живот.
@@ -26,7 +26,8 @@ This assessment was saved under an earlier protocol. Its stored result has not b
 This browser has no saved demo accounts to import.	В този браузър няма запазени демо профили за импортиране.
 This creates a dated snapshot. Later assessments are saved separately so your history stays intact. The saved copy keeps the answers and result from this assessment.	Запазва се копие с днешната дата, което съдържа отговорите и резултата от този анализ. Всеки следващ анализ се запазва отделно, за да можете да проследявате предишните си резултати.
 This form does not send a message or book an appointment. Use fictional contact details while reviewing it.	Този формуляр не изпраща запитвания и не запазва часове. За прегледа използвайте измислени данни за контакт.
-This is an educational service under development. It can help you understand the information you enter, but it does not diagnose a condition or replace medical care.	Това е информационна услуга в процес на разработка. Тя може да помогне да разберете въведените данни, но не поставя диагноза и не замества медицинската грижа.
+This assessment puts your information in context using published research. Discuss your results with a healthcare professional when making decisions about your care.	Анализът разглежда данните ви в контекста на публикувани научни изследвания. Обсъдете резултатите си с медицински специалист, когато вземате решения за здравето си.
+Edit any section before viewing your health profile.	Можете да редактирате всеки раздел, преди да разгледате здравния си профил.
 This removes the assessment and its report, including purchased access, from your live account on all devices. It does not request a refund. Downloaded copies remain on your device.	Анализът и докладът ще бъдат изтрити от профила ви на всички устройства. Ще загубите и закупения достъп до доклада. Изтриването не подава заявка за връщане на сумата. Вече изтеглените копия остават на устройството ви.
 This removes your profile, assessments and report snapshots from the live database across devices. It does not delete your ChatGPT account. This also removes purchased-report access. It does not request a refund. Provider backups, downloads and Stripe payment records have separate lifecycles.	Профилът, анализите и запазените доклади ще бъдат изтрити от активната база данни и няма да са достъпни от никое устройство. Профилът ви в ChatGPT няма да бъде изтрит. Ще загубите и достъпа до закупени доклади, без автоматично да се заявява връщане на сумите. За резервните копия на доставчика, изтеглените файлове и платежните записи в Stripe важат отделни срокове за съхранение.
 This simple difference is not the age-adjusted PhenoAgeAccel measure used in some studies.	Тази разлика не е коригираният спрямо възрастта показател PhenoAgeAccel, използван в някои проучвания.
@@ -123,3 +124,27 @@ Year	Година
 Delete	Изтрийте
 Edit	Редактирайте
 View	Вижте
+
+# Overview and assay-specific comparisons
+Your laboratory limits always take precedence. Published intervals provide context for your readings.	Използваме първо границите на вашата лаборатория. Публикуваните интервали дават контекст на стойностите.
+Creatinine reference group	Референтна група за креатинин
+From your health profile. Check it against your lab report.	Попълнено от здравния ви профил. Сверете с лабораторния резултат.
+Choose the group your lab uses, or enter its interval below.	Изберете групата, която използва лабораторията ви, или въведете нейния интервал по-долу.
+CRP test type	Вид изследване за CRP
+Choose the test name on your lab report.	Изберете вида, посочен в лабораторния резултат.
+Choose a reference group beside creatinine, or enter the interval from your lab.	Изберете референтна група до креатинина или въведете интервала на вашата лаборатория.
+Reference group needed	Нужна е референтна група
+Use your laboratory’s hs-CRP interval with this reference guide.	За това сравнение използвайте интервала за hs-CRP на вашата лаборатория.
+Lab interval needed	Нужен е лабораторен интервал
+Select Standard CRP or hs-CRP beside the reading, or enter the interval from your lab.	Изберете стандартен CRP или hs-CRP до стойността или въведете интервала на вашата лаборатория.
+CRP test type needed	Нужен е видът на CRP изследването
+At or above the hs-CRP threshold	На или над прага за hs-CRP
+Below the hs-CRP threshold	Под прага за hs-CRP
+Mayo Clinic Laboratories · hs-CRP	Лаборатории Mayo Clinic · hs-CRP
+Published adult comparisons	Публикувани сравнения за възрастни
+Cardiovascular threshold	Праг за сърдечносъдов риск
+Review comparison ↗	Прегледайте сравнението ↗
+Published intervals may differ from your laboratory. Reference colours show direction only. Separate critical-result alerts use their own published thresholds. The hs-CRP threshold provides cardiovascular context.	Публикуваните интервали може да се различават от тези на вашата лаборатория. Цветовете показват посоката на сравнението. Сигналите за критични резултати използват отделни публикувани прагове. Прагът за hs-CRP дава сърдечносъдов контекст.
+Study age group	Възрастова група в проучването
+Age at measurement	Възраст при измерването
+STUDY REFERENCE	РЕФЕРЕНТНИ ДАННИ ОТ ПРОУЧВАНЕ

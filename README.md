@@ -2,7 +2,7 @@
 
 The product owner selected **GeneticAge** on 6 November 2026. KoleQuant remains the publisher and the opening brand signature.
 
-Mobile-friendly full-stack Site with ChatGPT sign-in, per-user managed D1 storage and application-encrypted health records. The existing Site identity and owner-private audience are preserved.
+Mobile-friendly full-stack Site with email-code accounts, per-user managed D1 storage and application-encrypted health records. The existing Site is owner-private.
 
 Current priority: scientific content, design and core functionality. Payment activation is deferred. The private review release enables full report reading without payment through the server setting `REPORT_REVIEW_MODE=true`; this does not create orders or purchased entitlements, and is disabled whenever `PAYMENTS_ENABLED=true`.
 
@@ -28,13 +28,37 @@ Editorial standard: use concrete headings, ordinary English and defined terms; a
 
 Content version `2026-11-06-report-v3` retains questionnaire answers and blood entries when switching routes. Reports opens the current draft, with Summary, Findings, Blood results and Details instead of a long chapter dropdown. Sample exploration keeps a temporary copy of the current draft so the user can return to it. Only explicit reset/new-assessment actions clear entries; reloading still clears unsaved data.
 
-Users can enter their own reference limits in the measurement’s selected unit, including one-sided and exclusive limits. These take precedence. New assessments can use a source-pinned ABIM adult guide for missing intervals, or leave comparisons unassigned. The fallback requires known adult collection context; creatinine needs the report’s reference group, fasting glucose needs confirmed fasting, and CRP needs an identified standard assay. hs-CRP risk bands are not used as laboratory intervals. Earlier saved records without guide metadata remain lab-only. Reference settings never alter PhenoAge or overwrite saved results. [Reference policy and sources](docs/LAB_REFERENCE_POLICY.md).
+Users can enter their own reference limits in the measurement’s selected unit, including one-sided and exclusive limits. These take precedence. Published comparisons require adult collection context. The creatinine group and CRP test type appear beside their readings. Standard CRP uses the ABIM guide. High-sensitivity CRP uses the Mayo Clinic Laboratories cardiovascular threshold when selected. The encrypted record stores the guide version used. [Reference policy and sources](docs/LAB_REFERENCE_POLICY.md).
 
 ## Laboratory entry safeguards: 6 November 2026
 
 Content version `2026-11-06-lab-safety-v4` adds feedback after leaving a measurement field. Yellow/green/red indicate below/within/above the actual reference used; a separate question mark denotes an input or coverage check, and a triangular warning denotes selected published critical thresholds. New estimates are withheld for critical values, unsupported input coverage or a rounded output outside 1–99. The pure formula and conversions are unchanged. Valid extreme entries remain saveable with no numeric age. Old snapshots stay immutable, and out-of-window historical numbers are hidden only in current presentation. [Scientific policy, exact rules, sources and limitations](docs/LAB_SAFETY_POLICY.md).
 
 The hosted Sites app and static Pages preview are separate publications. Both now include the 3-second KoleQuant launch signature on every full opening, with one additional second of brand hold and the original code-to-clock handoff speed. Empty instruments use the paired-form emblem with a clear unmeasured status.
+
+## Heart & Vascular
+
+This separate assessment estimates the 10-year risk of a first heart attack, stroke or cardiovascular death for eligible adults using SCORE2 at ages 40–69 and SCORE2-OP at ages 70–89. The country of residence selects the ESC region. The models use current cigarette smoking, age, sex, systolic blood pressure, and total and HDL cholesterol. Health history determines eligibility. The app’s calculation range is 100 to under 180 mmHg systolic, 2.5–8 mmol/L total cholesterol and 0.5–3 mmol/L HDL cholesterol. Outside the supported scope, the report shows the reason, the entered measurements and a next step. [SCORE2 study](https://doi.org/10.1093/eurheartj/ehab309), [SCORE2-OP study](https://doi.org/10.1093/eurheartj/ehab312), [regional assignments](https://www.heartscore.org/en_GB/faq), [ESC/EAS scope](https://doi.org/10.1093/eurheartj/ehaf190).
+
+Eligible adults aged 40–69 with type 2 diabetes use SCORE2-Diabetes. The flow asks for age at diagnosis and exact HbA1c and eGFR after checking eligibility and the routine measurements. It lists any missing values in the report and opens the fields to complete the estimate. The app covers HbA1c of 20–140 mmol/mol and eGFR of 60–150 mL/min/1.73 m², and directs reported complications or lipid-lowering treatment to clinical review. [SCORE2-Diabetes study](https://doi.org/10.1093/eurheartj/ehad260), [ESC diabetes guidance](https://doi.org/10.1093/eurheartj/ehad192).
+
+At ages 18–29, the app uses the coronary PDAY score as applied to living participants in CARDIA. It uses both blood pressure numbers, blood pressure treatment, total and HDL cholesterol, smoking, fasting glucose or diabetes treatment, and BMI for male participants. It shifts the published five-year age band by the risk-factor points. The midpoint leads when the full band falls within the study's ages 15–34. The band or supported bound remains visible. [PDAY derivation](https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/486517), [CARDIA inputs](https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/411303), [long-term follow-up](https://doi.org/10.1093/eurheartj/ehac009).
+
+At ages 30–39, the assessment uses the Framingham general cardiovascular model with total and HDL cholesterol, systolic blood pressure, blood pressure medicine, smoking and diabetes history. It supports eligible adults with no known cardiovascular disease and either no diabetes or type 2 diabetes. The comparison matches the modeled risk to the study's same-sex reference with untreated systolic pressure of 125 mmHg, total cholesterol of 180 mg/dL, HDL cholesterol of 45 mg/dL, no current smoking and no diabetes. The app shows the U.S. reference age within 30–74 or a bound, and lists any remaining inputs with a direct link to complete them. [Framingham study](https://pubmed.ncbi.nlm.nih.gov/18212285/), [published equation](https://www.framinghamheartstudy.org/fhs-for-researchers/fhs-risk-functions/cardiovascular-disease-10-year-risk/).
+
+The SCORE2 vascular risk age compares the estimated risk with that of a nonsmoker of the same sex and region with systolic pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. SCORE2-Diabetes uses the standard SCORE2 reference for that comparison. Each reference curve shows a bound for risks outside its modeled ages. [Published reference-profile approach](https://pubmed.ncbi.nlm.nih.gov/40753001/).
+
+When the routine models have no coverage, the prevention review summarizes the entered measurements and what to do next. Eligible adults under 40 can optionally add a clinical carotid–femoral pulse wave velocity in m/s using 80% of the direct distance. The separate arterial stiffness age matches that reading with the median for the selected sex in the Austrian LEAD study, bounded to the app's reference range of 18–80. [LEAD reference equations, Table 3](https://doi.org/10.1038/s41598-024-74162-5).
+
+Adults can review health history and measurements at any supported entry age. A new Heart & Vascular draft offers to review matching answers from the current Health & lifestyle draft, or the latest personal saved profile when there is no current draft with answers. The user confirms or edits those answers and fills in the remaining questions.
+
+Blood pressure and the lipid panel have separate steps. Leaving a field reveals an input check or a comparison with the user's lab interval, with a clearly labeled adult lipid guide where applicable. Lp(a) comparisons use the reported unit. A reading of at least 180 mmHg systolic or 110 mmHg diastolic gets a separate alert and withholds the risk estimate. [ABIM adult lipid guide](https://www.abim.org/media/e2wdwdqu/laboratory-reference-ranges.pdf) · [ESC blood-pressure guidance](https://doi.org/10.1093/eurheartj/ehae178) · [EAS Lp(a) consensus](https://doi.org/10.1093/eurheartj/ehac361)
+
+The report includes optional smoking history, diastolic blood pressure, ApoB and Lp(a) when entered. The browser and server share the versioned calculation and checks. The server calculates and encrypts the inputs, results and measurement review in a separate saved snapshot.
+
+## System assessments
+
+Metabolic, Kidney and Fitness each have a guided intake and a report with Summary, Measurements and Methods. They reuse matching answers for review and link to missing fields. A specialist result opens its own step with a short explanation, a route back to the current result and a link for help finding the test. Each system keeps its own versioned report and age reference. [Model inputs, references and research review](docs/SYSTEM_AGE_METHODS.md).
 
 ## Phone preview on GitHub Pages
 
@@ -50,9 +74,10 @@ The **App checks** workflow builds both editions. A maintainer can run it manual
 
 - A 31-question, six-section questionnaire with conditional questions, optional answers and validation.
 - A health profile, manual blood-entry route, and demo clinical PhenoAge calculation with unit conversions and explicit withholding states.
+- A separate Heart & Vascular assessment with regional SCORE2, SCORE2-OP and SCORE2-Diabetes, age comparisons, and optional ApoB and Lp(a) results.
 - Report preview, Stripe hosted Checkout integration, verified purchased-report access and browser print/save-PDF layout. Charging stays disabled until merchant configuration and webhook delivery are ready.
 - Consultation enquiry preview with selectable sharing categories. No enquiry is transmitted.
-- Real sign-in via ChatGPT; separate adult account registration and versioned health-storage consent. The application stores a site-specific user ID and nickname, without persisting a sign-in email or full name.
+- Email sign-in uses a one-time code. New accounts confirm adult eligibility and health-storage consent before they can save. The app keeps the sign-in email, nickname and consent record. Resend receives the email address and sign-in message.
 - Explicit cloud saving, immutable assessment/report snapshots, cross-device history, a reports tab, same-method progress charts, JSON export and live-record deletion.
 - Sample and personal progress are separated. Optional explicit import of old browser-local demo history; original copies are retained.
 - Responsive layouts, labeled controls, keyboard focus, dialog focus containment and sample data.
@@ -63,7 +88,13 @@ Account storage is real. Unsaved questionnaire/lab entries remain in page memory
 
 Health payloads and report snapshots use AES-256-GCM with a fresh nonce, bound to their owner, record ID and record kind. The encryption key is a hosted runtime secret, separate from the database and source. This is application encryption, not end-to-end encryption. Site operators with runtime administration access can administer stored data.
 
-All API access requires platform-verified identity. Every record query includes the server-derived owner ID; supplied owner/result/report fields are ignored. Mutations require same-origin requests, JSON and an account-bound HMAC CSRF token. Writes are rate-limited (120/hour per identity), request size is capped at 48 KiB, and account history is capped at 500 snapshots. SQL uses parameter binding. Account responses are private/no-store. Application code does not log health bodies, identities or decrypted records.
+Account data APIs require a verified email session. The Sites audience gate applies separately at the hosting layer. Every record query uses the server-derived owner ID. Mutations require same-origin requests, JSON and an account-bound HMAC CSRF token. Writes are rate-limited (120/hour per identity), request size is capped at 48 KiB, and account history is capped at 500 snapshots. SQL uses parameter binding. Account responses are private/no-store. The app stores keyed digests of one-time codes and session tokens, limits delivery requests and verification attempts, and uses HttpOnly session cookies.
+
+### Enable email sign-in on Sites
+
+1. Verify the sending domain in Resend and use a sending-only key for that domain. The default sender is `KoleQuant <support@kolequant.xyz>`. Set `AUTH_EMAIL_FROM` if the verified sender is different. [Resend domain setup](https://resend.com/docs/dashboard/domains/introduction)
+2. Set `RESEND_API_KEY` as a Sites secret. Keep the existing `ASSESSMENT_ENCRYPTION_KEY` so existing encrypted data remains readable.
+3. Publish the verified build through Sites so the email-auth D1 migration is applied. Check delivery, registration, re-entry and account deletion in the hosted app.
 
 The server validates questionnaire/lab inputs and recomputes clinical results and report content before encrypting a snapshot. Saved reports retain their generated clinical interpretation and priorities. Full-report access is derived from a verified server-side order, or the explicitly enabled private review mode described above. Client-supplied unlock flags and old simulated unlocks are ignored. Outside private review mode, unpurchased report responses and exports include a preview; user-entered health records remain exportable.
 
@@ -89,7 +120,7 @@ Purchases shows payment state, paid report links and Stripe receipts. Account re
 
 References: https://docs.stripe.com/checkout/fulfillment, https://docs.stripe.com/webhooks, https://docs.stripe.com/api/checkout/sessions/create, https://docs.stripe.com/api/disputes/list.
 
-The clinical calculation uses the published clinical PhenoAge formula with a stable log-space transformation. The current age scope (20–84) and collection-review rules are described above and require clinical approval; they are not proof of universal model applicability. No questionnaire age, molecular clock, mortality probability, organ age or causal marker-contribution values are generated.
+The blood-based age calculation uses the published clinical PhenoAge formula with a stable log-space transformation. The current age scope (20–84) and collection-review rules are described above and require clinical approval. The health profile supplies educational guidance. Heart & Vascular reports its own defined cardiovascular endpoint and reference comparison.
 
 Before a public health service, review the privacy notice, provider agreements, retention/backups, applicable consent and regulatory scope, payment verification, clinical method approval and a staffed consultation workflow. Account deletion removes live profile, assessment, report and rate-limit rows; provider backups and downloads have separate lifecycles. Preserve the existing private Site audience unless explicitly authorized to change it. This release is not an independent security audit or clinical validation.
 
@@ -99,7 +130,7 @@ Use Node.js 24.15+ in the 24.x line (see `.nvmrc`), or Node.js 26+, and install 
 
 Source assets are in `public/`, the app shell in `app/`, account routes in `app/api/[...path]/route.ts`, the backend in `lib/account-api.mjs`, and migrations in `db/` and `drizzle/`. `dist/` is generated output.
 
-For local saved-record testing, generate a separate 32-byte base64 key in ignored `.dev.vars` as `ASSESSMENT_ENCRYPTION_KEY`. Hosted keys remain Sites runtime secrets. A key used for existing records requires a re-encryption/rotation plan before replacement. The local preview simulates platform sign-in; hosted identity must be verified separately.
+For local saved-record testing, use an isolated D1 database with all migrations and a separate 32-byte base64 `ASSESSMENT_ENCRYPTION_KEY` in ignored `.dev.vars`. The email-auth test uses an isolated SQLite store and a simulated sender. Use a verified delivery setup to test actual email delivery.
 
 Build with `npm run build`; stop a running local preview before building on Windows. Follow the Sites helper workflow for actual publication, preserving the existing project ID and bindings. GitHub checks and merges do not deploy the hosted app. Append migrations instead of editing applied migrations.
 

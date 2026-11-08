@@ -1,0 +1,357 @@
+# Heart & Vascular assessment and report
+Albania	Албания
+Algeria	Алжир
+Armenia	Армения
+Azerbaijan	Азербайджан
+Belarus	Беларус
+Bosnia and Herzegovina	Босна и Херцеговина
+Egypt	Египет
+Georgia	Грузия
+Iceland	Исландия
+Kazakhstan	Казахстан
+Kyrgyzstan	Киргизстан
+Lebanon	Ливан
+Libya	Либия
+Luxembourg	Люксембург
+Moldova	Молдова
+Montenegro	Черна гора
+Morocco	Мароко
+North Macedonia	Северна Македония
+Russia	Русия
+San Marino	Сан Марино
+Serbia	Сърбия
+Slovakia	Словакия
+Slovenia	Словения
+Syria	Сирия
+Tunisia	Тунис
+Türkiye	Турция
+Ukraine	Украйна
+Uzbekistan	Узбекистан
+Other country	Друга държава
+Female	Женски
+Male	Мъжки
+Low-risk region	Регион с нисък риск
+Moderate-risk region	Регион с умерен риск
+High-risk region	Регион с висок риск
+Very-high-risk region	Регион с много висок риск
+Heart & Vascular	Сърце и съдове
+ASSESSMENT OPTIONS	ВИДОВЕ АНАЛИЗИ
+SCORE2 assessment ready	Анализът със SCORE2 е готов
+CARDIOVASCULAR ASSESSMENT	СЪРДЕЧНОСЪДОВ АНАЛИЗ
+Age in years	Възраст в навършени години
+SCORE2 selects the regional calibration using the country where you live.	SCORE2 използва настройката за региона, в който попада държавата, в която живеете.
+Sex used for SCORE2	Пол за изчислението със SCORE2
+SCORE2 uses separate equations for female and male participants.	SCORE2 използва отделни формули за жени и мъже.
+Choose Yes if you smoke every day or on some days.	Изберете „Да“, ако пушите всеки ден или в някои дни.
+Do any of these diagnoses apply to you?	Имате ли някоя от следните диагнози?
+Heart or blood vessel disease (including a previous heart attack or stroke), diabetes, chronic kidney disease, or an inherited or rare cholesterol or blood pressure disorder.	Заболяване на сърцето или кръвоносните съдове (включително преживян инфаркт или инсулт), диабет, хронично бъбречно заболяване или наследствено или рядко нарушение на холестерола или кръвното налягане.
+Are you taking cholesterol-lowering medicine?	Приемате ли лекарства за понижаване на холестерола?
+Choose an answer.	Изберете отговор.
+Routine measurements	Рутинни измервания
+Systolic blood pressure	Систолично кръвно налягане
+Use the top number from a recent resting measurement.	Въведете горната стойност от скорошно измерване в покой.
+Total cholesterol	Общ холестерол
+HDL cholesterol	HDL холестерол
+Total cholesterol unit	Мерна единица за общ холестерол
+HDL cholesterol unit	Мерна единица за HDL холестерол
+ApoB (apolipoprotein B)	ApoB (аполипопротеин B)
+Lp(a) (lipoprotein(a))	Lp(a) (липопротеин(a))
+ApoB (apolipoprotein B) unit	Мерна единица за ApoB
+Lp(a) (lipoprotein(a)) unit	Мерна единица за Lp(a)
+Estimate unavailable	Оценката е недостъпна
+VASCULAR RISK AGE	ЕКВИВАЛЕНТНА СЪДОВА ВЪЗРАСТ
+Above 69	Над 69 г.
+Below 40	Под 40 г.
+These results are listed separately from the SCORE2 calculation.	Тези резултати се показват отделно от изчислението по SCORE2.
+Details & methods	Данни и метод
+SCORE2 uses age, sex, current cigarette smoking, systolic blood pressure, total cholesterol and HDL cholesterol. The country of residence selects the regional calibration.	SCORE2 използва възраст, пол, текущо пушене на цигари, систолично кръвно налягане, общ и HDL холестерол. Държавата на пребиваване определя настройката за региона.
+Vascular risk age matches the estimated risk to a reference person of the same sex and region who does not smoke, with systolic blood pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. The comparison covers reference ages 40–69.	Еквивалентната съдова възраст сравнява оценения риск с този на човек от същия пол и регион, който не пуши и има систолично налягане 110 mmHg, общ холестерол 4,75 mmol/L и HDL холестерол 1,3 mmol/L. Сравнението обхваща възрасти от 40 до 69 години.
+This educational estimate uses an app-specific comparison based on continuous SCORE2 risk. Calculation coverage is systolic blood pressure from 100 to under 180 mmHg, total cholesterol 2.5–8 mmol/L and HDL cholesterol 0.5–3 mmol/L.	Тази образователна оценка използва сравнение в приложението, основано на непрекъснатата формула SCORE2. Изчислението обхваща систолично налягане от 100 до под 180 mmHg, общ холестерол 2,5–8 mmol/L и HDL холестерол 0,5–3 mmol/L.
+Saved assessment	Запазен анализ
+SCORE2 uses routine measurements and a country-specific region to estimate 10-year cardiovascular risk. The report compares that risk with a reference age and lists any optional specialist results.	SCORE2 оценява 10-годишния сърдечносъдов риск чрез рутинни измервания и настройка според държавата на пребиваване. Докладът сравнява риска с референтна възраст и показва въведените допълнителни изследвания.
+The country selected is outside the SCORE2 regions covered here.	Избраната държава е извън регионите по SCORE2, обхванати от този анализ.
+This assessment estimates SCORE2 risk for ages 40–69.	Този анализ оценява риска по SCORE2 за възраст от 40 до 69 години.
+The health history entered here needs a different approach to cardiovascular risk assessment.	Посочената здравна история изисква друг подход за оценка на сърдечносъдовия риск.
+This assessment uses cholesterol measurements from people who are not taking cholesterol-lowering medicine.	Този анализ използва стойности на холестерол при хора, които не приемат лекарства за понижаването му.
+SCORE2 needs a supported sex input and a known current smoking status.	За SCORE2 са нужни данни за пол и текущо пушене.
+Enter the measured value.	Въведете измерената стойност.
+Check the measured value and unit.	Проверете измерената стойност и мерната единица.
+HDL cholesterol must be lower than total cholesterol. Check both values and units.	HDL холестеролът трябва да е по-нисък от общия холестерол. Проверете двете стойности и мерните единици.
+A blood pressure or cholesterol value falls outside this assessment’s calculation range. Check the entries and discuss the measurements with a clinician.	Стойност на кръвното налягане или холестерола е извън обхвата на изчислението. Проверете въведените данни и обсъдете измерванията с лекар.
+SCORE2 Working Group (2021) · 10-year cardiovascular risk	Работна група SCORE2 (2021) · 10-годишен сърдечносъдов риск
+SCORE2 · Published model coefficients and calibration	SCORE2 · Публикувани коефициенти и регионални настройки
+ESC HeartScore · Country assignments	ESC HeartScore · Разпределение по държави
+ESC/EAS (2025) · Cardiovascular risk assessment	ESC/EAS (2025) · Оценка на сърдечносъдовия риск
+Cuende and Guijarro · Vascular age reference comparison	Cuende и Guijarro · Сравнение с референтна съдова възраст
+Heart & Vascular includes its report.	Анализът на сърцето и съдовете включва доклад.
+Where do you live?	В коя държава живеете?
+Choose a country	Изберете държава
+SCORE2 covers eligible adults aged 40–69.	SCORE2 е приложим за хора на 40–69 години, които отговарят на условията.
+Blood pressure & cholesterol	Кръвно налягане и холестерол
+Use total and HDL cholesterol from the same lipid panel.	Въведете общия и HDL холестерола от един и същ липиден профил.
+Add ApoB or Lp(a)	Добавете ApoB или Lp(a)
+These results add context to your report. SCORE2 uses the routine measurements above.	Тези резултати допълват доклада. SCORE2 използва рутинните измервания по-горе.
+Your measurements	Вашите измервания
+Assessment progress	Напредък на анализа
+Approximate age comparison	Приблизителна възраст за сравнение
+10-year SCORE2 risk	10-годишен риск по SCORE2
+Optional results	Допълнителни резултати
+You can add ApoB or Lp(a) if you have the results.	Можете да добавите ApoB или Lp(a), ако разполагате с резултатите.
+Edit optional results	Редактирайте допълнителните резултати
+Add optional results	Добавете допълнителни резултати
+The reference age	Референтна възраст
+Your answers	Вашите отговори
+Measurements	Измервания
+Methods	Метод
+SCORE2 estimates the chance of a first heart attack, stroke, or cardiovascular death over 10 years. The age expresses that risk as a comparison with a reference profile.	SCORE2 оценява риска от първи инфаркт, инсулт или сърдечносъдова смърт през следващите 10 години. Възрастта показва как този риск се съпоставя с референтен профил.
+Choose where to begin.	Изберете откъде да започнете.
+Start with your answers or measurements you already have.	Започнете с отговори или с измервания, с които вече разполагате.
+Blood pressure and cholesterol	Кръвно налягане и холестерол
+
+# Guided intake and model-specific results
+Your country of residence determines which regional estimate applies.	Държавата, в която живеете, определя кой регионален модел се използва.
+Sex used for the risk estimate	Пол за изчисляване на риска
+The models use separate equations for female and male participants.	Моделите използват отделни формули за жени и мъже.
+Used to smoke	Пушил/а съм преди
+Never smoked	Никога не съм пушил/а
+Current smoker	Пуша в момента
+Not currently smoking	Не пуша в момента
+Does any of this health history apply to you?	Отнася ли се някое от следните за вас?
+Heart or blood vessel disease, diabetes, chronic kidney disease, an inherited or rare cholesterol or blood pressure disorder, or current pregnancy.	Заболяване на сърцето или кръвоносните съдове, диабет, хронично бъбречно заболяване, наследствено или рядко нарушение на холестерола или кръвното налягане, или настояща бременност.
+Which apply to you?	Кои от изброените се отнасят за вас?
+Select all that apply.	Изберете всички приложими отговори.
+Heart attack or coronary heart disease	Инфаркт или исхемична болест на сърцето
+Stroke or mini-stroke (TIA)	Инсулт или преходна исхемична атака (ТИА)
+Other heart or blood vessel disease	Друго заболяване на сърцето или кръвоносните съдове
+Chronic kidney disease	Хронично бъбречно заболяване
+Inherited or rare cholesterol or blood pressure disorder	Наследствено или рядко нарушение на холестерола или кръвното налягане
+Currently pregnant	Бременна съм в момента
+Not sure which	Не знам точно кое
+Select the conditions that apply or choose Not sure which.	Изберете състоянията, които се отнасят за вас, или „Не знам точно кое“.
+Choose Not sure which on its own.	Изберете „Не знам точно кое“ като единствен отговор.
+Smoking history	История на пушенето
+Add any details you know. These details appear in your report.	Въведете данните, които знаете. Те ще бъдат показани в доклада.
+Days you smoked in the past 30 days	Дни с пушене през последните 30 дни
+Cigarettes on a day you smoke	Цигари в ден, в който пушите
+Cigarettes on a day you smoked	Цигари в ден, в който сте пушили
+Years you smoked cigarettes	Години, през които сте пушили цигари
+Check the smoking history value.	Проверете въведената стойност за пушенето.
+Your age	Вашата възраст
+Your readings will appear in a prevention review.	Измерванията ви ще бъдат включени в прегледа за профилактика.
+Blood pressure	Кръвно налягане
+For 150/90, enter 150 in the first box and 90 in the second. The estimate uses the top number.	При 150/90 въведете 150 в първото поле и 90 във второто. Оценката използва горната стойност.
+Top number (systolic)	Горна стойност (систолична)
+Bottom number (optional)	Долна стойност (по избор)
+Enter the top number for this blood pressure reading.	Въведете горната стойност на кръвното налягане.
+The bottom number must be lower than the top number.	Долната стойност трябва да е по-ниска от горната.
+These results add context to your report.	Тези резултати допълват доклада.
+These results add context to your report. The estimate uses the routine measurements above.	Тези резултати допълват доклада. Оценката използва рутинните измервания по-горе.
+View report	Вижте доклада
+Your report is ready	Докладът ви е готов
+VASCULAR RISK	СЪДОВ РИСК
+Above	Над
+Below	Под
+10-year SCORE2-OP risk	10-годишен риск по SCORE2-OP
+SCORE2 estimates 10-year risk for eligible adults aged 40–69.	SCORE2 оценява 10-годишния риск при хора на възраст 40–69 години, които отговарят на условията.
+SCORE2-OP estimates 10-year risk for eligible adults aged 70–89.	SCORE2-OP оценява 10-годишния риск при хора на възраст 70–89 години, които отговарят на условията.
+The assessment uses SCORE2 for ages 40–69 and SCORE2-OP for ages 70–89, when eligible.	При изпълнени условия се използва SCORE2 за възраст 40–69 години и SCORE2-OP за възраст 70–89 години.
+The risk models use age, sex, current cigarette smoking, systolic blood pressure, total cholesterol and HDL cholesterol. The country of residence selects the regional calibration.	Моделите използват възраст, пол, текущо пушене на цигари, систолично кръвно налягане, общ и HDL холестерол. Държавата на пребиваване определя настройката за региона.
+Health history helps determine eligibility. Smoking frequency and history, diastolic blood pressure, ApoB and Lp(a) appear in the report for context.	Здравната история помага да се определи дали моделът е приложим. Честотата и историята на пушенето, диастоличното кръвно налягане, ApoB и Lp(a) допълват доклада.
+Calculation coverage is systolic blood pressure from 100 to under 180 mmHg, total cholesterol 2.5–8 mmol/L and HDL cholesterol 0.5–3 mmol/L.	Изчислението обхваща систолично налягане от 100 до под 180 mmHg, общ холестерол 2,5–8 mmol/L и HDL холестерол 0,5–3 mmol/L.
+Vascular risk age is an app comparison. It matches your risk to a nonsmoker of the same sex and region with systolic blood pressure of 110 mmHg, total cholesterol of 4.75 mmol/L and HDL cholesterol of 1.3 mmol/L. Reference ages stay within the model’s age range.	Еквивалентната съдова възраст сравнява вашия риск с риска при непушач от същия пол и регион със систолично налягане 110 mmHg, общ холестерол 4,75 mmol/L и HDL холестерол 1,3 mmol/L. Сравнението е в рамките на възрастовия обхват на модела.
+The percentage estimates the chance of a first heart attack, stroke, or cardiovascular death over 10 years. Vascular risk age expresses that risk as a comparison with a reference profile.	Процентът оценява вероятността за първи инфаркт, инсулт или сърдечносъдова смърт през следващите 10 години. Еквивалентната съдова възраст сравнява този риск с референтен профил.
+Reported health history	Посочена здравна история
+What you can do next	Какво можете да направите
+Review measurements	Прегледайте измерванията
+Edit measurements	Редактирайте измерванията
+Edit age	Променете възрастта
+Review your measurements and health history with a clinician.	Обсъдете измерванията и здравната си история с лекар.
+The European 10-year risk estimates in this assessment start at age 40.	Европейските модели за 10-годишен риск в този анализ започват от 40-годишна възраст.
+The European 10-year risk estimates in this assessment cover ages 40–89.	Европейските модели за 10-годишен риск в този анализ обхващат възраст от 40 до 89 години.
+Review your blood pressure, cholesterol and family history with a clinician to discuss risk at your age.	Обсъдете кръвното налягане, холестерола и фамилната си история с лекар за оценка на риска на вашата възраст.
+Ask a clinician whether a longer-term risk assessment such as LIFE-CVD2 is appropriate for you.	Попитайте лекар дали оценка на по-дългосрочния риск като LIFE-CVD2 е подходяща за вас.
+Review your blood pressure and cholesterol with a clinician to find the assessment that fits your situation.	Обсъдете кръвното налягане и холестерола си с лекар, за да намерите подходящата оценка.
+Check your country of residence or ask a clinician which risk assessment is used where you live.	Проверете държавата на пребиваване или попитайте лекар кой метод за оценка се използва там.
+These models estimate the risk of a first event. Your answers include a history of cardiovascular disease.	Тези модели оценяват риска от първо сърдечносъдово събитие. Посочили сте сърдечносъдово заболяване.
+Ask the clinician who manages your heart or blood vessel condition about a follow-up risk assessment.	Попитайте лекуващия си лекар за оценка на риска при проследяване на заболяването.
+Your answers include a diabetes diagnosis. Cardiovascular risk in diabetes uses a separate assessment.	Посочили сте диагноза диабет. При диабет се използва отделна оценка на сърдечносъдовия риск.
+Ask your clinician about a diabetes-specific cardiovascular risk assessment.	Попитайте лекар за оценка на сърдечносъдовия риск, съобразена с диабета.
+If you have type 2 diabetes, ask a clinician whether SCORE2-Diabetes fits your history. It uses HbA1c, kidney function and age at diagnosis.	Ако имате диабет тип 2, попитайте лекар дали SCORE2-Diabetes е подходящ за вас. Той използва HbA1c, бъбречната функция и възрастта при поставяне на диагнозата.
+Your answers include chronic kidney disease. Kidney function changes how cardiovascular risk is assessed.	Посочили сте хронично бъбречно заболяване. Бъбречната функция влияе върху начина, по който се оценява сърдечносъдовият риск.
+Your answers include an inherited or rare cholesterol or blood pressure disorder. This requires a different approach to risk assessment.	Посочили сте наследствено или рядко нарушение на холестерола или кръвното налягане. То изисква отделен подход към оценката на риска.
+Current pregnancy requires a separate approach to cardiovascular assessment.	При бременност сърдечносъдовата оценка изисква отделен подход.
+Share your measurements with your maternity care team.	Покажете измерванията на медицинския екип, който проследява бременността ви.
+Your diagnosis history needs clarification before using this estimate.	За тази оценка са нужни уточнения относно здравната ви история.
+Check which diagnoses apply to you, or discuss your history and measurements with a clinician.	Проверете кои диагнози се отнасят за вас или обсъдете историята и измерванията си с лекар.
+Discuss your results and treatment history with the clinician who manages your cholesterol.	Обсъдете резултатите и лечението си с лекаря, който проследява холестерола ви.
+Your cholesterol medication history needs clarification before using this estimate.	За тази оценка е нужно да уточните дали приемате лекарства за холестерол.
+Check your medication list, or review it with a clinician.	Проверете списъка си с лекарства или го обсъдете с лекар.
+The estimate uses a sex-specific equation.	Оценката използва формула според пола.
+Review the sex input or view your measurements on their own.	Прегледайте отговора за пол или вижте измерванията си отделно.
+The estimate needs your current smoking status.	За оценката е нужен отговор дали пушите в момента.
+Review your smoking answer or view your measurements on their own.	Прегледайте отговора за пушене или вижте измерванията си отделно.
+This blood pressure is outside the range for the risk estimate.	Това кръвно налягане е извън обхвата на оценката на риска.
+Check the numbers against your reading. If this is a recent, confirmed reading, seek prompt medical advice.	Сверете числата с измерването. Ако стойностите са скорошни и потвърдени, потърсете медицински съвет възможно най-скоро.
+A blood pressure or cholesterol value falls outside this assessment’s calculation range.	Стойност на кръвното налягане или холестерола е извън обхвата на този анализ.
+Check the values and units. If they match your measurements, discuss them with a clinician.	Проверете стойностите и мерните единици. Ако съвпадат с измерванията, обсъдете ги с лекар.
+SCORE2 and SCORE2-Diabetes cover eligible adults aged 40–69. SCORE2-OP covers ages 70–89. The 10-year risk estimate uses the region for your country of residence.	SCORE2 и SCORE2-Diabetes обхващат хора на възраст 40–69 години, които отговарят на условията. SCORE2-OP обхваща възрастта 70–89 години. Оценката на 10-годишния риск използва региона на държавата, в която живеете.
+Younger adults can add a clinical pulse-wave result for a separate arterial stiffness age comparison.	По-младите хора могат да добавят клинично измерване на пулсовата вълна за отделно сравнение на възрастта по артериална ригидност.
+SCORE2-OP Working Group (2021) · 10-year risk in older adults	Работна група SCORE2-OP (2021) · 10-годишен риск при по-възрастни хора
+ESC · SCORE2 and SCORE2-OP calculators	ESC · Калкулатори за SCORE2 и SCORE2-OP
+SCORE2-Diabetes Working Group (2023) · Risk in type 2 diabetes	Работна група SCORE2-Diabetes (2023) · Риск при диабет тип 2
+Hageman et al. (2024) · LIFE-CVD2 lifetime risk model	Hageman и съавт. (2024) · Модел LIFE-CVD2 за риск през живота
+ESC (2024) · Blood pressure assessment	ESC (2024) · Оценка на кръвното налягане
+Educational report. Prepared automatically.	Образователен доклад. Изготвен автоматично.
+
+# Answer review and measurement checks
+We started with your Health & lifestyle answers. Update anything that has changed.	Попълнихме отговорите от „Здраве и начин на живот“. Променете всичко, което вече е различно.
+Saved answers were unavailable. Enter your current answers.	Запазените отговори не са достъпни. Въведете актуалните си отговори.
+Cigarette smoking	Пушене на цигари
+Heart or blood vessel disease (type unsure)	Заболяване на сърцето или кръвоносните съдове (неуточнено)
+Cholesterol	Холестерол
+Lower limit rule	Условие за долната граница
+Upper limit rule	Условие за горната граница
+Outside calculation range	Извън обхвата на изчислението
+Check the numbers against your reading.	Сверете числата с измерването.
+Check the numbers against your reading. If this is a recent, confirmed reading, seek urgent medical advice.	Сверете числата с измерването. Ако стойностите са скорошни и потвърдени, потърсете спешно медицински съвет.
+Check the laboratory reference limit rules.	Проверете условията за лабораторните референтни граници.
+This result is reported as a limit. Use the interpretation printed on your lab report.	Резултатът е посочен като граница. Вижте тълкуването в лабораторния си отчет.
+Check how this value is reported by your laboratory.	Проверете как лабораторията е посочила тази стойност.
+Add the laboratory interval in the same Lp(a) unit as your result.	Добавете лабораторния интервал в същата мерна единица като резултата за Lp(a).
+Use the laboratory interval for your situation.	Използвайте лабораторния интервал, приложим за вас.
+Add the interval from your lab report or review your sex input.	Добавете интервала от лабораторния си отчет или прегледайте отговора за пол.
+Enter the Lp(a) value and limits printed in the selected unit.	Въведете стойността и границите за Lp(a) в избраната мерна единица, както са посочени в отчета.
+Edit blood pressure	Редактирайте кръвното налягане
+How measurements are checked	Как се проверяват измерванията
+Your laboratory limits take precedence. When applicable, a published lipid guide supplies a general comparison. Individual treatment targets depend on overall risk.	Границите от вашата лаборатория са с предимство. Когато е приложим, публикуваният ориентир за липиди служи за общо сравнение. Индивидуалните цели на лечението зависят от общия риск.
+The published HDL comparison uses the sex entered for the estimate. Lp(a) stays in the unit printed on your report.	Публикуваният ориентир за HDL използва пола, посочен за оценката. Lp(a) остава в мерната единица от лабораторния отчет.
+Reference comparisons describe the measurement. Eligibility and calculation checks determine whether the risk estimate can be shown.	Референтните сравнения дават контекст на измерването. Условията за приложимост и проверките на стойностите определят дали може да се покаже оценка на риска.
+These equations estimate the chance of a first cardiovascular event. Risk with established disease uses a separate assessment.	Тези формули оценяват вероятността за първо сърдечносъдово събитие. При установено заболяване се използва отделна оценка.
+A diabetes-specific assessment can account for blood sugar control, kidney function and how long you have had diabetes.	Оценката при диабет може да вземе предвид контрола на кръвната захар, бъбречната функция и продължителността на диабета.
+Kidney function can change the way cardiovascular risk is assessed.	Бъбречната функция може да промени начина, по който се оценява сърдечносъдовият риск.
+Ask how your kidney function results factor into your cardiovascular risk.	Попитайте как резултатите за бъбречната функция се отразяват на оценката на сърдечносъдовия ви риск.
+Inherited lipid or blood pressure disorders can affect risk beyond the measurements these equations use.	Наследствените нарушения на липидите или кръвното налягане могат да повлияят на риска допълнително към измерванията, използвани във формулите.
+Pregnancy changes how blood pressure and cholesterol are interpreted.	При бременност кръвното налягане и холестеролът се тълкуват по различен начин.
+A very high blood pressure reading needs attention before a long-term risk estimate.	Много висока стойност на кръвното налягане изисква внимание преди оценка на дългосрочния риск.
+If you have type 2 diabetes, ask whether SCORE2-Diabetes fits your history. Bring your latest HbA1c and eGFR results and your age at diagnosis if available.	Ако имате диабет тип 2, попитайте дали SCORE2-Diabetes е подходящ за вас. Ако разполагате с тях, носете последните резултати за HbA1c и eGFR и възрастта при поставяне на диагнозата.
+Bring your latest HbA1c and kidney function results if available. Ask which cardiovascular assessment fits your age and medical history.	Ако разполагате с тях, носете последните резултати за HbA1c и бъбречната функция. Попитайте коя сърдечносъдова оценка е подходяща за възрастта и здравната ви история.
+
+# Type 2 diabetes and prevention review
+Which type of diabetes were you diagnosed with?	Кой тип диабет ви е диагностициран?
+Type 2 diabetes	Диабет тип 2
+Type 1 diabetes	Диабет тип 1
+Another type or not sure	Друг тип или не съм сигурен/сигурна
+Has a clinician identified complications from diabetes?	Лекар установил ли е усложнения от диабета?
+For example, kidney disease, protein in your urine, diabetic eye disease, or nerve damage.	Например бъбречно заболяване, белтък в урината, диабетно очно заболяване или увреждане на нервите.
+Age at diabetes diagnosis	Възраст при поставяне на диагнозата диабет
+Enter the age at diagnosis in whole years. It must be no greater than your current age.	Въведете възрастта при поставяне на диагнозата в навършени години. Тя трябва да е най-много колкото сегашната ви възраст.
+HbA1c	Гликиран хемоглобин (HbA1c)
+eGFR (kidney function)	eGFR (бъбречна функция)
+HbA1c unit	Мерна единица за HbA1c
+Complete your diabetes measurements	Попълнете данните за диабета
+SCORE2-Diabetes uses your age at diagnosis and these two lab results. You can review your other readings while you look for them.	SCORE2-Diabetes използва възрастта при поставяне на диагнозата и тези два лабораторни резултата. Можете да прегледате другите си измервания, докато ги потърсите.
+Diabetes complications can change how cardiovascular risk is assessed.	Усложненията от диабета могат да променят начина на оценка на сърдечносъдовия риск.
+Review your kidney results and any eye or nerve complications with your diabetes care team.	Обсъдете бъбречните резултати и евентуалните очни или неврологични усложнения с екипа, който проследява диабета ви.
+SCORE2-Diabetes needs a few more details to calculate your estimate.	За оценка със SCORE2-Diabetes са нужни още няколко данни.
+Add the missing values from your records. An exact lab value is needed for the calculation.	Добавете липсващите стойности от документацията си. За изчислението е нужна точна лабораторна стойност.
+A diabetes measurement is outside the range this assessment uses.	Една от стойностите за диабета е извън обхвата на този анализ.
+Check the HbA1c and eGFR values and units. If they match the report, review them with your diabetes care team.	Проверете стойностите и мерните единици за HbA1c и eGFR. Ако съвпадат с отчета, обсъдете ги с екипа, който проследява диабета ви.
+Your prevention review	Преглед за профилактика
+Add blood pressure or cholesterol readings to see them here.	Добавете измервания на кръвното налягане или холестерола, за да ги видите тук.
+This reading reaches the ESC office blood-pressure threshold. Several readings help show whether it stays elevated.	Това измерване достига прага на ESC за кръвно налягане, измерено в кабинет. Няколко измервания помагат да се види дали то остава повишено.
+10-year SCORE2-Diabetes risk	10-годишен риск по SCORE2-Diabetes
+Diabetes measurements	Измервания при диабет
+Edit diabetes measurements	Редактирайте данните за диабета
+SCORE2-Diabetes estimates 10-year risk for eligible adults aged 40–69 with type 2 diabetes.	SCORE2-Diabetes оценява 10-годишния риск при хора на 40–69 години с диабет тип 2, които отговарят на условията.
+SCORE2-Diabetes also uses age at diagnosis, HbA1c and eGFR. This assessment uses exact HbA1c from 20 to 140 mmol/mol and eGFR from 60 to 150 mL/min/1.73 m². The study used the CKD-EPI 2009 equation for eGFR.	SCORE2-Diabetes използва и възрастта при поставяне на диагнозата, HbA1c и eGFR. Анализът използва точни стойности на HbA1c от 20 до 140 mmol/mol и eGFR от 60 до 150 mL/min/1.73 m². Проучването използва формулата CKD-EPI 2009 за eGFR.
+The comparison matches the SCORE2-Diabetes risk to the standard SCORE2 reference profile.	Сравнението съпоставя риска по SCORE2-Diabetes със стандартния референтен профил по SCORE2.
+Finish your risk estimate	Завършете оценката на риска
+Add missing details	Добавете липсващите данни
+Add diabetes type	Добавете типа диабет
+A clinician can check whether DIAL2, a longer-term risk model for type 2 diabetes, fits your situation.	Лекар може да прецени дали DIAL2, модел за дългосрочен риск при диабет тип 2, е подходящ за вас.
+Add readings	Добавете измервания
+SCORE2-Diabetes · Published calculation	SCORE2-Diabetes · Публикувано изчисление
+NGSP · HbA1c unit conversion	NGSP · Преобразуване на единиците за HbA1c
+Østergaard et al. (2023) · DIAL2 risk in type 2 diabetes	Østergaard и съавт. (2023) · Риск по DIAL2 при диабет тип 2
+
+# Arterial stiffness comparison
+Pulse-wave measurement	Измерване на пулсовата вълна
+Carotid–femoral pulse wave velocity (cfPWV)	Каротидно-феморална скорост на пулсовата вълна (cfPWV)
+Use a clinic measurement of pulse wave velocity from the neck to the groin. The report may call it cfPWV.	Използвайте клинично измерване на скоростта на пулсовата вълна от шията до слабините. В отчета може да е отбелязано като cfPWV.
+My report confirms 80% of the direct carotid–femoral distance.	В отчета е посочено, че са използвани 80% от прякото каротидно-феморално разстояние.
+Confirm that your report uses 80% of the direct carotid–femoral distance.	Потвърдете, че в отчета са използвани 80% от прякото каротидно-феморално разстояние.
+Enter the pulse wave velocity in m/s, from 3 to 25.	Въведете скоростта на пулсовата вълна в m/s, от 3 до 25.
+Review your answers before adding a pulse-wave result.	Прегледайте отговорите си, преди да добавите резултат за пулсовата вълна.
+Compare arterial stiffness	Сравнете артериалната ригидност
+Remove result	Премахнете резултата
+Compare your arterial stiffness	Сравнете ригидността на артериите си
+If you have a pulse-wave result, you can use it for a separate age comparison.	Ако имате резултат за скоростта на пулсовата вълна, можете да го използвате за отделно сравнение по възраст.
+Add pulse-wave result	Добавете резултат за пулсовата вълна
+Edit pulse-wave result	Редактирайте резултата за пулсовата вълна
+ARTERIAL STIFFNESS AGE	ВЪЗРАСТ ПО АРТЕРИАЛНА РИГИДНОСТ
+Arterial stiffness age	Възраст по артериална ригидност
+Arterial stiffness	Артериална ригидност
+Your pulse-wave measurement is compared with adult reference values. The 10-year risk estimate starts at age 40.	Измерването на пулсовата вълна е сравнено с референтни стойности за възрастни. Оценката на 10-годишния риск започва от 40 години.
+The comparison finds the age at which the median carotid–femoral pulse wave velocity in the Austrian LEAD study matches your result. It uses the reference curve for your sex and stays within ages 18–80.	Сравнението намира възрастта, при която медианната каротидно-феморална скорост на пулсовата вълна в австрийското проучване LEAD съвпада с вашия резултат. То използва референтната крива за вашия пол и остава в границите от 18 до 80 години.
+The measurement uses 80% of the direct carotid–femoral distance. Blood pressure at the time of the test can affect the reading. This age describes arterial stiffness. A 10-year event risk uses a separate calculation.	При измерването се използват 80% от прякото каротидно-феморално разстояние. Кръвното налягане по време на теста може да повлияе на стойността. Тази възраст описва артериалната ригидност. За 10-годишния риск се използва отделно изчисление.
+Austrian LEAD study (2024) · Arterial stiffness reference	Австрийско проучване LEAD (2024) · Референтни стойности за артериална ригидност
+
+# Framingham vascular age for younger adults
+Do you take medicine for high blood pressure?	Приемате ли лекарство за високо кръвно налягане?
+Blood pressure medicine	Лекарство за кръвно налягане
+Type of diabetes	Тип диабет
+Blood pressure and a routine cholesterol panel can give you a vascular age comparison.	Измерването на кръвното налягане и стандартният липиден профил позволяват сравнение на съдовата възраст.
+Add the remaining details to calculate your vascular age.	Добавете липсващите данни, за да изчислите съдовата си възраст.
+This vascular age comparison covers adults without diabetes and adults with type 2 diabetes.	Това сравнение на съдовата възраст е приложимо за възрастни без диабет и с диабет тип 2.
+Ask your diabetes care team which cardiovascular assessment fits your history.	Попитайте екипа, който проследява диабета ви, коя сърдечносъдова оценка е подходяща за вас.
+Finish your vascular age estimate	Завършете оценката на съдовата възраст
+VASCULAR AGE	СЪДОВА ВЪЗРАСТ
+Framingham reference · U.S. study	Референтни стойности Framingham · Проучване в САЩ
+Your answers and readings match the modeled risk of someone this age with the study’s reference readings.	Отговорите и измерванията ви съответстват на изчисления риск за човек на тази възраст с референтните стойности от проучването.
+For ages 30–39, this assessment uses the Framingham general cardiovascular model with routine cholesterol results.	За възраст 30–39 години този анализ използва общия сърдечносъдов модел Framingham и резултати от стандартен липиден профил.
+The model uses age, sex, smoking, systolic blood pressure, blood pressure medicine, diabetes, and total and HDL cholesterol. Its outcome includes coronary disease, stroke, peripheral artery disease and heart failure.	Моделът използва възраст, пол, тютюнопушене, систолно кръвно налягане, прием на лекарства за кръвно налягане, диабет, общ и HDL холестерол. Той обхваща коронарна болест, инсулт, периферна артериална болест и сърдечна недостатъчност.
+The comparison matches your modeled risk to a nonsmoker of the same sex with no diabetes, untreated systolic pressure of 125 mmHg, total cholesterol of 180 mg/dL and HDL cholesterol of 45 mg/dL. Reference ages span 30–74.	Сравнението съпоставя изчисления ви риск с този на непушач от същия пол без диабет, със систолно налягане 125 mmHg без лечение, общ холестерол 180 mg/dL и HDL холестерол 45 mg/dL. Референтните възрасти са от 30 до 74 години.
+The model was developed in the United States. The report shows the comparison age. SCORE2 provides country-calibrated percentages for eligible adults starting at age 40.	Моделът е разработен в САЩ. Докладът показва възрастта за сравнение. SCORE2 дава процентна оценка, съобразена с държавата, при хора над 40 години включително, които отговарят на условията.
+Optional pulse-wave comparison	Сравнение по пулсова вълна по избор
+A clinic pulse-wave measurement can give you a separate arterial stiffness age.	Клиничното измерване на пулсовата вълна позволява отделна оценка на възрастта по артериална ригидност.
+Your clinic pulse-wave measurement is compared with adult reference values for arterial stiffness.	Клиничното ви измерване на пулсовата вълна се сравнява с референтните стойности за артериална ригидност при възрастни.
+D’Agostino et al. (2008) · Framingham vascular age	D’Agostino и съавт. (2008) · Съдова възраст по Framingham
+Framingham Heart Study · Published cardiovascular equation	Проучване Framingham · Публикувана сърдечносъдова формула
+For eligible adults aged 30–39, the Framingham model compares vascular age using blood pressure and routine cholesterol results.	При хора на 30–39 години, които отговарят на условията, моделът Framingham сравнява съдовата възраст по кръвното налягане и стандартните изследвания за холестерол.
+
+# PDAY early vascular age
+Do you take medicine to treat diabetes?	Приемате ли лекарство за лечение на диабет?
+Height	Ръст
+Weight	Тегло
+Height unit	Мерна единица за ръст
+Weight unit	Мерна единица за тегло
+Height and weight	Ръст и тегло
+Blood sugar	Кръвна захар
+Fasting glucose	Кръвна захар на гладно
+Fasting glucose unit	Мерна единица за кръвна захар на гладно
+PDAY uses these measurements to calculate body mass index. For feet and inches, enter the total in inches.	PDAY използва тези измервания, за да изчисли индекса на телесна маса. Ако ръстът е във футове и инчове, въведете общия брой инчове.
+Use a fasting glucose result from your lab report.	Използвайте стойността за кръвна захар на гладно от лабораторния си отчет.
+For 150/90, enter 150 in the first box and 90 in the second. PDAY uses both numbers.	При 150/90 въведете 150 в първото поле и 90 във второто. PDAY използва и двете стойности.
+Bottom number (diastolic)	Долна стойност (диастолно)
+Add the remaining details to estimate your early vascular age.	Добавете липсващите данни, за да получите оценка за ранната си съдова възраст.
+Height or weight is outside the calculation range.	Ръстът или теглото е извън диапазона за изчисление.
+Check the measurements and units you entered.	Проверете въведените стойности и мерни единици.
+The fasting glucose result needs attention before an age comparison.	Резултатът за кръвна захар на гладно изисква внимание преди сравнение по възраст.
+Edit height and weight	Редактирайте ръста и теглото
+Edit fasting glucose	Редактирайте кръвната захар на гладно
+Finish your early vascular age estimate	Завършете оценката на ранната съдова възраст
+EARLY VASCULAR AGE	РАННА СЪДОВА ВЪЗРАСТ
+PDAY · Coronary plaque risk comparison	PDAY · Сравнение на риска за коронарни плаки
+Up to	До
+At least	Поне
+For eligible adults aged 18–29, PDAY compares risk factors for plaque buildup in the arteries that supply the heart.	При хора на 18–29 години, които отговарят на условията, PDAY сравнява факторите за натрупване на плаки в артериите, които кръвоснабдяват сърцето.
+The model uses both blood pressure numbers, blood pressure treatment, total and HDL cholesterol, smoking, and fasting glucose or diabetes treatment. It also uses body mass index for male participants.	Моделът използва двете стойности на кръвното налягане, лечението за кръвно налягане, общия и HDL холестерола, тютюнопушенето и кръвната захар на гладно или лечението на диабета. За мъжете използва и индекс на телесна маса.
+Health history helps determine eligibility. ApoB and Lp(a) appear in the report for context.	Здравната история помага да се определи дали оценката е приложима. ApoB и Lp(a) се показват в доклада за допълнителна информация.
+PDAY used U.S. coronary artery data from ages 15–34. CARDIA followed young adults from age 18 and linked the score with later coronary artery calcium and coronary events.	PDAY използва данни от САЩ за коронарните артерии при хора на възраст 15–34 години. CARDIA проследява млади хора от 18-годишна възраст и свързва резултата с по-късна коронарна калцификация и коронарни събития.
+The study scales one point to about one year of modeled plaque risk. The app shifts your five-year age band by the risk-factor points and shows the part supported by the study's ages 15–34.	В проучването една точка съответства на около една година според модела на риска за плаки. Приложението измества петгодишния ви възрастов диапазон според точките за рискови фактори и показва частта, обхваната в проучването от 15 до 34 години.
+For this score, the pressure cutoffs are 130 systolic or 85 diastolic. The glucose cutoff is 126 mg/dL or 7 mmol/L. Treatment for either condition also counts in the corresponding factor.	За този резултат праговете за налягане са 130 систолно или 85 диастолно. Прагът за кръвна захар е 126 mg/dL или 7 mmol/L. Лечението за всяко от двете състояния също се отчита за съответния фактор.
+This range compares your risk factors for coronary plaque with the study’s reference profile.	Диапазонът сравнява вашите рискови фактори за коронарни плаки с референтния профил от проучването.
+McMahan et al. (2005) · PDAY coronary risk score	McMahan и съавт. (2005) · Оценка на коронарния риск по PDAY
+Gidding et al. (2006) · PDAY in living young adults	Gidding и съавт. (2006) · PDAY при млади възрастни
+Gidding et al. (2022) · CARDIA follow-up	Gidding и съавт. (2022) · Проследяване в CARDIA
+For eligible adults aged 18–29, PDAY estimates an early vascular age range from routine measurements and health history.	При хора на 18–29 години, които отговарят на условията, PDAY оценява диапазон на ранната съдова възраст по стандартни измервания и здравна история.

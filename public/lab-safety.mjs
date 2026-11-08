@@ -14,8 +14,8 @@ export const INPUT_COVERAGE=Object.freeze({
  lymphocytes:[3.2,76.5],mcv:[59.7,117.6],rdw:[10.9,19.6],alp:[17,264],wbc:[2.1,18.6]
 });
 export const CRITICAL_MESSAGE='Potentially critical if confirmed. Check the value and unit. For a recent or unreviewed result, seek urgent medical advice. If seriously unwell, seek emergency care.';
-export const COVERAGE_MESSAGE='Check the value, unit and test type against your report. This entry is outside the data coverage used by this prototype; a correct result can still be outside it. The age estimate will be withheld. Review it with your laboratory or clinician.';
-export const DISPLAY_RANGE_REASON='The calculated estimate falls outside this prototype’s reporting range. No age is shown. Check the entries with your laboratory or clinician; the app cannot establish a reliable personal age from this result.';
+export const COVERAGE_MESSAGE='This value falls outside the range used to estimate age. Check the value, unit and test type against your lab report. If they match, discuss the result with your laboratory or clinician.';
+export const DISPLAY_RANGE_REASON='The estimate falls outside the range this assessment can report. Review the entries with your laboratory or clinician.';
 
 const entered=value=>value!==undefined&&value!==null&&String(value).trim()!=='';
 export function reviewLabSafety(id,entry={}){
