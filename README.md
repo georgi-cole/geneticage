@@ -2,7 +2,7 @@
 
 The product owner selected **GeneticAge** on 6 November 2026. KoleQuant remains the publisher and the opening brand signature.
 
-Mobile-friendly full-stack Site with email-code accounts, per-user managed D1 storage and application-encrypted health records. The existing Site is owner-private.
+Mobile-friendly full-stack Site with Apple, Google and email-code sign-in, per-user managed D1 storage and application-encrypted health records. The hosted preview has a separate Sites access gate.
 
 Current priority: scientific content, design and core functionality. Payment activation is deferred. The private review release enables full report reading without payment through the server setting `REPORT_REVIEW_MODE=true`; this does not create orders or purchased entitlements, and is disabled whenever `PAYMENTS_ENABLED=true`.
 
@@ -84,7 +84,7 @@ The **App checks** workflow builds both editions. A maintainer can run it manual
 
 ## Prototype boundaries
 
-Account storage is real. Unsaved questionnaire/lab entries remain in page memory. Users explicitly choose to save; no new health records or sign-in tokens are written to browser storage. Legacy demo data is read only for opt-in import. Stripe payment code is implemented but live payments are not configured. No research, marketing or live consultation-submission service is connected. No analytics SDK is installed.
+Account storage is real. Unsaved questionnaire and lab entries remain in page memory. Users explicitly choose when to save. Browser local storage holds display preferences and hidden-record IDs, and sign-in sessions use HttpOnly cookies. Legacy demo data is read only for opt-in import. Stripe payment code is implemented but live payments are not configured. No research, marketing or live consultation-submission service is connected. No analytics SDK is installed.
 
 Health payloads and report snapshots use AES-256-GCM with a fresh nonce, bound to their owner, record ID and record kind. The encryption key is a hosted runtime secret, separate from the database and source. This is application encryption, not end-to-end encryption. Site operators with runtime administration access can administer stored data.
 
@@ -98,6 +98,8 @@ Use the hosted HTTPS address as `PUBLIC_SITE_ORIGIN`. Each button appears when i
 - **Google.** Create a Web application OAuth client with the authorized redirect URI `<PUBLIC_SITE_ORIGIN>/api/auth/oauth/google/callback`. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. [Google OpenID Connect setup](https://developers.google.com/identity/openid-connect/openid-connect)
 
 Publish with the OAuth D1 migration and test first-time registration, returning sign-in, cancellation and account deletion on the hosted URL. The app requests an opaque identity from each provider and keeps a keyed digest of its identifier. Each sign-in method has its own account identity. Use the same method to reopen saved history. The app sends no assessment inputs to sign-in providers. Separate assessment consent and explicit saving still apply.
+
+Both providers are enabled on the hosted preview. [Hosted sign-in verification and native store requirements](PRODUCT_RELEASE_NOTES.md#native-store-submission).
 
 ### Enable email sign-in on Sites
 
