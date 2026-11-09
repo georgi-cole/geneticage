@@ -6,12 +6,40 @@ const normalize=text=>text.replace(/\s+/g,' ').trim();
 const escapePattern=value=>value.replace(/[.*+?^{}$()|[\]\\]/g,'\\$&');
 const phrases=Object.keys(BG).sort((a,b)=>b.length-a.length);
 const phrasePattern=new RegExp('(?<![\\p{L}\\p{N}])(?:'+phrases.map(escapePattern).join('|')+')(?![\\p{L}\\p{N}])','gu');
+// Composed report sentences retain canonical English in saved snapshots. Match
+// only complete, curated templates so changing language never changes a number,
+// unit, model identifier or other interpolated fact.
+const placeholder=/\{([A-Za-z][A-Za-z0-9_]*)\}/g;
+const translationTemplates=phrases.filter(key=>/\{[A-Za-z][A-Za-z0-9_]*\}/.test(key)).map(key=>{
+ const names=[];
+ const parts=[];
+ let offset=0;
+ for(const match of key.matchAll(placeholder)){
+  parts.push(escapePattern(key.slice(offset,match.index)),'(.+?)');
+  names.push(match[1]);offset=match.index+match[0].length;
+ }
+ parts.push(escapePattern(key.slice(offset)));
+ return {pattern:new RegExp('^'+parts.join('')+'$','u'),names,text:BG[key]};
+});
+function translateTemplate(source){
+ for(const template of translationTemplates){
+  const match=template.pattern.exec(source);
+  if(!match)continue;
+  const values=new Map();
+  let consistent=true;
+  template.names.forEach((name,index)=>{
+   if(values.has(name)&&values.get(name)!==match[index+1])consistent=false;
+   values.set(name,match[index+1]);
+  });
+  if(consistent)return template.text.replace(placeholder,(_,name)=>values.get(name)??'{'+name+'}');
+ }
+}
 
 export function translateText(text,language='en',{protectedPrefix=''}={}){
  if(protectedPrefix&&text.startsWith(protectedPrefix))return protectedPrefix+translateText(text.slice(protectedPrefix.length),language);
  if(language!=='bg'||!text||!/[A-Za-z]/.test(text))return text;
  const source=normalize(text);
- let translated=BG[source];
+ let translated=BG[source]??translateTemplate(source);
  if(translated===undefined){
   const match=source.match(/^(\d+) saved (assessment|report)s?$/);
   const dated=source.match(/^(\d+) dated (record|records)$/);

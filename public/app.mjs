@@ -17,6 +17,7 @@ import {createNavigationHistory} from './navigation-history.mjs';
 import {labReferenceGroup,validateLabReferences,setLabEntryUnit} from './lab-review.mjs';
 import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 import {renderAssessmentReport} from './report-ui.mjs';
+import {initializeReportExport} from './report-export.mjs';
 import {assessHeartVascular, HEART_ASSESSMENT, heartOffersArterialAge} from './heart-vascular.mjs';
 import {heartSteps, heartRoute, readHeartForm, refreshHeartFeedback, changeHeartUnit, renderHeartForm, renderHeartReport, renderHeartArterialForm, readHeartArterialForm, heartRoutineAgeStep} from './heart-vascular-ui.mjs';
 import {heartPrefill} from './heart-prefill.mjs';
@@ -69,6 +70,7 @@ function hideSavedRecord(id){
 }
 const account=()=>auth.profile?{...auth.profile,history:auth.history}:null;
 const language=initializeLanguage();
+const reportExport=initializeReportExport();
 const resultMotion=initializeResultMotion();
 initializeLaunch();
 initializeLabFeedback({getState:()=>state});
@@ -395,8 +397,8 @@ function hasContext(){return state.answers.illness==='Yes'||['conditions','medic
 
 function pagesInfo(){modal('This preview is offline for accounts',`<p>Account creation needs the hosted app. You can use assessments in this preview, and your entries stay on this page.</p><a class="btn" href="${HOSTED_APP_URL}" target="_blank" rel="noopener noreferrer">Open hosted app ↗</a>`);}
 function report(){
- if(isHeartAssessment(state))return state.heart.result?renderHeartReport({heart:state.heart,saved:!!state.saved,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):heartForm();
- if(isSystemAssessment(state))return state.system.result?renderSystemReport({type:state.assessmentType,system:state.system,saved:!!state.saved,sample:state.sample,hasDraftBackup:!!draftBackup,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):systemForm();
+ if(isHeartAssessment(state))return state.heart.result?renderHeartReport({heart:state.heart,saved:!!state.saved,savedReport:state.savedReport,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):heartForm();
+ if(isSystemAssessment(state))return state.system.result?renderSystemReport({type:state.assessmentType,system:state.system,saved:!!state.saved,savedReport:state.savedReport,sample:state.sample,hasDraftBackup:!!draftBackup,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):systemForm();
  const reviewing=NATIVE_APP||!!auth.reportReview||!!state.savedReport?.access?.review;state.unlocked=state.savedReport?.full===true||reviewing;
  return renderAssessmentReport({state,clinical:clinical(),full:state.unlocked,reviewing,pagesPreview:PAGES_PREVIEW,sourceLinks,ageComparison,hasDraftBackup:!!draftBackup,consultations:!NATIVE_APP});
 }
@@ -1194,7 +1196,7 @@ document.addEventListener('click',async e=>{
   return;
  }
  if(act==='checkout'){checkout();return;}
- if(act==='print'){if(independentAssessment(state)||auth.reportReview||state.savedReport?.full===true){const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(d=>d.open);details.forEach(d=>d.open=true);window.addEventListener('afterprint',()=>details.forEach((d,i)=>d.open=previous[i]),{once:true});window.print();}else checkout();return;}
+ if(act==='print'){if(independentAssessment(state)||NATIVE_APP||auth.reportReview||state.savedReport?.full===true)reportExport.print(b.dataset.export);else checkout();return;}
  if(act==='save-before-checkout'){await action(b,async()=>{await api('assessments','POST',snapshot());await openSaved(state.saveId,'report');checkout();});return;}
  if(act==='purchase-checkout'){await action(b,async()=>{const result=await api('payments/checkout','POST',{assessmentId:state.saveId,confirm:true});if(result.purchased){close();await openSaved(state.saveId,'report');return;}const url=new URL(result.url);if(url.protocol!=='https:'||url.hostname!=='checkout.stripe.com')throw Error('Could not open secure checkout.');modal('Your secure checkout is ready.',`<p>Continue to Stripe to review the final total and pay. Your saved report stays in your account if you leave checkout.</p><a class="btn" href="${esc(url.href)}" target="_top" rel="noreferrer">Open Stripe checkout →</a><p class="small muted" style="margin-top:15px">You can return to Purchases to check or cancel an unfinished checkout.</p>`);});return;}
  if(act==='refresh-payments'||act==='check-order'){await action(b,async()=>{const result=await api('payments/refresh','POST',act==='check-order'?{orderId:b.dataset.id}:{});auth.purchases=result.purchases;await refreshAccount();state.accountTab='purchases';goto('account');});return;}

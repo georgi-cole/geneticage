@@ -53,7 +53,7 @@
 .new-assessment-link {font-size:10px;color:var(--muted);align-self:flex-start}
 .sample-badge:has(button) {display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 
-/* Four report destinations; each has a clear title and its own reading surface. */
+/* Narrative, data and evidence share the same report reading surface. */
 .report-workspace {height:100%;min-height:0;max-width:960px;gap:12px;padding:22px 24px}
 .report-heading {display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-shrink:0}
 .report-heading h1 {font-size:27px;line-height:1.2;font-weight:450;letter-spacing:-.8px;margin:6px 0 0}
@@ -63,7 +63,7 @@
 .report-tools .text-btn {display:flex;align-items:center;gap:6px;font-size:11px;min-height:36px}
 .report-tools svg {width:18px;height:18px}
 .report-mode-note {font-size:9px;color:var(--muted);margin:0;flex-shrink:0;line-height:1.4}
-.report-tabs {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--paper);flex-shrink:0}
+.report-tabs {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--paper);flex-shrink:0}
 .report-tabs button {border:0;border-radius:8px;background:none;color:var(--muted);font:12px var(--font-sans);min-height:38px;padding:8px 4px;cursor:pointer}
 .report-tabs button[aria-current=page] {background:color-mix(in srgb,var(--accent) 12%,var(--paper));color:var(--ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent)}
 .report-workspace .report-paper {flex:1;min-height:0;overflow:auto;padding:22px;border:1px solid var(--line);border-radius:18px;background:var(--paper);overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
@@ -209,4 +209,89 @@
  .report-estimate * {color:#202023!important}.report-answer-group,.finding-card,.blood-review-item {break-inside:avoid;margin:12px 0}
  .report-panel>h2,.report-section-heading {margin:18px 0}.report-panel button {display:none!important}
  .report-paper summary:after {display:none!important}
+}
+
+/* A composed report reads as a continuous, deliberately paced document. */
+.personal-report-workspace .report-heading>div:first-child {min-width:0}
+.personal-report-workspace .report-tools {justify-content:flex-end;flex-wrap:wrap;gap:3px 12px;max-width:280px;flex-shrink:0}
+.personal-report-workspace .report-tools .text-btn {min-height:40px;line-height:1.35;text-align:left}
+.personal-report-workspace .report-tabs button {min-height:42px;line-height:1.35}
+.personal-report-workspace .report-paper {padding:clamp(18px,3vw,32px)}
+.report-opening {padding-bottom:2px}
+.report-opening>h2 {font-size:clamp(22px,3vw,29px);line-height:1.2;letter-spacing:-.65px}
+.report-opening>.eyebrow {display:block}
+.report-result-caveat {color:var(--muted);max-width:72ch}
+.personal-report-document {display:flex;flex-direction:column;gap:28px;min-width:0}
+.report-narrative-section {min-width:0;border-top:1px solid var(--line);padding-top:24px}
+.report-narrative-heading {display:flex;align-items:baseline;gap:13px;margin-bottom:14px;min-width:0}
+.report-narrative-heading h2 {font-size:clamp(19px,2.5vw,23px);font-weight:500;letter-spacing:-.45px;overflow-wrap:anywhere}
+.report-priority-number {font:11px var(--font-mono);color:var(--accent);flex:0 0 21px;font-variant-numeric:tabular-nums}
+.report-narrative-prose {max-width:72ch}
+.report-panel .report-narrative-prose p {font-size:13px;line-height:1.8;color:var(--ink);overflow-wrap:anywhere}
+.report-narrative-prose p+p {margin-top:13px}
+.report-narrative-section[data-section-kind=intro] {border-top:0;padding-top:7px}
+.report-narrative-section[data-section-kind=plan] {padding:22px;border:1px solid var(--line);border-radius:13px;background:color-mix(in srgb,var(--accent) 5%,transparent)}
+.report-narrative-sources {margin-top:14px;color:var(--muted)}
+.report-narrative-sources:empty {display:none}
+.report-narrative-sources .source-list {display:flex;flex-wrap:wrap;gap:5px 15px;list-style:none;padding:0;margin:0;font-size:10px;line-height:1.5}
+.report-narrative-sources .source-list li {margin:0}
+.report-narrative-sources a {color:var(--muted);text-underline-offset:3px}
+.report-snapshot-note {padding:12px 14px;border-left:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,transparent);color:var(--muted)}
+.personal-report-workspace .report-stored-findings {gap:28px}
+.personal-report-workspace .report-stored-findings .finding-card {border:0;border-top:1px solid var(--line);border-radius:0;overflow:visible;margin:0;padding:24px 0 0}
+.report-record-summary {border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:7px}
+.report-record-summary>span {color:var(--muted);font-size:11px}
+.report-record-summary>strong {font-size:24px;font-weight:450;line-height:1.2}
+.report-record-summary>strong>span {font-size:12px;font-weight:400}
+.report-record-summary>p {font-size:11px;color:var(--muted)}
+.report-data-heading {margin-top:15px}
+.report-provenance dl {margin:12px 0 0}
+.report-provenance dd {font-size:10px}
+.personal-report-workspace .report-explanation p+p {margin-top:12px}
+.personal-report-workspace .report-explanation>.source-list {font-size:12px;line-height:1.65;padding-left:18px}
+@media (max-width:480px) {
+ .personal-report-workspace .report-heading {display:block}
+ .personal-report-workspace .report-tools {max-width:none;justify-content:flex-start;gap:3px 18px;padding-top:4px}
+ .personal-report-workspace .report-tabs button {font-size:10px;padding:7px 3px}
+ .personal-report-workspace .report-paper {padding:16px}
+ .personal-report-document {gap:23px}
+ .report-narrative-section {padding-top:21px}
+ .report-narrative-section[data-section-kind=plan] {padding:17px}
+ .report-narrative-heading {gap:9px}
+ .report-panel .report-narrative-prose p {font-size:12px;line-height:1.8}
+ .report-narrative-sources .source-list {font-size:10px}
+}
+@media print {
+ /* Browser print and Report PDF default to narrative. The explicit companion
+    export selects data and methods, regardless of the currently open app tab. */
+ .report-workspace {--lab-low:#875d12;--lab-within:#286646;--lab-high:#ad3548;--lab-check:#665083;--lab-alert:#93481d}
+ :root[data-theme] .report-workspace .report-estimate {--paper:#fff;--result-base:#fff;--result-ink:#202023;--result-muted:#555;--result-line:#ccc}
+ .report-workspace .report-panel[data-export-scope=technical],
+ body[data-report-export=report] [data-export-scope=technical],
+ body[data-report-export=technical] [data-export-scope=report] {display:none!important}
+ body[data-report-export=technical] .report-workspace .report-panel[data-export-scope=technical] {display:block!important}
+ .personal-report-workspace .report-paper {padding:0!important}
+ .report-opening {margin:0 0 16px}
+ .report-opening>h2 {font-size:25px}
+ .personal-report-document {display:block}
+ .report-result-caveat {font-size:10px!important;line-height:1.5!important;color:#444;margin:14px 0 18px!important}
+ .report-narrative-section {display:block;margin:22px 0 0;padding-top:18px;border-color:#d5d5d5;break-inside:avoid-page}
+ .report-narrative-heading {margin-bottom:10px;break-after:avoid-page}
+ .report-narrative-heading h2 {font-size:18px;color:#202023}
+ .report-priority-number {color:#555}
+ .report-panel .report-narrative-prose p {font-size:11px;line-height:1.65;color:#202023;orphans:3;widows:3}
+ .report-narrative-prose p+p {margin-top:9px}
+ .report-narrative-section[data-section-kind=plan] {border-color:#ddd;background:#f7f7f7;padding:18px}
+ .report-narrative-sources {margin-top:9px}
+ .report-narrative-sources .source-list {font-size:8px;gap:4px 12px;color:#555}
+ .report-narrative-sources a {color:#555}
+ .report-record-summary,.answer-row,.reference-interval,.blood-review-item {break-inside:avoid-page}
+ /* Screen rounding must not clip content when a long record spans pages. */
+ .report-workspace .report-estimate,.report-workspace .blood-review-list,.report-workspace .report-answer-group,.report-workspace .blood-review-item {overflow:visible!important}
+ .report-workspace .lab-alert-symbol {background:none;clip-path:none;border:1px solid #222;color:#222!important}
+ .report-record-summary {margin:0 0 18px;border-color:#ccc}
+ .report-record-summary>span,.report-record-summary>p {color:#555}
+ .personal-report-workspace .report-stored-findings .finding-card {margin:22px 0 0;break-inside:avoid-page}
+ .report-section-heading,.report-explanation>h3,.report-answer-group>summary {break-after:avoid-page}
+ .report-panel[data-report-panel=details],.report-panel[data-report-panel=methods] {break-before:page}
 }
