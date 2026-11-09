@@ -1284,8 +1284,11 @@ document.addEventListener('submit',async e=>{
  }
  if(f.id==='store-review-form'&&NATIVE_APP&&f.reportValidity())await emailAction(f,async()=>{
   await api('auth/store-review','POST',{code:f.elements.code.value.trim()});
-  signIn={stage:'review-register'};
-  signup();
+  await api('auth/register','POST',{
+   name:'GeneticAge Review',adult:f.elements.adult.checked,consent:f.elements.consent.checked,
+   consentVersion:CONSENT_VERSION,signInMethod:'social',
+  });
+  await finishSignIn();
  });
  if(f.id==='auth-email-form'&&f.reportValidity())await sendEmailCode(f,f.elements.email.value.trim());
  if(f.id==='auth-code-form'&&f.reportValidity())await emailAction(f,async()=>{
