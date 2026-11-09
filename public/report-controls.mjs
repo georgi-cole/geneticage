@@ -16,17 +16,18 @@ export function reportFootnote(studyBased=true,print=false) {
 }
 
 const chapters=[
- ['matched','Steps linked to your readings','See what was tested, what changed, and what to discuss with your clinician.'],
- ['context','What stands out','The details that give your result more meaning.'],
- ['steps','Small steps to consider','Pick a change that fits your health and your routine.'],
- ['clinician','Questions for your next visit','Bring the questions that fit your situation and any earlier results you have.'],
+ ['matched','What the research adds'],
+ ['context','How to put your results in context'],
+ ['steps','A place to start in your routine'],
+ ['clinician','Planning your next conversation'],
 ];
 
-function studyDetails({duration,protocol,outcomes,contrast,fit}){
+const paragraphs=copy=>copy.filter(Boolean).map(paragraph=>`<p>${esc(paragraph)}</p>`).join('');
+
+function studyDetails({duration,outcomes}){
  return `<div class="premium-report-study">
   <div class="premium-study-protocol">
-   <div class="premium-study-heading"><strong class="premium-study-label">What the study tested</strong><span class="premium-study-duration">${esc(duration)}</span></div>
-   <p>${esc(protocol)}</p>
+   <div class="premium-study-heading"><strong class="premium-study-label">Study duration or time point</strong><span class="premium-study-duration">${esc(duration)}</span></div>
   </div>
   <div class="premium-study-outcomes">
    <strong class="premium-study-label">What changed in the study</strong>
@@ -34,25 +35,30 @@ function studyDetails({duration,protocol,outcomes,contrast,fit}){
     <dt>${esc(name)}</dt><dd><strong>${esc(value)}</strong><small>${esc(note)}</small></dd>
    </div>`).join('')}</dl>
   </div>
-  ${contrast?`<details class="report-answer-group premium-study-comparison"><summary>What about vigorous exercise?</summary><p>${esc(contrast)}</p></details>`:''}
-  <div class="premium-study-fit"><strong class="premium-study-label">How closely it applies</strong><p>${esc(fit)}</p></div>
  </div>`;
 }
 
-function insightCard(item,label,sourceLinks){
- const matched=item.study||item.evidence;
+function insightCard(item,sourceLinks){
+ const {study,measurements,visit}=item;
+ const matched=study||item.evidence;
+ const notes=measurements?.length||study;
  return `<article class="premium-report-card${matched?' premium-report-matched':''}">
   <h3>${esc(item.name)}</h3>
-  ${item.text?`<p>${esc(item.text)}</p>`:''}
-  ${item.study?'<strong class="premium-study-label">Your starting point</strong>':''}
-  ${item.measurements?.length?`<ul class="premium-report-readings">${item.measurements.map(reading=>typeof reading==='string'?`<li>${esc(reading)}</li>`
-   :`<li><strong>${esc(reading.title)}</strong><small>${esc(reading.description)}</small></li>`).join('')}</ul>`:''}
-  ${item.study?studyDetails(item.study):item.evidence?`<div class="premium-report-evidence"><strong>What the study found</strong><p>${esc(item.evidence)}</p></div>`:''}
-  ${item.action?`<div class="premium-report-next"><strong>${label}</strong><p>${esc(item.action)}</p></div>`:''}
-  ${item.visit?.length?`<div class="premium-report-visit">
-   <strong class="premium-study-label">Bring to your clinician</strong>
-   <ol>${item.visit.map(question=>`<li>${esc(question)}</li>`).join('')}</ol>
+  <div class="premium-report-prose">${paragraphs([...(item.paragraphs||[item.text]),
+   study?.protocol,...(study?.paragraphs||[item.evidence]),study?.fit,item.action])}</div>
+  ${visit?.length?`<div class="premium-report-visit">
+   <strong class="premium-study-label">One way to ask at your next visit</strong>
+   <blockquote><p>${esc(visit.join(' '))}</p></blockquote>
   </div>`:''}
+  ${study?.contrast?`<details class="report-answer-group premium-study-comparison"><summary>What about vigorous exercise?</summary><p>${esc(study.contrast)}</p></details>`:''}
+  ${notes?`<details class="report-answer-group premium-report-notes"${item.paragraphs&&(!study||study.paragraphs)?' data-pdf-exclude':''}>
+   <summary>${study?'Readings and study details':'Readings behind this section'}</summary>
+   <div class="premium-report-notes-body">
+    ${measurements?.length?`<ul class="premium-report-readings">${measurements.map(reading=>typeof reading==='string'?`<li>${esc(reading)}</li>`
+     :`<li><strong>${esc(reading.title)}</strong><small>${esc(reading.description)}</small></li>`).join('')}</ul>`:''}
+    ${study?studyDetails(study):''}
+   </div>
+  </details>`:''}
   ${matched?sourceLinks(item.sources||[]):''}
  </article>`;
 }
@@ -63,22 +69,21 @@ export function renderReportInsights({guidance,assessment,safety='',sourceLinks=
   <p>Get more context for your results, guidance that applies to your answers, and questions to discuss with a healthcare professional.</p>
   <button class="btn secondary" type="button" data-action="checkout">Full report ${uiIcon('forward')}</button>
  </section>`;
- const {title,intro,stats=[]}=reportHighlights(assessment);
- const groups=chapters.map(([key,name,description])=>({key,name,description,items:guidance.filter(item=>(item.section||'context')===key)}))
+ const {title,opening}=reportHighlights(assessment);
+ const groups=chapters.map(([key,name])=>({name,items:guidance.filter(item=>(item.section||'context')===key)}))
   .filter(chapter=>chapter.items.length);
  const matchedSources=new Set(guidance.filter(item=>item.study||item.evidence).flatMap(item=>item.sources||[]));
  const sources=[...new Set(guidance.flatMap(item=>item.sources||[]))].filter(id=>!matchedSources.has(id));
  return `<section class="premium-report">
   <div class="premium-report-cover" data-theme-part>
    ${reportArtwork()}
-   <span class="eyebrow">AT A GLANCE</span><h2>${esc(title)}</h2>
-   <p>${esc(intro)}</p>
-   ${stats.length?`<dl class="premium-report-stats">${stats.map(([label,value,unit])=>`<div><dt>${esc(label)}</dt><dd><strong>${esc(value)}</strong> <span>${esc(unit)}</span></dd></div>`).join('')}</dl>`:''}
+   <span class="eyebrow">YOUR RESULTS</span><h2>${esc(title)}</h2>
+   <div class="premium-report-prose">${paragraphs(opening)}</div>
   </div>
   ${safety}
-  ${groups.map(({key,name,description,items},index)=>`<section class="premium-report-chapter">
-   <header><span class="premium-report-number" aria-hidden="true">${String(index+1).padStart(2,'0')}</span><div><h2>${name}</h2><p>${description}</p></div></header>
-   ${items.map(item=>insightCard(item,{steps:'A place to start',clinician:'Bring this up',matched:'A starting point to discuss'}[key]||'Keep in mind',sourceLinks)).join('')}
+  ${groups.map(({name,items})=>`<section class="premium-report-chapter">
+   <header><h2>${name}</h2></header>
+   ${items.map(item=>insightCard(item,sourceLinks)).join('')}
   </section>`).join('')}
   ${sources.length?`<details class="report-answer-group premium-report-sources"><summary>Research and guidance behind this report</summary>${sourceLinks(sources)}</details>`:''}
  </section>`;

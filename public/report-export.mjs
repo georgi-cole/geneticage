@@ -15,10 +15,8 @@ function readableText(node) {
 }
 
 function cardBlocks(card, heading=[]) {
- const children=[...card.children];
- const split=children.findIndex(child=>child.matches('.premium-report-study'));
- const tail=split<0?[]:children.splice(split);
- return [{stack:[...heading,...children.flatMap(blocks)],unbreakable:true,margin:[0,4,0,7]},...tail.flatMap(blocks)];
+ const [title,opening,...rest]=[...card.children].flatMap(blocks);
+ return [{stack:[...heading,title,opening].filter(Boolean),unbreakable:true,margin:[0,4,0,0]},...rest];
 }
 
 function blocks(element) {
@@ -29,7 +27,7 @@ function blocks(element) {
   return [...cardBlocks(first,blocks(header)),...rest.flatMap(blocks)];
  }
  if(element.matches('.premium-report-card'))return cardBlocks(element);
- if(element.matches('.premium-study-protocol,.premium-study-outcomes,.premium-study-comparison,.premium-study-fit,.premium-report-visit')){
+ if(element.matches('.premium-study-protocol,.premium-study-outcomes,.premium-study-comparison,.premium-report-visit')){
   return [{stack:[...element.children].flatMap(blocks),unbreakable:true,margin:[0,4,0,7]}];
  }
  if(element.matches('.premium-study-heading'))return [...element.children].flatMap(blocks);
@@ -40,13 +38,6 @@ function blocks(element) {
    {text:cleanText(readableText(pair.querySelector('dd small'))),style:'body'},
   ]}));
   return [{columns,columnGap:16,margin:[0,0,0,5]}];
- }
- if(element.matches('.premium-report-stats')){
-  const columns=[...element.children].map(pair=>({width:'*',stack:[
-   {text:cleanText(readableText(pair.querySelector('dt'))),style:'eyebrow'},
-   {text:cleanText(readableText(pair.querySelector('dd'))),style:'result'},
-  ]}));
-  return [{columns,columnGap:16,margin:[0,8,0,5]}];
  }
  if(element.matches('.premium-report-readings li')&&element.children.length){
   return [{stack:[
@@ -72,7 +63,8 @@ function blocks(element) {
   if(!text)return [];
   if(tag==='A'&&/^https:\/\//i.test(element.href))return [{text,link:element.href,style:'link'}];
   const style=element.matches('.report-age-line')?'result':element.matches('.premium-report-cover h2')?'briefing'
-   :element.matches('.premium-report-chapter h2')?'section':element.matches('.premium-report-next strong,.premium-report-evidence strong,.premium-study-label,.premium-study-duration,.premium-report-cover .eyebrow')?'eyebrow'
+   :element.matches('.premium-report-chapter h2')?'section':element.matches('.premium-study-label,.premium-study-duration,.premium-report-cover .eyebrow')?'eyebrow'
+   :element.matches('.premium-report-prose p')?'narrative':element.matches('.premium-report-visit p')?'visitQuote'
    :tag==='H1'?'title':tag==='H2'?'heading':tag==='SUMMARY'||/^H[34]$/.test(tag)?'subheading':'body';
   return [{text,style}];
  }
@@ -120,6 +112,8 @@ export function reportDocument(screen) {
    heading:{fontSize:12,bold:true,margin:[0,8,0,4]},
    subheading:{fontSize:10,bold:true,margin:[0,6,0,3]},
    body:{margin:[0,0,0,4]},
+   narrative:{fontSize:10.5,lineHeight:1.25,margin:[0,0,0,8]},
+   visitQuote:{fontSize:10.5,lineHeight:1.25,margin:[9,0,4,6],italics:true},
    link:{color:'#783b30',decoration:'underline',margin:[0,0,0,4]},
    footnote:{fontSize:9,color:'#605351',margin:[0,16,0,0]},
   },

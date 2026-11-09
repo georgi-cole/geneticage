@@ -12,7 +12,10 @@ export function activityNeedsReview(answers={}){
 
 const glucoseStudy={
  duration:'6 months',
- protocol:'The combined group received coaching on food and weight and gradually built up moderate exercise, mostly on a treadmill. They averaged about 150 minutes over three sessions a week. The study asked participants to attend at least two supervised sessions per week.',
+ protocol:'In a six-month study called STRRIDE-PD, one group received coaching on food and weight while gradually building up moderate exercise, mostly on a treadmill. They averaged about 150 minutes over three sessions each week. The researchers asked them to attend at least two supervised sessions a week.',
+ paragraphs:[
+  'By the end of the program, fasting blood sugar fell by an average of 0.32 mmol/L, or about 6 mg/dL. Triglycerides, a type of fat in the blood, fell by 0.34 mmol/L, or about 30 mg/dL. Both changes were measured in the group that worked on food and activity together.',
+ ],
  outcomes:[
   ['Fasting blood sugar','−0.32 mmol/L','About 6 mg/dL lower on average in the combined group.'],
   ['Triglycerides (blood fats)','−0.34 mmol/L','About 30 mg/dL lower on average in the same group.'],
@@ -35,6 +38,9 @@ function fastingGlucoseStep(assessment,aboveGuide,profileAnswers) {
  if(!inStudyRange||age<45||age>75||!Number.isFinite(age))return null;
 
  const markers=[reportReading('Fasting blood sugar',glucose)];
+ const paragraphs=[
+  `Your fasting blood sugar was ${glucose.value} ${glucose.unit}. This measures how much sugar was in your blood at the time of the test. Your reading was above the comparison range, so it’s worth asking whether it was a one-off result or part of a pattern. HbA1c, a test that reflects your average blood sugar over the last few months, can help with that question.`,
+ ];
  let action='Ask your clinician whether repeating the fasting test or trying a structured food-and-activity program would be useful for you.';
  let coversMovement=false;
  let fit='Your age and fasting result are within the study’s entry ranges. The researchers also used body measurements and confirmed elevated blood sugar on two fasting tests.';
@@ -60,15 +66,19 @@ function fastingGlucoseStep(assessment,aboveGuide,profileAnswers) {
  if(activity&&[activity.moderate,activity.vigorous].every(value=>(typeof value==='number'||typeof value==='string'&&value.trim())&&Number.isFinite(Number(value))&&Number(value)>=0)){
   const moderate=Number(activity.moderate),vigorous=Number(activity.vigorous);
   markers.push(`Moderate activity · ${moderate} min/week`,`Vigorous activity · ${vigorous} min/week`);
+  const usualActivity=moderate===0&&vigorous===0?'You recorded no moderate or vigorous activity in a typical week.'
+   :vigorous===0?`You reported about ${moderate} minutes of moderate activity in a typical week, with no vigorous activity.`
+    :`You reported ${moderate} minutes of moderate activity and ${vigorous} minutes of vigorous activity in a typical week.`;
+  paragraphs.push(usualActivity+' That gives you and your clinician a starting point for talking about what could fit into your routine.');
   if(activity.limitations==='No'&&moderate+2*vigorous<150){
    coversMovement=true;
-   action='If walking suits your health, discuss how to build on the activity you already do and pair it with a food change that fits your routine.';
+   action='If walking suits your health, one option to discuss is building on the activity you already do and pairing it with a food change you could keep up. Your clinician can help you choose a starting point and decide which blood test would tell you whether it’s helping.';
   }else if(moderate+2*vigorous>=150){
    action='You already reach the WHO’s general activity starting target. Bring your activity pattern and the fasting result to your next visit to discuss whether a repeat test or changes to eating would help.';
   }
  }
  return {
-  section:'matched',name:'Food and activity for fasting blood sugar',measurements:markers,coversMovement,
+  section:'matched',name:'What your fasting blood sugar can tell you',measurements:markers,coversMovement,paragraphs,
   text:markers.length>1?'Your fasting blood sugar was above the comparison range. The activity you recorded gives you a starting point for choosing a next step.'
    :'Your fasting blood sugar was above the comparison range. Bring this reading to your next visit to discuss what follow-up fits.',
   evidence:'In a six-month study of inactive adults aged 45 to 75 with elevated fasting blood sugar, the group that combined dietary changes and regular exercise averaged a drop of 0.32 mmol/L (about 6 mg/dL). That was the result of the full program.',
@@ -95,10 +105,15 @@ function heartMarkerSteps(heart,answers) {
    section:'matched',name:'Less salt and the top blood pressure number',
    measurements:[reportReading('Systolic blood pressure',inputs.systolic),...(inputs.diastolic?[reportReading('Diastolic blood pressure',inputs.diastolic)]:[])],
    text:'Systolic is the top number. It measures pressure when your heart beats. Several readings give a clearer picture of your usual blood pressure.',
+   paragraphs:[
+    (inputs.diastolic?`You entered a blood pressure of ${top}/${bottom} mmHg. `:`You entered a top blood pressure number of ${top} mmHg. `)
+     +'The top number, called systolic pressure, tells you how much pressure there is when your heart beats. The bottom number measures the pressure between beats. Because blood pressure changes through the day, a few readings taken in the same way can give a clearer picture of what’s usual for you.',
+   ],
    evidence:'In the DASH-Sodium feeding trial, reducing sodium lowered systolic blood pressure on average in adults with above-optimal or mildly elevated readings.',
    study:{
     duration:'30 days at each sodium level',
-    protocol:'The researchers provided meals and tested three levels of sodium, the main mineral in salt. Participants spent 30 days at each level while keeping the rest of their assigned diet consistent.',
+    protocol:'The DASH-Sodium researchers wanted to see how much difference the salt in food could make. They provided meals so that participants could spend 30 days at each of three levels of sodium, a mineral in salt, while keeping the rest of their assigned diet consistent.',
+    paragraphs:['On the comparison diet, moving from the higher to the middle sodium level lowered the top number by an average of 2.1 mmHg. That gives you a specific reading to discuss and a practical question about where salt comes from in your usual meals.'],
     outcomes:[
      ['Systolic blood pressure','−2.1 mmHg','Average drop from the higher to the middle sodium level on the comparison diet.'],
     ],
@@ -120,10 +135,16 @@ function heartMarkerSteps(heart,answers) {
    section:'matched',name:'A cooking swap and total cholesterol',
    measurements:[reportReading('Total cholesterol',inputs.total),...(inputs.hdl?[reportReading('HDL cholesterol',inputs.hdl)]:[])],
    text:'Total cholesterol includes HDL and other types of cholesterol. Your clinician can use those individual results to give the total more context.',
+   paragraphs:[
+    `Your total cholesterol was ${inputs.total.value} ${inputs.total.unit}. `
+     +(inputs.hdl?`Your HDL cholesterol was ${inputs.hdl.value} ${inputs.hdl.unit}. `:'')
+     +'Think of total cholesterol as a summary. The individual results, including LDL and HDL, tell your clinician which kinds of cholesterol make up that total and which result is most useful to follow.',
+   ],
    evidence:'In a four-week randomized trial of adults aged 50 to 75, total cholesterol rose more in the butter group than in the olive oil group. WHO recommends replacing saturated fats with unsaturated fats where possible.',
    study:{
     duration:'4 weeks',
-    protocol:'Adults were assigned olive oil, coconut oil or butter. Each group received 50 grams of its assigned fat per day. The amounts describe the study, and your clinician can help you choose a swap that fits your diet.',
+    protocol:'A four-week trial compared three familiar cooking fats. Adults were assigned olive oil, coconut oil or butter, with each group receiving 50 grams of its assigned fat a day as part of the experiment.',
+    paragraphs:['Total cholesterol rose less in the olive oil group than in the butter group, by 0.38 mmol/L on average. The researchers also measured LDL separately and found it was lower in the olive oil group relative to butter. If you often cook with butter, that makes the choice of cooking fat a concrete topic to discuss.'],
     outcomes:[
      ['Total cholesterol','0.38 mmol/L less rise','Difference in average change in the olive oil group compared with the butter group.'],
      ['LDL cholesterol','Lower with olive oil','The study measured LDL separately from total cholesterol.'],
@@ -151,9 +172,12 @@ function fitnessTrainingStep(system,answers){
  return {
   section:'matched',name:'What structured training can change',coversMovement:true,
   text:'Peak oxygen uptake measures how much oxygen your body can use during hard exercise. It’s the fitness measure the researchers tested.',
+  paragraphs:[`You recorded ${inputs.moderate.value} minutes of moderate and ${inputs.vigorous.value} minutes of vigorous activity per week in this assessment. That can help you and your clinician decide whether a structured activity program would suit where you’re starting.`,
+   'If the goal is to build stamina, peak oxygen uptake gives you a specific measure to follow. It describes how much oxygen your body can use when you’re working hard.'],
   measurements:[`Estimated oxygen uptake · ${review.estimatedVo2.toFixed(1)} mL/kg/min`,
    reportReading('Moderate activity',inputs.moderate),reportReading('Vigorous activity',inputs.vigorous)],
-  study:{duration:'6 months',protocol:'In a study of previously inactive adults, the supervised group worked toward four 43-minute fitness sessions a week. A second group followed a step-count walking program.',
+  study:{duration:'6 months',protocol:'In a six-month study of previously inactive adults, the supervised group worked toward four 43-minute fitness sessions a week. A second group followed a step-count walking program.',
+   paragraphs:['Measured peak oxygen uptake improved by about 9% on average in the supervised group. The step-count group showed no clear change on that test. If you want to know whether your stamina is changing, that distinction can help you decide which measurement to use.'],
    outcomes:[['Peak oxygen uptake','About 9% higher','Average gain in the supervised training group. The walking group had no clear change on this test.']],
    fit:'You reported less than an hour of weekly activity in both assessments. The study measured oxygen uptake during an exercise test. Your fitness assessment estimates it from your answers and readings.'},
   visit:['Is a supervised program appropriate for me, and what starting level makes sense?',

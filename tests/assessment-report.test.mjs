@@ -6,7 +6,7 @@ import {freshAssessment} from '../public/assessment-flow.mjs';
 import {sampleAnswers,sampleLabs,assessClinical} from '../public/model.mjs';
 import {translateText} from '../public/language-system.mjs';
 import {reportDocument} from '../public/report-export.mjs';
-import {reportGuidance} from '../public/report-guidance.mjs';
+import {reportGuidance,reportHighlights} from '../public/report-guidance.mjs';
 import {reportOffer} from '../public/report-controls.mjs';
 import {reportReadiness} from '../public/report-readiness.mjs';
 import {assessHeartVascular} from '../public/heart-vascular.mjs';
@@ -24,7 +24,9 @@ test('report has four stable sections, a focal estimate, actual answers and dist
  assert.equal(doc.querySelector('.report-age-line strong').textContent,String(Math.round(clinical.value)));
  assert.ok(doc.querySelectorAll('.premium-report-card').length>=3);
  assert.match(doc.querySelector('.premium-report-cover').textContent,/Your blood-based age, explained/);
- assert.deepEqual([...doc.querySelectorAll('.premium-report-chapter h2')].map(el=>el.textContent),['Steps linked to your readings','What stands out','Small steps to consider','Questions for your next visit']);
+ assert.match(doc.querySelector('.premium-report-cover .premium-report-prose p').textContent,/You were 45 years old.*estimate was about 50 years/);
+ assert.match(doc.querySelector('.premium-report').textContent,/1 day of strength activity/);
+ assert.deepEqual([...doc.querySelectorAll('.premium-report-chapter h2')].map(el=>el.textContent),['What the research adds','How to put your results in context','A place to start in your routine','Planning your next conversation']);
  const answers=[...doc.querySelectorAll('.answer-row')];
  assert.ok(answers.some(el=>el.querySelector('dt').textContent==='How old are you?'&&el.querySelector('dd').textContent==='45 years'));
  assert.ok(answers.some(el=>el.querySelector('dd').textContent==='Bulgaria'));
@@ -60,14 +62,20 @@ test('fasting glucose guidance uses the actual result, known context and the rep
  assert.equal(match({...assessment,lab:{...state.lab,glucose:{value:'126',unit:'mg/dL'}}}),undefined);
  assert.equal(match({...assessment,clinical:{withheld:'critical-values',reason:'Review needed'}}),undefined);
  assert.equal(match({...assessment,lab:{...state.lab,glucose:{value:'112',unit:'mg/dL'}}}).measurements[0],'Fasting blood sugar · 112 mg/dL');
- const {content}=reportDocument(render().querySelector('.report-workspace'));
+ const document=render();
+ const story=document.querySelector('.premium-report-matched');
+ assert.match(story.querySelector('.premium-report-prose p').textContent,/Your fasting blood sugar was 6.2 mmol\/L.*HbA1c/);
+ assert.match(story.querySelector('.premium-report-prose').textContent,/fell by an average of 0\.32 mmol\/L/);
+ assert.match(story.querySelector('blockquote').textContent,/when would you want to check it again/);
+ assert.equal(story.querySelector('.premium-report-notes').open,false);
+ const {content}=reportDocument(document.querySelector('.report-workspace'));
  const pdfText=JSON.stringify(content);
- assert.match(pdfText,/What the study tested/);
- assert.match(pdfText,/Bring to your clinician/);
+ assert.match(pdfText,/six-month study called STRRIDE-PD/);
+ assert.match(pdfText,/One way to ask at your next visit/);
  assert.match(pdfText,/What about vigorous exercise\?/);
- assert.match(pdfText,/−0\.32 mmol\/L/);
- assert.match(pdfText,/Fasting blood sugar · 6.2 mmol\/L/);
- assert.match(pdfText,/The count behind the percentage/);
+ assert.match(pdfText,/Your fasting blood sugar was 6.2 mmol\/L/);
+ assert.match(pdfText,/Lymphocytes made up 25%/);
+ assert.doesNotMatch(pdfText,/Readings and study details/);
 });
 
 test('report readiness distinguishes missing fields from useful optional measurements in all six assessments',()=>{
@@ -119,7 +127,8 @@ test('separate health profile changes report guidance without changing the recor
  })};
  const kidneyGuidance=reportGuidance(kidney,profile);
  assert.ok(kidneyGuidance.some(item=>item.study?.duration==='1–2 hours after eating'));
- assert.match(kidneyGuidance.find(item=>item.name==='Two measures of kidney health').visit[0],/urine albumin/);
+ assert.match(kidneyGuidance.find(item=>item.name==='What a urine result can add').visit[0],/urine albumin/);
+ assert.match(reportHighlights(kidney).opening.join(' '),/Your blood creatinine was 0.9 mg\/dL.*Your estimated filtration was/);
  const metabolic={assessmentType:'metabolic',system:assessSystem('metabolic',systemSampleInputs('metabolic'))};
  assert.ok(reportGuidance(metabolic,profile).some(item=>item.name==='Blood sugar in context'));
  assert.ok(reportGuidance({answers:{...sampleAnswers}},profile).some(item=>item.name==='Make room for a little more movement'&&item.visit?.length));
