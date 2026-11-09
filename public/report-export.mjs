@@ -14,16 +14,32 @@ function readableText(node) {
  return [...node.childNodes].map(readableText).join(separator);
 }
 
+function cardBlocks(card, heading=[]) {
+ const children=[...card.children];
+ const split=children.findIndex(child=>child.matches('.premium-report-study'));
+ const tail=split<0?[]:children.splice(split);
+ return [{stack:[...heading,...children.flatMap(blocks)],unbreakable:true,margin:[0,4,0,7]},...tail.flatMap(blocks)];
+}
+
 function blocks(element) {
  if(element.matches(excluded))return [];
  const tag=element.tagName;
  if(element.matches('.premium-report-chapter')){
   const [header,first,...rest]=element.children;
-  const opening=[...blocks(header),...[...first.children].flatMap(blocks)];
-  return [{stack:opening,unbreakable:true,margin:[0,0,0,7]},...rest.flatMap(blocks)];
+  return [...cardBlocks(first,blocks(header)),...rest.flatMap(blocks)];
  }
- if(element.matches('.premium-report-card')){
+ if(element.matches('.premium-report-card'))return cardBlocks(element);
+ if(element.matches('.premium-study-protocol,.premium-study-outcomes,.premium-study-comparison,.premium-study-fit,.premium-report-visit')){
   return [{stack:[...element.children].flatMap(blocks),unbreakable:true,margin:[0,4,0,7]}];
+ }
+ if(element.matches('.premium-study-heading'))return [...element.children].flatMap(blocks);
+ if(element.matches('.premium-study-results')){
+  const columns=[...element.children].map(pair=>({width:'*',stack:[
+   {text:cleanText(readableText(pair.querySelector('dt'))),style:'subheading'},
+   {text:cleanText(readableText(pair.querySelector('dd strong'))),style:'studyValue'},
+   {text:cleanText(readableText(pair.querySelector('dd small'))),style:'body'},
+  ]}));
+  return [{columns,columnGap:16,margin:[0,0,0,5]}];
  }
  if(element.matches('.premium-report-stats')){
   const columns=[...element.children].map(pair=>({width:'*',stack:[
@@ -56,7 +72,7 @@ function blocks(element) {
   if(!text)return [];
   if(tag==='A'&&/^https:\/\//i.test(element.href))return [{text,link:element.href,style:'link'}];
   const style=element.matches('.report-age-line')?'result':element.matches('.premium-report-cover h2')?'briefing'
-   :element.matches('.premium-report-chapter h2')?'section':element.matches('.premium-report-next strong,.premium-report-evidence strong,.premium-report-cover .eyebrow')?'eyebrow'
+   :element.matches('.premium-report-chapter h2')?'section':element.matches('.premium-report-next strong,.premium-report-evidence strong,.premium-study-label,.premium-study-duration,.premium-report-cover .eyebrow')?'eyebrow'
    :tag==='H1'?'title':tag==='H2'?'heading':tag==='SUMMARY'||/^H[34]$/.test(tag)?'subheading':'body';
   return [{text,style}];
  }
@@ -82,7 +98,7 @@ export function reportDocument(screen) {
  for(const [index,panel] of panels.entries()){
   const copy=panel.cloneNode(true);
   copy.querySelectorAll(excluded).forEach(node=>node.remove());
-  if(!premium||index>0)content.push({text:panel.getAttribute('aria-label'),style:'section',...(premium&&index===1?{pageBreak:'before'}:{})});
+  if(!premium||index>0)content.push({text:panel.getAttribute('aria-label'),style:'section'});
   content.push(...blocks(copy));
  }
  const footnote=paper.querySelector(':scope > .report-footnote');
@@ -91,6 +107,7 @@ export function reportDocument(screen) {
   content,
   info:{title:'GeneticAge · '+title,author:'KoleQuant'},
   pageSize:'A4',pageMargins:[44,42,44,48],
+  pageBreakBefore:(node,page)=>node.style==='section'&&!page.getFollowingNodesOnPage().length,
   defaultStyle:{fontSize:10,color:'#241b1a',lineHeight:1.18},
   styles:{
    brand:{fontSize:12,bold:true,color:'#783b30',margin:[0,0,0,16]},
@@ -98,6 +115,7 @@ export function reportDocument(screen) {
    title:{fontSize:26,bold:true,margin:[0,0,0,8]},
    briefing:{fontSize:21,bold:true,color:'#783b30',margin:[0,5,0,8]},
    result:{fontSize:21,bold:true,margin:[0,0,0,4]},
+   studyValue:{fontSize:14,bold:true,margin:[0,0,0,4]},
    section:{fontSize:15,bold:true,color:'#783b30',margin:[0,16,0,6]},
    heading:{fontSize:12,bold:true,margin:[0,8,0,4]},
    subheading:{fontSize:10,bold:true,margin:[0,6,0,3]},

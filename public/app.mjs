@@ -19,6 +19,7 @@ import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
 import {renderAssessmentReport} from './report-ui.mjs';
 import {renderReportInsights,reportOffer} from './report-controls.mjs';
 import {reportGuidance} from './report-guidance.mjs';
+import {reportReadiness,reportGoal} from './report-readiness.mjs';
 import {exportReport} from './report-export.mjs';
 import {renderProgress} from './report-progress.mjs';
 import {assessHeartVascular, HEART_ASSESSMENT, heartOffersArterialAge} from './heart-vascular.mjs';
@@ -109,7 +110,10 @@ async function refreshAccount(){
  return accountRefresh;
 }
 async function action(button,fn){if(button.disabled)return;button.disabled=true;button.setAttribute('aria-busy','true');try{await fn();}catch(error){modal('Your change was not completed.', '<p role="alert">'+esc(error.message)+'</p><p>Your current assessment is still on this page. Please retry after refreshing the account connection.</p><button class="btn" data-action="close">Close</button>');}finally{button.disabled=false;button.removeAttribute('aria-busy');}}
-function dirty(){delete state.saveId;delete state.savedReport;delete state.saved;}
+function dirty(){
+ delete state.saveId;delete state.savedReport;delete state.saved;
+ delete state.reportProfile;delete state.reportEdition;
+}
 
 function announce(t){$('#live').textContent=t;}
 const arrow=' '+uiIcon('forward'),sampleBadge=()=>state.sample?'<div class="sample-badge">Illustrative sample data · Not a personal assessment'+(draftBackup?'<button class="text-link" data-action="restore-draft">Return to your assessment</button>':'')+'</div>':'';
@@ -194,8 +198,10 @@ function goBack({commitEdit=false}={}){
  while(origin?.draft&&hiddenRecords.has(origin.draft.saveId))origin=returnTrail.pop();
  origin??=fallbackReturn();
  if(origin.restore==='edit'&&!commitEdit)navigationHistory.forget(point=>point.draft===state);
- const restoreDraft=origin.restore==='edit'?!commitEdit:origin.restore==='preview'||state.savedReport||state.sample;
+ const profileReturn=origin.restore==='report-profile';
+ const restoreDraft=origin.restore==='edit'?!commitEdit:profileReturn||origin.restore==='preview'||state.savedReport||state.sample;
  if(restoreDraft&&origin.draft&&state!==origin.draft){
+  if(profileReturn)parkedAssessments.set(assessmentType(state),state);
   state=origin.draft;
   draftBackup=origin.backup;
   parkedAssessments.delete(assessmentType(state));
@@ -389,7 +395,7 @@ function result(){
  let content='';
  if(tab==='summary')content=(c&&!c.reason?resultInstrument({value:Math.round(c.value),age:state.labAge,gap:displayGap(c.gap),sample:false,illustrative:state.sample,title:'Your blood-based age',action:'method',date:state.labDate}):`<section class="card result-surface" data-theme-part><span class="eyebrow">${c?'ESTIMATE WITHHELD':'HEALTH & LIFESTYLE'}</span><h2>${c?'These entries need review':'Your personal health profile'}</h2>${c?'<div class="withheld-emblem">'+unmeasuredMark()+'</div>':''}<p>${c?esc(c.reason):'Your answers identify topics for review. This assessment does not calculate an age in years.'}</p>${clinicalCheckSummary(c)}<button class="btn secondary" data-action="labs">${c?'Review blood entries':'Add blood results'} →</button></section>`)+`<p class="result-context">${c&&!c.reason?'One blood sample, in context. This is not a measure of aging speed.':c?'Your report identifies the flagged measurements and explains the checks.':'Review the details of your health profile.'}</p>`;
  else if(tab==='insights')content='<div class="card">'+renderReportInsights({assessment:{...state,clinical:c},
-  guidance:fullReportAvailable()?currentGuidance():null,safety:clinicalCheckSummary(c),sourceLinks})+'</div>';
+  guidance:fullReportAvailable()&&(state.sample||state.reportEdition==='full')?currentGuidance():null,safety:clinicalCheckSummary(c),sourceLinks})+'</div>';
  else content=`<div class="detail-actions" data-theme-part><button class="account-setting" data-action="report"><span><strong>Assessment report</strong><small>Interpretation, entries and evidence</small></span><span>↗</span></button><button class="account-setting" data-action="labs"><span><strong>Blood entries</strong><small>Review the values and collection details</small></span><span>↗</span></button><button class="account-setting" data-action="review"><span><strong>Questionnaire</strong><small>Review your health and lifestyle answers</small></span><span>↗</span></button><button class="account-setting" data-action="method"><span><strong>Methods & limitations</strong><small>What this estimate can and cannot tell you</small></span><span>↗</span></button>${NATIVE_APP?'':'<button class="account-setting" data-action="consult"><span><strong>Discuss your results</strong><small>Consultation and laboratory testing</small></span><span>↗</span></button>'}</div>${hasContext()?'<div class="notice amber">You reported a condition, treatment or recent illness. This profile cannot determine whether your care should change.</div>':''}`;
  return `<div class="wrap app-screen result-screen ${tab==='insights'?'insight-screen':''}">${screenHeading(state.sample?'ILLUSTRATIVE SAMPLE':'YOUR ASSESSMENT',c?(c.reason?'Review your assessment':'Your result'):'Your health profile',state.sample?'Sample data · Not a personal assessment':c?'Blood draw · '+esc(state.labDate):'Based on the answers you provided.')}${tabs}${content}<div class="result-actions">${PAGES_PREVIEW?'<button class="text-btn" data-action="review">Review answers</button>':state.saved?'<button class="text-btn" type="button" disabled>Saved</button>':'<button class="btn secondary" data-action="save">Save assessment</button>'}<button class="btn secondary" data-action="report">Open report ↗</button></div></div>`;
 }
@@ -400,7 +406,10 @@ function betaReportAccess(){return auth.authenticated&&auth.reportReview;}
 function fullReportAvailable(draft=state){
  return draft.sample===true||betaReportAccess()||!!(account()&&draft.savedReport?.full&&draft.savedReport.access?.purchased);
 }
-function currentGuidance(){return state.savedReport?.guidance||reportGuidance({...state,clinical:clinical()});}
+function currentGuidance(){
+ if(state.reportProfile?.answers)return reportGuidance({...state,clinical:clinical()},state.reportProfile);
+ return state.savedReport?.guidance||reportGuidance({...state,clinical:clinical()});
+}
 function report(){
  const full=fullReportAvailable()&&(state.reportEdition==='full'||state.sample&&state.reportEdition!=='basic');
  const options={saved:state.saved,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab,full,guidance:full?currentGuidance():null,sample:state.sample,hasDraftBackup:!!draftBackup};
@@ -409,21 +418,51 @@ function report(){
  return renderAssessmentReport({state,clinical:clinical(),...options,ageComparison,consultations:!NATIVE_APP});
 }
 function webReportCheckout(){return !NATIVE_APP&&!PAGES_PREVIEW&&!!auth.payments?.enabled;}
-function checkout(id){
+const offeredProfiles=new WeakMap();
+let offerRequest=0;
+function savedProfileRecord(){
+ const records=auth.history.filter(record=>!record.sample&&record.hasProfile);
+ return records.findLast(record=>!record.labSubmitted)||records.at(-1);
+}
+async function profileForReport(assessment){
+ if(assessment.sample||reportGoal(assessment)==='profile')return null;
+ const assessmentId=assessment.id||assessment.saveId;
+ const working=draftForGoal('profile');
+ if(working&&!working.sample&&working!==assessment&&(!working.saved||working.saveId!==assessmentId)&&profileProgress(working.answers).answered){
+  if(!working.saved)return {answers:structuredClone(working.answers),source:'session'};
+  if(account())return {answers:structuredClone(working.answers),source:'saved',saved:working.saved,id:working.saveId};
+ }
+ const record=savedProfileRecord();
+ if(!record)return auth.collectionsError?{source:'unavailable'}:null;
+ if(record.id===assessmentId)return null;
+ try{
+  const {assessment:profile}=await api('assessments/'+record.id+'?snapshot=1');
+  return profile.sample||hiddenRecords.has(record.id)?null:{answers:profile.answers,source:'saved',saved:profile.saved,id:profile.id};
+ }catch{return {source:'unavailable'};}
+}
+async function checkout(id,opener){
+ const request=++offerRequest,entry=navigationHistory.position,draft=state;
+ if(accountRefresh)await accountRefresh;
+ const session=auth.csrf;
  const record=id?auth.history.find(item=>item.id===id):state;
  if(!record||(!id&&!state.assessment))return;
+ const assessment=id?(await api('assessments/'+id+'?snapshot=1')).assessment:draft;
+ const profile=await profileForReport(assessment);
+ if(request!==offerRequest||state!==draft||navigationHistory.position!==entry||session!==auth.csrf
+  ||opener&&!opener.isConnected||id&&hiddenRecords.has(id))return;
  modal('Full report',reportOffer({
   assessment:assessmentTitle(record),price:auth.payments?.label,sample:record.sample,review:betaReportAccess(),
   purchased:!!(record.access?.purchased||record.savedReport?.access?.purchased),canPurchase:webReportCheckout(),
-  needsSave:!record.saved,test:auth.payments?.mode==='test',recordId:id||'',
+  needsSave:!record.saved,test:auth.payments?.mode==='test',recordId:id||'',readiness:reportReadiness(assessment,profile),
  }));
+ offeredProfiles.set($('.report-offer'),profile);
 }
 function savedDraft(s,report,goal=s.labSubmitted?'labs':assessmentType(s)){
  const draft={...freshAssessment(goal),...s,labReferenceMode:s.labReferenceMode||'lab-only',labReferenceVersion:s.labReferenceVersion||null,labReferenceGroup:s.labReferenceGroup||'unspecified',profileCompleted:!Object.keys(profileMeasurementErrors(s.answers)).length,saveId:s.id,savedReport:report,assessment:true,labValid:true,consent:true};
  rememberSaved(draft);
  return draft;
 }
-async function openSaved(id,view='results',origin,{full=false}={}){
+async function openSaved(id,view='results',origin,{full=false,profile=null}={}){
  if(hiddenRecords.has(id))return;
  const {assessment:s,report}=await api('assessments/'+id);
  if(hiddenRecords.has(id))return;
@@ -436,9 +475,10 @@ async function openSaved(id,view='results',origin,{full=false}={}){
  state=savedDraft(s,report);
  const unlocked=full&&fullReportAvailable();
  state.reportEdition=unlocked?'full':'basic';
+ if(unlocked)state.reportProfile=profile;
  state.reportTab=unlocked?'findings':'summary';
  goto(independentAssessment(state)?'report':view);
- if(full&&!unlocked)checkout();
+ if(full&&!unlocked)await checkout();
 }
 function purchaseList(){const purchases=auth.purchases||[];return `<section class="card"><div class="section-head"><div><h2>Your purchases</h2><p class="muted small">Purchased reports follow your account across devices. Refresh to check a recent payment.</p></div><button class="btn secondary" data-action="refresh-payments">Refresh payments</button></div>${purchases.length?purchases.map(p=>`<article class="purchase-row"><div><strong>Full educational report</strong><p class="small muted">${esc(new Date(p.created).toLocaleDateString('en-GB'))} · ${p.testOnly?'Test checkout · ':''}${esc(p.id.slice(0,8))}</p><span class="pill">${esc(({paid:'Purchased',open:'Awaiting payment',creating:'Preparing checkout',processing:'Payment processing',expired:'Checkout ended',refunded:'Refunded',disputed:'Payment under review'})[p.status]||p.status)}</span></div><div><strong>US$${(p.amount/100).toFixed(2)}</strong><div class="actions" style="margin-top:12px">${p.status==='paid'&&!hiddenRecords.has(p.assessmentId)?`<button class="text-link" data-action="open-full-report" data-id="${esc(p.assessmentId)}">Read purchased report</button>`:''}${p.receiptUrl?`<a class="text-link" href="${esc(p.receiptUrl)}" target="_blank" rel="noopener noreferrer">Stripe receipt ↗</a>`:''}${['creating','open','processing'].includes(p.status)?`<button class="text-link" data-action="check-order" data-id="${esc(p.id)}">Check payment</button>`:''}${p.status==='open'?`<button class="text-btn" data-action="cancel-payment" data-id="${esc(p.id)}">Cancel checkout</button>`:''}</div></div></article>`).join(''):'<div class="empty"><h3>No purchases yet.</h3><p>Your saved report previews are available in Reports.</p></div>'}<p class="small muted" style="margin-top:20px">Payment records and receipts are also held by Stripe.</p></section>`;}
 async function paymentReturn(){if(PAGES_PREVIEW)return;const params=new URLSearchParams(location.search);const id=params.get('payment_order')||params.get('payment_cancelled');if(!id){if(location.hash==='#purchases'){state.accountTab='purchases';goto('account');}return;}state.accountTab='purchases';goto('account');if(!account()){modal('Sign in to check your purchase.','<p>Use the same account that started checkout, then refresh Purchases. A redirect alone never unlocks a report.</p>');return;}try{const result=await api('payments/refresh','POST',{orderId:id});auth.purchases=result.purchases;await refreshAccount();goto('account');const purchase=auth.purchases.find(p=>p.id===id);const title=purchase?.status==='paid'?'Your report is ready.':purchase?.status==='expired'?'Checkout has ended.':'Your payment status';modal(title,`<p>${purchase?.status==='paid'?'Payment has been verified. You can read your full report from this account on any device.':purchase?.status==='open'?'Checkout is still open. No report access has been granted. You can continue from the report or cancel it in Purchases.':purchase?.status==='processing'?'Payment is still processing. Please check Purchases again shortly.':'Please review the status in Purchases before attempting another payment.'}</p>${purchase?.status==='paid'?`<button class="btn" data-action="open-full-report" data-id="${esc(purchase.assessmentId)}">Read my report →</button>`:'<button class="btn" data-action="close">View purchases</button>'}`);history.replaceState(history.state,'',location.pathname+'#purchases');}catch(error){modal('Check your purchase in your account.', '<p>'+esc(error.message)+'</p><p>Please refresh Purchases before attempting to pay again.</p>');}}
@@ -961,11 +1001,12 @@ function restartAssessment(goal){
  state={...freshAssessment(goal),...other,assessment:!!hasOtherResult};
  goto('consent');
 }
-async function editExistingAssessment(goal,id,button){
+async function editExistingAssessment(goal,id,button,{reportContext=false}={}){
  const saved=id?await api('assessments/'+id):null;
  if(!button.isConnected||id&&hiddenRecords.has(id))return;
  close();
- rememberReturn(null,saved?.assessment.sample?{restore:'preview'}:undefined);
+ const restore=saved?.assessment.sample?'preview':reportContext&&independentAssessment(state)?'report-profile':'';
+ rememberReturn(null,{restore});
  if(saved?.assessment.sample){
   rememberDraftForSample();
   state=savedDraft(saved.assessment,saved.report,goal);
@@ -1247,7 +1288,12 @@ document.addEventListener('click',async e=>{
   }
   return;
  }
- if(act==='checkout'||act==='offer-report'){checkout(b.dataset.id);return;}
+ if(act==='checkout'||act==='offer-report'||act==='open-full-report'&&!b.closest('.report-offer')){
+  await action(b,()=>checkout(b.dataset.id,b));return;
+ }
+ if(act==='report-review-profile'){
+  await action(b,()=>editExistingAssessment('profile',b.dataset.id,b,{reportContext:true}));return;
+ }
  if(act==='print'){
   await action(b,async()=>{
    try{await exportReport($('.report-workspace'));}
@@ -1260,16 +1306,17 @@ document.addEventListener('click',async e=>{
   await action(b,async()=>{
    const draft=state;
    await persistAssessment();
-   if(state===draft){render();checkout();}
+   if(state===draft){render();await checkout();}
   });
   return;
  }
  if(act==='purchase-checkout'&&webReportCheckout()){
   const id=b.dataset.id||state.saveId;
   if(!id||!account())return;
+  const profile=offeredProfiles.get(b.closest('.report-offer'));
   await action(b,async()=>{
    const result=await api('payments/checkout','POST',{assessmentId:id,confirm:true});
-   if(result.purchased){close();await openSaved(id,'report',returnPoint(b,{restore:'saved'}),{full:true});return;}
+   if(result.purchased){close();await openSaved(id,'report',returnPoint(b,{restore:'saved'}),{full:true,profile});return;}
    const url=new URL(result.url);
    if(url.protocol!=='https:'||url.hostname!=='checkout.stripe.com')throw Error('Could not open secure checkout.');
    modal('Your secure checkout is ready.',`<p>Continue to Stripe to review the final total and pay. Your saved report stays in your account if you leave checkout.</p><a class="btn" href="${esc(url.href)}" target="_top" rel="noreferrer">Open Stripe checkout →</a><p class="small muted" style="margin-top:15px">You can return to Purchases to check or cancel an unfinished checkout.</p>`);
@@ -1299,6 +1346,7 @@ document.addEventListener('click',async e=>{
  });return;}
  if(act==='open-full-report'&&!b.dataset.id){
   if(!fullReportAvailable())return;
+  state.reportProfile=offeredProfiles.get(b.closest('.report-offer'));
   close();
   if(state.view!=='report')rememberReturn(null);
   state.reportEdition='full';
@@ -1307,9 +1355,10 @@ document.addEventListener('click',async e=>{
   return;
  }
  if(['open-saved','open-report','open-full-report'].includes(act)&&b.dataset.id){
+  const profile=offeredProfiles.get(b.closest('.report-offer'));
   const opener=b.closest('#main')?b:[...$('#main').querySelectorAll('[data-action="offer-report"]')].find(button=>button.dataset.id===b.dataset.id);
   const origin=returnPoint(opener,{restore:'saved'});
-  await action(b,async()=>{close();await openSaved(b.dataset.id,act==='open-saved'?'results':'report',origin,{full:act==='open-full-report'});});return;
+  await action(b,async()=>{close();await openSaved(b.dataset.id,act==='open-saved'?'results':'report',origin,{full:act==='open-full-report',profile});});return;
  }
  if(act==='remove-local'||act==='reset'){
   const id=b.dataset.id;

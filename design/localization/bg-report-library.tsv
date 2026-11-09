@@ -169,3 +169,122 @@ STRRIDE-PD trial · Diet, activity and fasting blood sugar	Проучване ST
 DASH-Sodium trial · Sodium and blood pressure	Проучване DASH-Sodium · Натрий и кръвно налягане
 Khaw et al. · Cooking fats and blood cholesterol	Khaw и съавт. · Мазнини за готвене и холестерол в кръвта
 MedlinePlus · Types of white blood cells	MedlinePlus · Видове бели кръвни клетки
+
+# Assessment context, study results and report readiness
+See what was tested, what changed, and what to discuss with your clinician.	Виж какво са изследвали, какво се е променило и какво да обсъдиш с лекаря си.
+What the study tested	Какво са изследвали
+What changed in the study	Какво се е променило в проучването
+What about vigorous exercise?	А какво показва по-интензивното натоварване?
+How closely it applies	Доколко проучването е приложимо
+Your starting point	Твоите изходни данни
+Bring to your clinician	Въпроси към лекаря ти
+A starting point to discuss	Идея за обсъждане
+Uses the health-profile answers recorded with this assessment.	Използва отговорите от здравния профил, записани с този анализ.
+Uses your saved health profile	Използва запазения ти здравен профил
+Uses the health-profile answers you entered in this session.	Използва отговорите от здравния профил, които въведе в тази сесия.
+This sample uses fictional information.	Този пример използва измислени данни.
+Health-profile answers are missing.	Липсват отговори от здравния профил.
+Before building your report	Преди създаването на доклада
+We could not load your saved health profile. Try again to include those answers.	Запазеният ти здравен профил не можа да се зареди. Опитай отново, за да включиш отговорите.
+Health details that could add context	Здравни данни за повече контекст
+Assessment details to fill in	Данни за допълване в анализа
+Extra measurements to add if available	Допълнителни измервания, ако разполагаш с тях
+The report can use the information you’ve entered. Missing details may limit which findings and next steps it can offer.	Докладът може да използва въведените данни. Липсващите подробности могат да ограничат изводите и насоките в него.
+Review health profile	Прегледай здравния профил
+Review this assessment	Прегледай този анализ
+Continue with available data	Продължи с наличните данни
+See what people in a relevant study did, which readings changed and what to ask before trying a change.	Виж какво са правили участниците в подходящо проучване, кои стойности са се променили и какво да попиташ, преди да направиш промяна.
+Weekly activity and any activity limits	Седмична активност и евентуални ограничения
+Health history, medicines and recent health changes	Здравна история, лекарства и скорошни промени в здравето
+Cigarette smoking history	История на тютюнопушенето
+Usual fruit and vegetable intake	Обичаен прием на плодове и зеленчуци
+Typical sleep and how rested you feel	Обичаен сън и усещане за отпочиналост
+Whether you fasted for the blood draw	Дали кръвната проба е взета на гладно
+Age at the blood draw	Възраст при вземане на кръвната проба
+Collection details help put your blood results in context.	Условията при вземане на пробата помагат за тълкуването на кръвните резултати.
+The report can explain your blood results. The age estimate requires a confirmed fasting sample and collection circumstances that fit the study.	Докладът може да обясни кръвните ти резултати. За оценка на възрастта е нужна потвърдена проба на гладно, взета при условия, които отговарят на проучването.
+What the full report includes	Какво включва пълният доклад
+Both blood pressure numbers	И двете стойности на кръвното налягане
+Total and HDL cholesterol	Общ и HDL холестерол
+Heart and blood vessel history and smoking status	Сърдечносъдова история и тютюнопушене
+Both pressure numbers, cholesterol and your history help give a fuller picture.	Двете стойности на налягането, холестеролът и здравната ти история дават по-пълна картина.
+Fasting glucose or HbA1c	Глюкоза на гладно или HbA1c
+A blood sugar result adds a direct measurement alongside your questionnaire answers.	Изследването на кръвната захар допълва отговорите ти с измерена стойност.
+Urine albumin result	Резултат за албумин в урината
+Cystatin C result	Резултат за цистатин C
+Urine albumin and a second blood marker can add detail to a creatinine-based estimate.	Албуминът в урината и втори кръвен показател могат да допълнят оценката по креатинин.
+Supervised exercise test result	Резултат от тест с натоварване под наблюдение
+A supervised test can measure the oxygen uptake this assessment estimates.	Тест под наблюдение може да измери кислородния капацитет, който този анализ оценява.
+Which activity fits my routine and health history, and could we track my weekly minutes or how the same walk feels over time?	Каква активност е подходяща за ежедневието и здравната ми история? Можем ли да проследим минутите на седмица или как се чувствам по същия маршрут с времето?
+Which small food change would fit my usual meals and any dietary restrictions?	Каква малка промяна би била подходяща за обичайното ми хранене и ограниченията ми?
+Saved health profile	Запазен здравен профил
+Health profile from this session	Здравен профил от тази сесия
+Health profile used for this report	Здравен профил, използван за този доклад
+Answers from your separate health profile help shape the discussion below. The measurements and study results come from this assessment.	Отговорите от отделния ти здравен профил помагат да насочим обсъждането по-долу. Измерванията и резултатите от сравнението с проучванията са от този анализ.
+Would urine albumin help explain this result?	Би ли помогнало изследване за албумин в урината да разберем този резултат?
+What does the second filtration marker add, and when would you repeat the tests?	Какво добавя вторият показател за филтрация и кога бихте повторили изследванията?
+Would cystatin C or a repeat creatinine test add useful information?	Ще даде ли полезна информация изследване за цистатин C или повторно измерване на креатинина?
+Why the timing of a kidney test matters	Защо е важно кога е направено бъбречното изследване
+Creatinine can shift after a meal. Tell your clinician when you last ate before the blood draw, especially if this result differs from an earlier one.	Стойността на креатинина може да се промени след хранене. Кажи на лекаря си кога си ял за последно преди вземането на пробата, особено ако резултатът се различава от предишен.
+1–2 hours after eating	1–2 часа след хранене
+Researchers took blood before and after a cooked-meat meal and compared it with readings around a meat-free meal.	Изследователите вземат кръв преди и след хранене с термично обработено месо и сравняват резултатите с тези преди и след хранене без месо.
+Median creatinine	Медианна стойност на креатинина
+The median rose temporarily after the cooked-meat meal.	Медианната стойност се покачва временно след храненето с термично обработено месо.
+A meal-related shift can change a filtration estimate. Your clinician can use the timing of your blood draw to judge whether this is relevant.	Промяната след хранене може да повлияе на оценката на филтрацията. Лекарят ти може да прецени дали това е от значение според момента на вземане на пробата.
+If I repeat the test, what preparation and timing would make the results easier to compare?	Ако повторя изследването, каква подготовка и какъв час ще улеснят сравнението на резултатите?
+Your fasting blood sugar is a snapshot from the time of the test. HbA1c adds a view of your average over the past few months.	Кръвната захар на гладно показва стойността при вземане на пробата. HbA1c дава представа за средната ти кръвна захар през последните няколко месеца.
+Waist size and family history help estimate long-term risk. A blood test can show how your blood sugar is behaving now.	Обиколката на талията и семейната история помагат да се оцени дългосрочният риск. Кръвно изследване дава информация за кръвната ти захар в момента.
+Which result gives the clearest starting point for me, and when would you check it again?	Кой резултат е най-подходящ за изходна стойност при мен и кога бихте го проверили отново?
+Choose the right blood sugar follow-up	Подходящо проследяване на кръвната захар
+Health history and the reason a test was ordered help determine how to interpret it and what to check next.	Здравната история и причината за изследването помагат за тълкуването и за избора какво да се провери след това.
+Which blood sugar test and follow-up would you use given my history and these results?	Какво изследване и проследяване на кръвната захар бихте избрали според моята история и тези резултати?
+What kind of activity suits my current health, and what would we measure to see whether my fitness changes?	Каква активност е подходяща за сегашното ми здраве и какво да измерим, за да видим дали физическата ми форма се променя?
+Find a useful fitness starting point	Подходяща отправна точка за физическата форма
+The kind of exercise test that is useful depends on your health and the information already available.	Подходящият тест с натоварване зависи от здравето ти и наличната информация.
+Given my health history and any activity limits, which starting measurement would be useful and safe to repeat?	Предвид здравната ми история и ограниченията ми кое изходно измерване би било полезно и безопасно за повторение?
+Bring your blood pressure and cholesterol together	Кръвното налягане и холестеролът в общ контекст
+Blood pressure varies with measurement conditions. The cholesterol results and your health history give your clinician more context for interpreting it.	Кръвното налягане варира според условията на измерване. Резултатите за холестерол и здравната ти история помагат на лекаря да го тълкува.
+Would other cholesterol results help explain my total?	Биха ли помогнали други показатели за холестерол да разберем общата ми стойност?
+Which cholesterol results would help you put my blood pressure in context?	Кои показатели за холестерол биха помогнали да разберем по-добре кръвното ми налягане?
+Round out your heart health picture	По-пълна картина на сърдечносъдовото здраве
+Blood pressure and cholesterol describe different parts of your heart and blood vessel health.	Кръвното налягане и холестеролът дават различна информация за здравето на сърцето и кръвоносните съдове.
+Which missing readings would help you interpret my result, and how should I get them measured?	Кои липсващи измервания биха помогнали за тълкуването на резултата ми и как да ги направя?
+6 months	6 месеца
+The combined group received coaching on food and weight and gradually built up moderate exercise, mostly on a treadmill. They averaged about 150 minutes over three sessions a week. The study asked participants to attend at least two supervised sessions per week.	Групата с комбинирана програма получава насоки за храненето и теглото и постепенно увеличава умереното натоварване, предимно на бягаща пътека. Участниците тренират средно около 150 минути в три занимания седмично. Изследователите изискват поне две занимания под наблюдение седмично.
+About 6 mg/dL lower on average in the combined group.	Средно с около 6 mg/dL по-ниска стойност в групата с комбинирана програма.
+Triglycerides (blood fats)	Триглицериди (мазнини в кръвта)
+About 30 mg/dL lower on average in the same group.	Средно с около 30 mg/dL по-ниска стойност в същата група.
+The vigorous-exercise group averaged 165 minutes over about three sessions a week. At peak exercise they used 0.18 litres more oxygen per minute on average. Their fasting blood sugar showed no clear change.	Групата с интензивно натоварване тренира средно 165 минути в около три занимания седмично. При максимално натоварване участниците използват средно с 0,18 литра повече кислород в минута. Кръвната им захар на гладно не показва ясна промяна.
+Your age and fasting result are within the study’s entry ranges. The researchers also used body measurements and confirmed elevated blood sugar on two fasting tests.	Възрастта ти и резултатът на гладно са в диапазоните за включване в проучването. Изследователите използват и телесни измервания и потвърждават повишената кръвна захар с две изследвания на гладно.
+Your age at the draw and fasting result are within the study’s ranges. Your BMI comes from a separate health profile. The study enrolled adults with low activity and confirmed elevated blood sugar on two fasting tests.	Възрастта ти при вземане на пробата и резултатът на гладно попадат в диапазоните на проучването. Индексът на телесната ти маса е от отделен здравен профил. Проучването включва възрастни с ниска активност и повишена кръвна захар, потвърдена с две изследвания на гладно.
+Your age at the draw, recorded BMI and fasting result are within the study’s ranges. The study enrolled adults with low activity and confirmed elevated blood sugar on two fasting tests.	Възрастта ти при вземане на пробата, записаният индекс на телесната маса и резултатът на гладно попадат в диапазоните на проучването. Проучването включва възрастни с ниска активност и повишена кръвна захар, потвърдена с две изследвания на гладно.
+If walking suits your health, discuss how to build on the activity you already do and pair it with a food change that fits your routine.	Ако ходенето е подходящо за здравето ти, обсъди как да надградиш активността, която вече имаш, и да я съчетаеш с промяна в храненето, която се вписва в ежедневието ти.
+Given my health history and medications, what type and intensity of activity would suit me?	Какъв вид и интензивност на активност са подходящи за мен предвид здравната ми история и лекарствата ми?
+Should we follow fasting blood sugar or HbA1c, and when would you want to check it again?	Да проследим ли кръвната захар на гладно или HbA1c и кога бихте повторили измерването?
+30 days at each sodium level	30 дни при всяко ниво на прием на натрий
+The researchers provided meals and tested three levels of sodium, the main mineral in salt. Participants spent 30 days at each level while keeping the rest of their assigned diet consistent.	Изследователите осигуряват храната и проверяват три нива на прием на натрий, основния минерал в солта. Участниците прекарват 30 дни на всяко ниво, а останалата част от зададения режим остава същата.
+Average drop from the higher to the middle sodium level on the comparison diet.	Среден спад при преминаване от високо към средно ниво на прием на натрий в сравнителната група.
+Your top number is within the trial’s range. Your bottom number is below the range used to enroll participants. Bring both readings to your clinician.	Горната ти стойност е в диапазона на проучването. Долната е под диапазона за включване. Покажи и двете стойности на лекаря си.
+Your top number is within the range studied. Researchers used both numbers and screened for medicines that affect blood pressure.	Горната ти стойност е в изследвания диапазон. Изследователите вземат предвид и двете стойности и проверяват дали участниците приемат лекарства, които влияят на кръвното налягане.
+Is reducing sodium a good fit for my readings and medical history?	Подходящо ли е да намаля натрия предвид стойностите и здравната ми история?
+Would a home blood pressure log help, and how would you like me to take and review the readings?	Би ли помогнал дневник на кръвното налягане у дома и как да измервам и проследявам стойностите?
+4 weeks	4 седмици
+Adults were assigned olive oil, coconut oil or butter. Each group received 50 grams of its assigned fat per day. The amounts describe the study, and your clinician can help you choose a swap that fits your diet.	Участниците са разпределени в групи със зехтин, кокосово масло или краве масло. Всяка група получава по 50 грама дневно от съответната мазнина. Това са количествата в проучването. Лекарят ти може да помогне да избереш подходяща за храненето ти замяна.
+0.38 mmol/L less rise	С 0,38 mmol/L по-малко покачване
+Difference in average change in the olive oil group compared with the butter group.	Разлика в средната промяна в групата със зехтин спрямо групата с краве масло.
+Lower with olive oil	По-нисък при зехтин
+The study measured LDL separately from total cholesterol.	В проучването LDL е измерен отделно от общия холестерол.
+Your age is within the study’s 50 to 75 age range. Participants had no known heart disease or diabetes and were screened for cholesterol medicines.	Възрастта ти е в изследвания диапазон от 50 до 75 години. Участниците нямат установено сърдечно заболяване или диабет и са проверени за прием на лекарства за холестерол.
+Which cholesterol result should I follow, and what would a useful change look like for me?	Кой показател за холестерол да проследявам и каква промяна би била значима за мен?
+If I make a cooking swap, when would a repeat cholesterol test tell us something useful?	Ако сменя мазнината за готвене, кога повторно изследване на холестерола би дало полезна информация?
+What structured training can change	Какво може да се промени с тренировъчна програма
+Peak oxygen uptake measures how much oxygen your body can use during hard exercise. It’s the fitness measure the researchers tested.	Пиковото усвояване на кислород показва колко кислород може да използва тялото ти при силно натоварване. Това е показателят за физическа форма, измерен от изследователите.
+In a study of previously inactive adults, the supervised group worked toward four 43-minute fitness sessions a week. A second group followed a step-count walking program.	В проучване на физически неактивни възрастни групата под наблюдение постепенно се насочва към четири тренировки по 43 минути седмично. Втора група следва програма за ходене с броене на крачките.
+Peak oxygen uptake	Пиково усвояване на кислород
+About 9% higher	Около 9% по-високо
+Average gain in the supervised training group. The walking group had no clear change on this test.	Средно повишение в групата с тренировки под наблюдение. В групата с ходене тестът не показва ясна промяна.
+You reported less than an hour of weekly activity in both assessments. The study measured oxygen uptake during an exercise test. Your fitness assessment estimates it from your answers and readings.	И в двата анализа си посочил по-малко от един час активност седмично. В проучването усвояването на кислород е измерено с тест с натоварване. Анализът на физическата ти форма го оценява по отговорите и измерванията ти.
+Is a supervised program appropriate for me, and what starting level makes sense?	Подходяща ли е за мен програма под наблюдение и с какво натоварване е разумно да започна?
+Would an exercise test help us measure change, and when would repeating it be useful?	Би ли помогнал тест с натоварване да измерим промяната и кога е полезно да го повторим?
+Bell et al. · Fitness training and peak oxygen uptake	Bell и съавт. · Тренировки и пиково усвояване на кислород
+Preiss et al. · Meals and blood creatinine	Preiss и съавт. · Хранене и креатинин в кръвта

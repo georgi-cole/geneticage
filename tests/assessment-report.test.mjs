@@ -7,7 +7,10 @@ import {sampleAnswers,sampleLabs,assessClinical} from '../public/model.mjs';
 import {translateText} from '../public/language-system.mjs';
 import {reportDocument} from '../public/report-export.mjs';
 import {reportGuidance} from '../public/report-guidance.mjs';
+import {reportOffer} from '../public/report-controls.mjs';
+import {reportReadiness} from '../public/report-readiness.mjs';
 import {assessHeartVascular} from '../public/heart-vascular.mjs';
+import {assessSystem,systemSampleInputs} from '../public/system-assessments.mjs';
 
 const state={...freshAssessment(),answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labDate:'2026-11-01',labFasting:'Yes',labContext:true,labReferenceGroup:'male',labSubmitted:true,reportTab:'summary'};
 state.lab.crp.assay='standard-crp';state.lab.albumin.referenceLow='35';state.lab.albumin.referenceHigh='50';
@@ -45,10 +48,12 @@ test('fasting glucose guidance uses the actual result, known context and the rep
  const assessment={...state,clinical};
  const match=draft=>reportGuidance(draft).find(item=>item.section==='matched');
  assert.deepEqual(match(assessment).measurements,['Fasting blood sugar · 6.2 mmol/L','Moderate activity · 90 min/week','Vigorous activity · 0 min/week']);
- assert.match(match(assessment).action,/short walk after a meal/);
- assert.match(match(assessment).evidence,/0\.32 mmol\/L/);
+ assert.match(match(assessment).action,/activity you already do/);
+ assert.equal(match(assessment).study.duration,'6 months');
+ assert.deepEqual(match(assessment).study.outcomes.map(([,value])=>value),['−0.32 mmol/L','−0.34 mmol/L']);
+ assert.match(match(assessment).study.contrast,/0\.18 litres more oxygen.*fasting blood sugar showed no clear change/);
  assert.match(match({...assessment,answers:{...state.answers,moderate:'180'}}).action,/already reach/);
- assert.doesNotMatch(match({...assessment,answers:{...state.answers,limitations:'Often'}}).action,/short walk/);
+ assert.equal(match({...assessment,answers:{...state.answers,limitations:'Often'}}),undefined);
  assert.equal(match({...assessment,labFasting:'No'}),undefined);
  assert.equal(match({...assessment,answers:{...state.answers,conditions:[]}}),undefined);
  assert.equal(match({...assessment,answers:{...state.answers,conditions:['Diabetes']}}),undefined);
@@ -57,9 +62,67 @@ test('fasting glucose guidance uses the actual result, known context and the rep
  assert.equal(match({...assessment,lab:{...state.lab,glucose:{value:'112',unit:'mg/dL'}}}).measurements[0],'Fasting blood sugar · 112 mg/dL');
  const {content}=reportDocument(render().querySelector('.report-workspace'));
  const pdfText=JSON.stringify(content);
- assert.match(pdfText,/What the study found/);
+ assert.match(pdfText,/What the study tested/);
+ assert.match(pdfText,/Bring to your clinician/);
+ assert.match(pdfText,/What about vigorous exercise\?/);
+ assert.match(pdfText,/−0\.32 mmol\/L/);
  assert.match(pdfText,/Fasting blood sugar · 6.2 mmol\/L/);
  assert.match(pdfText,/The count behind the percentage/);
+});
+
+test('report readiness distinguishes missing fields from useful optional measurements in all six assessments',()=>{
+ const profile={answers:{...sampleAnswers,moderate:'0',vigorous:'0'},source:'saved',saved:'2026-11-05T10:00:00Z',id:'profile-id'};
+ const emptyProfile=reportReadiness({answers:{age:'45',smoking:'Prefer not to say'}});
+ assert.deepEqual(emptyProfile.measurements,[]);
+ assert.ok(emptyProfile.profileFields.includes('Height'));
+ assert.ok(emptyProfile.profileFields.includes('Cigarette smoking history'));
+ const blood=reportReadiness({...state,labFasting:'Not sure',lab:{...state.lab,glucose:{}}},profile);
+ assert.deepEqual(blood.measurements,['Glucose','Whether you fasted for the blood draw']);
+ assert.deepEqual(blood.profileFields,[],'Zero activity is a valid answer.');
+ const heart=reportReadiness({assessmentType:'heart-vascular',heart:{inputs:{systolic:{value:120}}}},profile);
+ assert.ok(heart.measurements.includes('Both blood pressure numbers'));
+ assert.ok(heart.measurements.includes('Total and HDL cholesterol'));
+ for(const [type,expected] of [['metabolic',['Fasting glucose or HbA1c']],['kidney',['Urine albumin result','Cystatin C result']],['fitness',['Supervised exercise test result']]]){
+  const readiness=reportReadiness({assessmentType:type,system:{inputs:{}}},profile);
+  assert.deepEqual(readiness.helpful,expected);
+  assert.equal(readiness.limited,true);
+  const document=new JSDOM(reportOffer({assessment:type,review:true,readiness,recordId:'assessment-id'})).window.document;
+  assert.match(document.body.textContent,/Uses your saved health profile · 2026-11-05/);
+  assert.match(document.body.textContent,/Missing details may limit/);
+  assert.equal(document.querySelector('[data-action="report-review-profile"]'),null);
+  assert.equal(document.querySelector('[data-action="edit-existing-assessment"]').dataset.id,'assessment-id');
+  assert.match(document.querySelector('[data-action="open-full-report"]').textContent,/Continue with available data/);
+ }
+ assert.equal(reportReadiness({answers:profile.answers}).limited,false);
+ const unavailable=reportReadiness({assessmentType:'kidney'},{source:'unavailable'});
+ const document=new JSDOM(reportOffer({assessment:'Kidney',review:true,readiness:unavailable})).window.document;
+ assert.match(document.body.textContent,/could not load your saved health profile/);
+ assert.ok(document.querySelector('[data-action="report-review-profile"]'));
+});
+
+test('separate health profile changes report guidance without changing the recorded assessment',()=>{
+ const profile={answers:{...sampleAnswers,moderate:'0',vigorous:'0'},source:'saved',saved:'2026-11-05T10:00:00Z'};
+ const blood={...state,answers:{},clinical};
+ const guidance=reportGuidance(blood,profile);
+ assert.deepEqual(guidance.find(item=>item.name==='Health profile used for this report').measurements,['Saved health profile · 2026-11-05']);
+ assert.match(guidance.find(item=>item.study).study.fit,/BMI comes from a separate health profile/);
+ assert.equal(blood.clinical,clinical);
+ assert.deepEqual(blood.answers,{});
+ assert.equal(reportGuidance(blood,{...profile,answers:{...profile.answers,conditions:['Diabetes']}}).some(item=>item.section==='matched'),false);
+ const fitness={assessmentType:'fitness',system:assessSystem('fitness',{...systemSampleInputs('fitness'),moderate:{value:'20',unit:'min / week'},vigorous:{value:'0',unit:'min / week'}})};
+ assert.match(reportGuidance(fitness,profile).find(item=>item.section==='matched').study.outcomes[0][1],/9%/);
+ const limited=reportGuidance(fitness,{...profile,answers:{...profile.answers,limitations:'Often'}});
+ assert.equal(limited.some(item=>item.section==='matched'||item.name==='Choose movement you can keep doing'),false);
+ assert.ok(limited.some(item=>item.tag==='Adapt activity to your health'));
+ const kidney={assessmentType:'kidney',system:assessSystem('kidney',{
+  age:{value:'55',unit:'years'},sex:'Female',kidneyHistory:'No known kidney disease',kidneyContext:'Stable health',creatinine:{value:'0.9',unit:'mg/dL'},
+ })};
+ const kidneyGuidance=reportGuidance(kidney,profile);
+ assert.ok(kidneyGuidance.some(item=>item.study?.duration==='1–2 hours after eating'));
+ assert.match(kidneyGuidance.find(item=>item.name==='Two measures of kidney health').visit[0],/urine albumin/);
+ const metabolic={assessmentType:'metabolic',system:assessSystem('metabolic',systemSampleInputs('metabolic'))};
+ assert.ok(reportGuidance(metabolic,profile).some(item=>item.name==='Blood sugar in context'));
+ assert.ok(reportGuidance({answers:{...sampleAnswers}},profile).some(item=>item.name==='Make room for a little more movement'&&item.visit?.length));
 });
 
 test('heart guidance matches measured pressure and total cholesterol within the studied contexts',()=>{

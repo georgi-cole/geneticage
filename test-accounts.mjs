@@ -167,6 +167,10 @@ const fitnessSampleMeta=(await call(a,'assessments')).data.assessments.find(reco
 assert.equal(fitnessSampleMeta.assessmentType,'fitness');
 assert.equal(fitnessSampleMeta.sample,true);
 const fitnessSample=(await call(a,'assessments/'+fitnessSampleId)).data;
+const fitnessSnapshot=(await call(a,'assessments/'+fitnessSampleId+'?snapshot=1')).data;
+assert.deepEqual(Object.keys(fitnessSnapshot),['assessment']);
+assert.equal(fitnessSnapshot.assessment.system.result.method,'HUNT');
+assert.equal((await call(b,'assessments/'+fitnessSampleId+'?snapshot=1')).response.status,404);
 assert.equal(fitnessSample.assessment.sample,true);
 assert.equal(fitnessSample.report.sample,true);
 assert.equal(fitnessSample.report.full,true);
