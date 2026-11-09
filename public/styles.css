@@ -1597,6 +1597,43 @@ details p {
 .modal [data-auth-error] {
   color: var(--error);
 }
+.provider-sign-in-options {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.provider-sign-in {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 0 44px;
+  border: 1px solid #747775;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f1f1f;
+  font: 500 14px/1.25 Roboto, Arial, sans-serif;
+  text-align: center;
+  text-decoration: none;
+}
+.provider-sign-in img {
+  position: absolute;
+  left: 3px;
+  width: 36px;
+  height: 36px;
+  clip-path: inset(8px);
+}
+.provider-sign-in.apple {
+  background: #000;
+  color: #fff;
+  font: 500 19px/1.25 system-ui, sans-serif;
+}
+.provider-sign-in.apple img {
+  left: 0;
+  width: auto;
+  height: 44px;
+  clip-path: none;
+}
 .modal .close {
   display: grid;
   place-items: center;

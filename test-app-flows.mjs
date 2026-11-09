@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import {sections,sampleAnswers} from './public/model.mjs';
+import {sections,sampleAnswers,profileMeasurementErrors,profileBmi} from './public/model.mjs';
+import {accountEntry} from './public/account-entry.mjs';
 import {questionContext,questionChoices,questionDestination,labErrorStep,renderLabForm} from './public/flow-ui.mjs';
 import {renderAssessments,renderReportLibrary,renderRecordLibrary,renderAccount,pageSlice,resultInstrument} from './public/ui-components.mjs';
 import {previousAssessment} from './public/assessment-flow.mjs';
@@ -56,7 +57,19 @@ const kidneyPersonal={id:'kidney-personal',assessmentType:'kidney',sample:false}
 assert.equal(previousAssessment([kidneySample],'kidney'),kidneySample,'A saved sample can open the restart choice.');
 assert.equal(previousAssessment([kidneyPersonal,kidneySample],'kidney'),kidneyPersonal,'The personal assessment takes priority.');
 assert.match(renderAccount(guest),/Sign in \/ Create account/);
-assert.match(renderAccount({...guest,profile:{name:'Fictional user'}}),/Signed in with email/);
+assert.match(renderAccount({...guest,profile:{name:'Fictional user'}}),/Signed in/);
+assert.match(renderAccount({...guest,profile:{name:'Fictional user'},needsHealthProfile:true}),/Complete your health profile/);
+assert.doesNotMatch(renderAccount({...guest,profile:{name:'Fictional user'},needsHealthProfile:false}),/Complete your health profile/);
+assert.doesNotMatch(accountEntry().body,/Continue with Apple|Continue with Google/);
+const signIn=accountEntry({providers:['apple','google'],keepDraft:true}).body;
+assert.match(signIn,/oauth\/apple\/start" target="_blank"/);
+assert.match(signIn,/oauth\/google\/start" target="_blank"/);
+assert.match(signIn,/Send sign-in code/);
+assert.match(accountEntry({stage:'social-register'}).body,/You’ll enter your health details separately/);
+assert.deepEqual(Object.keys(profileMeasurementErrors({age:'45'})),['height','weight']);
+assert.deepEqual(Object.keys(profileMeasurementErrors({age:'45',height:'175',weight:'-1'})),['weight']);
+assert.equal(profileBmi({age:'45',height:'175',weight:'77'}).toFixed(1),'25.1');
+assert.equal(profileBmi({age:'45',height:'70',heightUnit:'in',weight:'175',weightUnit:'lb'}).toFixed(1),'25.1');
 assert.match(renderAccount({...guest,error:'Connection timed out'}),/data-action="refresh-account"/);
 assert.match(renderAccount({...guest,profile:{name:'<img onerror=alert(1)>'}}),/&lt;img/);
 console.log('Passed: forward/back conditional question traversal, lab error routing, record pagination, distinct report/account screens and safe profile rendering.');

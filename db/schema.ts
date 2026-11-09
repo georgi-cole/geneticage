@@ -15,6 +15,19 @@ export const authAccounts = sqliteTable("auth_accounts", {
   createdAt: text("created_at").notNull(),
 }, table => [uniqueIndex("auth_accounts_email").on(table.email)]);
 
+export const oauthAccounts = sqliteTable("oauth_accounts", {
+  userId: text("user_id").primaryKey().references(() => profiles.userId, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  subjectHash: text("subject_hash").notNull(),
+}, table => [uniqueIndex("oauth_accounts_identity").on(table.provider, table.subjectHash)]);
+
+export const oauthPending = sqliteTable("oauth_pending", {
+  tokenHash: text("token_hash").primaryKey(),
+  provider: text("provider").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+  subjectHash: text("subject_hash"),
+}, table => [index("oauth_pending_expiry").on(table.expiresAt)]);
+
 export const emailAuthCodes = sqliteTable("email_auth_codes", {
   email: text("email").primaryKey(),
   codeHash: text("code_hash").notNull(),
