@@ -1,0 +1,1 @@
+ALTER TABLE `oauth_pending` ADD `native_challenge` text;

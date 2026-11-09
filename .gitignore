@@ -1,5 +1,6 @@
 # Dependencies
 /node_modules/
+/native/node_modules/
 /.pnp
 .pnp.*
 # Keep authored Yarn tooling if the project adopts Yarn.
@@ -12,6 +13,8 @@
 # Generated builds and framework state
 /dist/
 /dist-pages/
+/dist-native/
+/dist-native-worker/
 /.next/
 /.vinext/
 /out/
@@ -32,6 +35,11 @@ yarn-error.log*
 !.env.example
 .dev.vars*
 *.pem
+*.p8
+*.p12
+*.mobileprovision
+*.jks
+*.keystore
 
 # Checkout-local tool state
 /.wrangler/

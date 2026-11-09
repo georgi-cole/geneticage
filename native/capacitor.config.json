@@ -1,0 +1,7 @@
+{
+  "appId": "xyz.kolequant.geneticage",
+  "appName": "GeneticAge",
+  "webDir": "../dist-native",
+  "backgroundColor": "#09090b",
+  "loggingBehavior": "none"
+}

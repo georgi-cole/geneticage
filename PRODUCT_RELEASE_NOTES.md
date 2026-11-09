@@ -22,6 +22,8 @@ Review and sign-off owners are to be assigned for product/editorial, scientific/
 
 ## Native store submission
 
+The separate mobile build and account service are described in [GeneticAge store beta](docs/STORE_BETA.md).
+
 On 9 November 2026, first-time Apple and Google sign-ins on hosted version 43 led through account registration to the separate Health & lifestyle questionnaire. Missing age, height and weight each blocked progress. The test measurements were fictional and remained unsaved.
 
 The iOS 1.0 record is in **Prepare for Submission** with manual release selected. Its first build and App Privacy answers are pending. Google Play's first internal release and App content setup are pending.
