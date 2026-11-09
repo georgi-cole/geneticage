@@ -15,7 +15,7 @@ await build({
   plugins: [{
     name: 'support-scripts',
     setup(builder) {
-      builder.onLoad({ filter: /[\\/]support[\\/](?:delete-account|sign-in-return)\.js$/ }, async ({ path }) => ({
+      builder.onLoad({ filter: /[\\/]support[\\/](?:delete-account|sign-in-start|sign-in-return)\.js$/ }, async ({ path }) => ({
         contents: await readFile(path, 'utf8'),
         loader: 'text',
       }));

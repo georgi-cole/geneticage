@@ -28,8 +28,11 @@ export async function openProvider(provider) {
   if (!['apple', 'google'].includes(provider)) return;
   verifier = hex(crypto.getRandomValues(new Uint8Array(32)));
   const challenge = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
-  const url = new URL('/api/auth/oauth/' + provider + '/start', accountOrigin);
-  url.searchParams.set('native_challenge', challenge);
+  // Load a page on the account origin first. Some system browsers mark the
+  // initial app navigation as cross-site, which the OAuth start route rejects.
+  const url = new URL('/sign-in-start/', accountOrigin);
+  url.searchParams.set('provider', provider);
+  url.hash = challenge;
   await globalThis.Capacitor.Plugins.Browser.open({ url: url.href });
 }
 

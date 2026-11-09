@@ -2,8 +2,10 @@ import { handleAccountApi } from '../lib/account-api.mjs';
 import { getSessionUser, handleAuthApi } from '../lib/auth-api.mjs';
 import privacyPage from './support/privacy.html';
 import deletionPage from './support/delete-account.html';
+import startPage from './support/sign-in-start.html';
 import returnPage from './support/sign-in-return.html';
 import deletionScript from './support/delete-account.js';
+import startScript from './support/sign-in-start.js';
 import returnScript from './support/sign-in-return.js';
 import stylesheet from './support/support.css';
 
@@ -18,9 +20,11 @@ const assets = new Map([
   ['', ['text/html', deletionPage]],
   ['/privacy', ['text/html', privacyPage]],
   ['/delete-account', ['text/html', deletionPage]],
+  ['/sign-in-start', ['text/html', startPage]],
   ['/sign-in-return', ['text/html', returnPage]],
   ['/support.css', ['text/css', stylesheet]],
   ['/delete-account.js', ['text/javascript', deletionScript]],
+  ['/sign-in-start.js', ['text/javascript', startScript]],
   ['/sign-in-return.js', ['text/javascript', returnScript]],
 ]);
 
