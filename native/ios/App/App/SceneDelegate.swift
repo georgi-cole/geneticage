@@ -60,7 +60,7 @@ private final class GeneticAgeBridgeController: CAPBridgeViewController {
 private final class GeneticAgeProviderSession: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding {
     let identifier = "GeneticAgeProviderSession"
     let jsName = "GeneticAgeProviderSession"
-    let pluginMethods = [CAPPluginMethod(name: "open", returnType: CAPPluginReturnPromise)]
+    let pluginMethods: [CAPPluginMethod] = [CAPPluginMethod(name: "open", returnType: CAPPluginReturnPromise)]
     private let callbackScheme = "xyz.kolequant.geneticage"
     private var session: ASWebAuthenticationSession?
     private weak var anchor: UIWindow?
