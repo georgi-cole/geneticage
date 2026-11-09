@@ -102,6 +102,7 @@ async function verifySocialSignIn(emailOwner) {
     const fixture = fixtures[flow.provider];
     assert.equal(address, fixture.token);
     assert.equal(options.method, 'POST');
+    assert.equal(options.redirect, 'manual', 'The worker must reject redirects without forwarding credentials.');
     assert.equal(options.body.get('code'), 'fixture-code');
     assert.equal(options.body.get('redirect_uri'), flow.query.get('redirect_uri'));
     if (flow.provider === 'google') {
