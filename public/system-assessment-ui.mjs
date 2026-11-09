@@ -2,6 +2,7 @@ import {assessSystem, systemAssessment, systemExtras, systemField, systemSteps} 
 import {measurementFeedbackMarkup} from './lab-feedback.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
 import {backButton, escapeHTML as esc, reportArtwork, screenHeading, specialistHelp, uiIcon} from './ui-components.mjs';
+import {insightsTab, renderReportInsights, reportEditionLabel, reportFootnote, reportSections, reportTools} from './report-controls.mjs';
 
 const arrow = ' ' + uiIcon('forward');
 
@@ -282,33 +283,35 @@ const methodCopy = {
 
 export const systemMethods = type => methodCopy[type].map(paragraph => `<p>${esc(paragraph)}</p>`).join('');
 
-export function renderSystemReport({type, system, saved, sample, hasDraftBackup, pagesPreview, sourceLinks, tab = 'summary'}) {
+export function renderSystemReport({type, system, saved, sample, hasDraftBackup, pagesPreview, sourceLinks, full = false, guidance, tab = 'summary'}) {
   const spec = systemAssessment(type);
   const {inputs, result, review} = system;
   const ready = result.status === 'ready';
   const derived = derivedRows(type, inputs, result, review);
   const readings = derived+measurementRows(type, Object.fromEntries(Object.entries(inputs).filter(([id]) => systemField(type, id).lab || id === 'vo2peak')), review);
+  const reviewReadings = !ready && readings ? `<section class="heart-reading"><h2>Readings to review</h2><dl>${readings}</dl></section>` : '';
   const panels = {
     summary:`${ready ? ageReadout(type, result) : followUp(type, result, saved)}
       ${ready ? `<section class="report-explanation"><h2>What this tells you</h2><p>${esc(resultCopy[result.version][1])}</p>${derived ? `<dl>${derived}</dl>` : ''}</section>` : ''}
       ${review.a1cOutside ? '<p class="heart-reading-context">HbA1c is below the app’s calculation range. The age uses your questionnaire and body measurements.</p>' : ''}
       ${review.testIncomplete ? '<p class="heart-reading-context">For a measured comparison, check the test type and peak RER on your report.</p>' : ''}
-      ${!ready && readings ? `<section class="heart-reading"><h2>Readings to review</h2><dl>${readings}</dl></section>` : ''}
+      ${reviewReadings}
       ${sample ? '' : saved ? '<button class="text-btn no-print" data-action="system-copy">Update from this report ↗</button>' : result.issue === 'fitness-age' ? '' : extraActions(type, inputs)}`,
     measurements:`<section class="heart-reading"><h2>Your answers and measurements</h2><dl>${derived}${measurementRows(type, inputs, review)}</dl>
       ${saved || sample ? '' : '<button class="text-btn no-print" data-action="system-edit" data-part="age" data-review-all>Review answers ↗</button>'}</section>`,
     methods:`<section class="report-explanation"><h2>How this comparison works</h2>${systemMethods(type)}${sourceLinks(spec.sources)}</section>`,
+    findings:renderReportInsights({guidance,assessment:{system,assessmentType:type},safety:reviewReadings,sourceLinks}),
   };
-  const tabs = [['summary','Summary'], ['measurements','Measurements'], ['methods','Methods']];
+  const tabs = reportSections([['summary','Summary'], ['measurements','Measurements'], ['methods','Methods'], insightsTab],full);
   const selected = Object.hasOwn(panels, tab) ? tab : 'summary';
   return `<div class="wrap app-screen report-workspace system-report">
-    <header class="report-heading" data-theme-part><div><span class="eyebrow">${sample ? 'ILLUSTRATIVE SAMPLE' : 'ASSESSMENT REPORT'}</span><h1>${esc(spec.title)}</h1>${saved ? '<p>Saved assessment</p>' : ''}</div>
-    <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print">${uiIcon('report')}<span>PDF</span></button></div></header>
+    <header class="report-heading" data-theme-part><div><span class="eyebrow">${reportEditionLabel(full,sample)}</span><h1>${esc(spec.title)}</h1>${saved?'<p>Saved assessment'+(typeof saved==='string'?' · '+esc(saved.slice(0,10)):'')+'</p>':''}</div>
+    ${reportTools({saved,pagesPreview})}</header>
     ${sample && hasDraftBackup ? '<button class="text-link no-print" data-action="restore-draft">Return to your assessment</button>' : ''}
     <nav class="report-tabs heart-report-tabs no-print" aria-label="Report sections">${tabs.map(([id, label]) => `<button type="button" data-action="report-tab" data-tab="${id}"${id === selected ? ' aria-current="page"' : ''}>${label}</button>`).join('')}</nav>
-    <article class="report-paper">${tabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}
-      <p class="print-only report-footnote">Educational report. Prepared automatically.</p>
+    <article class="report-paper">${tabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" aria-label="${label}"${id === selected ? '' : ' hidden'}${id==='findings'&&!full?' data-pdf-exclude':''}>${panels[id]}</section>`).join('')}
+      ${reportFootnote(true,true)}
     </article>
-    <p class="report-footnote">Educational estimates · Not clinically reviewed.</p>
+    ${reportFootnote()}
   </div>`;
 }

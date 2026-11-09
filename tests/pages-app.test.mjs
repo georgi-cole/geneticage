@@ -135,8 +135,8 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('.mobile-nav [data-route="reports"]');assert.equal($('#main [data-action="signup"]'),null);await click('#main [data-action="report"]');
  assert.match($('#main').textContent,/Unsaved assessment/);assert.match($('#main').textContent,/Fictional test country/);assert.equal($('#main [data-action="save"]'),null);
  const cloud=document.createElement('button');cloud.dataset.action='checkout';document.body.append(cloud);cloud.click();await flush();
- assert.match($('.modal').textContent,/Account creation needs the hosted app/);
- assert.equal($('.modal a').origin,'https://kolequant-age-prototype.quartzpaddock.chatgpt.site');
+ assert.match($('.modal').textContent,/US\$7\.99/);
+ assert.equal($('.modal [data-action="purchase-checkout"]'),null);
  await click('.modal [data-action="close"]');
  await click('.mobile-nav [data-route="history"]');await click('[data-action="start-heart"]');
  $('#consent').checked=true;await click('[data-action="consent-next"]');
@@ -331,7 +331,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('.mobile-nav [data-route="history"]');
  await click('[data-action="start-system"][data-type="fitness"]');
  await click('.consent-screen [data-action="sample"][data-type="fitness"]');
- assert.match($('.system-report .report-heading').textContent,/ILLUSTRATIVE SAMPLE.*Fitness/s);
+ assert.match($('.system-report .report-heading').textContent,/FULL REPORT · SAMPLE.*Fitness/s);
  assert.match($('.heart-estimate').textContent,/APPROXIMATE FITNESS AGE/);
  await click('.mobile-nav [data-route="history"]');
  await click('[data-action="start-system"][data-type="fitness"]');
@@ -343,7 +343,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.match($('#system-prefill-age').parentElement.textContent,/33 years/,'Trying the sample leaves the personal draft available.');
  await click('.mobile-nav [data-route="history"]');
  await click('[data-action="start-system"][data-type="kidney"]');
- assert.match($('.modal').textContent,/Starting over replaces the working answers/);
+ assert.match($('.modal').textContent,/Starting new clears this assessment’s working answers and keeps your saved history/);
  await click('[data-action="edit-existing-assessment"]');
  assert.ok($('#system-age').value,'Edit opens the completed assessment with its answers.');
  await click('.mobile-nav [data-route="history"]');
@@ -351,7 +351,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('[data-action="restart-assessment"]');
  assert.equal($('#consent').checked,false);
  await click('.consent-screen [data-action="sample"][data-type="kidney"]');
- assert.match($('.system-report .report-heading').textContent,/ILLUSTRATIVE SAMPLE.*Kidney/s);
+ assert.match($('.system-report .report-heading').textContent,/FULL REPORT · SAMPLE.*Kidney/s);
  assert.match($('.heart-estimate').textContent,/APPROXIMATE KIDNEY AGE/);
  await click('.mobile-nav [data-route="history"]');
  await click('[data-action="start-system"][data-type="metabolic"]');
@@ -364,7 +364,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.equal(document.activeElement,$('[data-action="start-system"][data-type="metabolic"]'));
  await click('[data-action="start-system"][data-type="metabolic"]');
  await click('.consent-screen [data-action="sample"][data-type="metabolic"]');
- assert.match($('.system-report .report-heading').textContent,/ILLUSTRATIVE SAMPLE.*Metabolic/s);
+ assert.match($('.system-report .report-heading').textContent,/FULL REPORT · SAMPLE.*Metabolic/s);
  assert.match($('.heart-estimate').textContent,/APPROXIMATE METABOLIC AGE/);
  await click('.system-report [data-action="report-tab"][data-tab="methods"]');
  history.go(-1);await flush();

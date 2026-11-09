@@ -1,6 +1,6 @@
 # GeneticAge store beta
 
-The iOS and Android builds bundle the assessment screens and report calculations. A connection is needed for sign-in, saving, export and account deletion. This release includes automated reports and omits consultations, specialist report reviews and purchases.
+The iOS and Android builds bundle the assessment screens and report calculations. A connection is needed for sign-in, account storage, account export and deletion. Report PDFs are generated on the device and open in the system share sheet. The beta includes an automated Full report preview. Native purchases and live consultations are outside this build.
 
 ## Build and sign
 
@@ -21,6 +21,7 @@ Account deletion first removes live account and health records. The server uses 
 
 - Use Account → Sign in / Create account → Store review access. Give reviewers the code privately in the store console. Review access opens a separate demo account after the reviewer confirms age eligibility and consent. Use the sample report or fictional entries. Verify age, height and weight are required and BMI is derived. Use Account → Manage saved data to export and delete the test account.
 - Test Apple, Google and email separately on installed builds. Verify that new users reach the health profile, returning users open the correct account, saved data stays private, and deleted sessions lose access. Test account deletion in the app and through the public page on a browser without the app.
+- Open Saved reports and try the Full report card with fictional data. Save a basic and a full PDF through the system share sheet. Check that both include the entered data and result, and that the full PDF adds the Insights section. Save a changed assessment and verify that the earlier dated report still opens.
 - Use the privacy policy and deletion pages on the store origin. The web deletion page supports the original sign-in method and a support email fallback. [Privacy policy](https://geneticage.kolequant.xyz/privacy/) · [Delete a GeneticAge account](https://geneticage.kolequant.xyz/delete-account/)
 - For App Store privacy, review nickname, email address, account identifiers, stored health and fitness data, and consent records. These serve account access and the saved-assessment feature. Review linked status and purposes from the final build and enabled services. [App Privacy details](https://developer.apple.com/app-store/app-privacy-details/)
 - For Google Play, review the corresponding personal and health/fitness data in Data safety. Saved assessments are optional and encrypted in transit. Describe the app's educational assessments in the Health declaration. Use the deletion page for the account-deletion URL and the private reviewer instructions for App access. [Data safety](https://support.google.com/googleplay/android-developer/answer/10787469) · [Account deletion](https://support.google.com/googleplay/android-developer/answer/13327111) · [Health declaration](https://support.google.com/googleplay/android-developer/answer/14738291)

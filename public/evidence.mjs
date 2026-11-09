@@ -52,6 +52,8 @@ export const references=[
  {id:'diet',label:'WHO · Healthy diet',url:'https://www.who.int/news-room/fact-sheets/detail/healthy-diet'},
  {id:'alcohol',label:'WHO · Alcohol and health',url:'https://www.who.int/news-room/fact-sheets/detail/alcohol/'},
  {id:'tobacco',label:'American Heart Association · Tobacco and cardiovascular health',url:'https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8'},
+ {id:'who-cessation',label:'WHO · Tobacco cessation guideline for adults',url:'https://www.who.int/publications/i/item/9789240096431'},
+ {id:'who-blood-pressure',label:'WHO · Blood pressure',url:'https://www.who.int/news-room/fact-sheets/detail/hypertension'},
  {id:'nhis-smoking',label:'CDC/NCHS · NHIS Sample Adult Questionnaire, 2004',url:'https://ftp.cdc.gov/pub/health_Statistics/nchs/Survey_Questionnaires/NHIS/2004/english/QADULT.pdf'},
  {id:'nhanes-smoking',label:'CDC/NCHS · NHANES Smoking - Cigarette Use, 2007–08',url:'https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2007/DataFiles/SMQ_E.htm'},
  {id:'weight-history',label:'CDC/NCHS · NHANES Weight History, 2007–08',url:'https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2007/DataFiles/WHQ_E.htm'},

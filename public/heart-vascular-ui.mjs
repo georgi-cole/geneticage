@@ -10,6 +10,7 @@ import {pday, heartPdayAge} from './heart-pday.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
 import {measurementFeedbackMarkup, safetyMarkup} from './lab-feedback.mjs';
 import {backButton, escapeHTML as esc, reportArtwork, screenHeading, specialistHelp, uiIcon} from './ui-components.mjs';
+import {insightsTab, renderReportInsights, reportFootnote, reportSections, reportTools} from './report-controls.mjs';
 
 const arrow = uiIcon('forward');
 const [country, sex, smoking, conditions, treatment] = heartQuestions;
@@ -554,7 +555,7 @@ function methodsPanel(inputs, result, review, sourceLinks) {
     <details class="report-answer-group"><summary>Evidence and sources</summary>${sourceLinks(heartSources(result, review))}</details>`;
 }
 
-const reportTabs = [['summary', 'Summary'], ['measurements', 'Measurements'], ['methods', 'Methods']];
+const basicTabs = [['summary', 'Summary'], ['measurements', 'Measurements'], ['methods', 'Methods'], insightsTab];
 
 function nextStep(result, inputs, review) {
   if (result.issue === 'diabetes-data') return `<section class="report-explanation heart-missing">
@@ -602,8 +603,9 @@ function finishVascularAge(missing, isPday) {
   </section>`;
 }
 
-export function renderHeartReport({heart, saved, pagesPreview, sourceLinks, tab = 'summary'}) {
+export function renderHeartReport({heart, saved, pagesPreview, sourceLinks, full = false, guidance, tab = 'summary'}) {
   const {inputs, result, review} = heart;
+  const reportTabs = reportSections(basicTabs,full);
   const selected = reportTabs.some(([id]) => id === tab) ? tab : 'summary';
   const summary = riskSummary(heart);
   const next = result.reason ? nextStep(result, inputs, review) : '';
@@ -623,16 +625,17 @@ export function renderHeartReport({heart, saved, pagesPreview, sourceLinks, tab 
       </section>${(isFramingham || isPday) && review?.pressureFollowUp ? `<section class="heart-reading"><dl>${pressureRow(inputs, review)}</dl></section>` : ''}${arterial}`,
     measurements: measurementsPanel(inputs, review),
     methods: methodsPanel(inputs, result, review, sourceLinks),
+    findings: renderReportInsights({guidance,assessment:{heart},safety:result.reason?summary:'',sourceLinks}),
   };
   return `<div class="wrap app-screen report-workspace heart-report-screen">
     <header class="report-heading" data-theme-part>
-      <div><span class="eyebrow">ASSESSMENT REPORT</span><h1>Heart & Vascular</h1>${saved ? '<p>Saved assessment</p>' : ''}</div>
-      <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print">${uiIcon('report')}<span>PDF</span></button></div>
+      <div><span class="eyebrow">${full?'FULL REPORT':'BASIC REPORT'}</span><h1>Heart & Vascular</h1>${saved?'<p>Saved assessment'+(typeof saved==='string'?' · '+esc(saved.slice(0,10)):'')+'</p>':''}</div>
+      ${reportTools({saved,pagesPreview})}
     </header>
     <nav class="report-tabs heart-report-tabs no-print" aria-label="Report sections">${reportTabs.map(([id, label]) => `<button type="button" data-action="report-tab" data-tab="${id}"${id === selected ? ' aria-current="page"' : ''}>${label}</button>`).join('')}</nav>
-    <article class="report-paper">${reportTabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}
-      <p class="print-only report-footnote">Educational report. Prepared automatically.</p>
+    <article class="report-paper">${reportTabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" aria-label="${label}"${id === selected ? '' : ' hidden'}${id==='findings'&&!full?' data-pdf-exclude':''}>${panels[id]}</section>`).join('')}
+      ${reportFootnote(true,true)}
     </article>
-    <p class="report-footnote">Educational estimates · Not clinically reviewed.</p>
+    ${reportFootnote()}
   </div>`;
 }

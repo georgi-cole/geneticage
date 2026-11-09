@@ -34,8 +34,12 @@ async function buildClient({directory,basePath,native}){
   await rm(output,{recursive:true});
  }catch(error){if(error.code!=='ENOENT')throw error;}
  await mkdir(output);
- const bundled=await build({absWorkingDir:root,entryPoints:[native?'native/entry.mjs':'public/app.mjs'],bundle:true,platform:'browser',format:'esm',target:'es2022',write:false,logLevel:'silent'});
- await writeFile(path.join(output,'app.js'),relativeAssets(bundled.outputFiles[0].text));
+ const bundled=await build({absWorkingDir:root,entryPoints:{app:native?'native/entry.mjs':'public/app.mjs'},outdir:output,
+  bundle:true,splitting:native,chunkNames:'chunks/[name]-[hash]',platform:'browser',format:'esm',target:'es2022',write:false,logLevel:'silent'});
+ for(const file of bundled.outputFiles){
+  await mkdir(path.dirname(file.path),{recursive:true});
+  await writeFile(file.path,path.basename(file.path)==='app.js'?relativeAssets(file.text):file.text);
+ }
  // The publication contains public media/styles and the browser bundle only.
  const publicRoot=path.join(root,'public');
  for(const entry of await readdir(publicRoot,{withFileTypes:true})){

@@ -5,18 +5,21 @@ import {renderAssessmentReport} from '../public/report-ui.mjs';
 import {freshAssessment} from '../public/assessment-flow.mjs';
 import {sampleAnswers,sampleLabs,assessClinical} from '../public/model.mjs';
 import {translateText} from '../public/language-system.mjs';
+import {reportDocument} from '../public/report-export.mjs';
 
 const state={...freshAssessment(),answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labDate:'2026-11-01',labFasting:'Yes',labContext:true,labReferenceGroup:'male',labSubmitted:true,reportTab:'summary'};
 state.lab.crp.assay='standard-crp';state.lab.albumin.referenceLow='35';state.lab.albumin.referenceHigh='50';
 const clinical=assessClinical({age:45,lab:state.lab,contextConfirmed:true,fasting:'Yes'});
-const render=(s=state,options={})=>new JSDOM(renderAssessmentReport({state:s,clinical,full:true,reviewing:true,pagesPreview:true,...options})).window.document;
+const render=(s=state,options={})=>new JSDOM(renderAssessmentReport({state:s,clinical,full:true,pagesPreview:true,...options})).window.document;
 
 test('report has four stable sections, a focal estimate, actual answers and distinct sourced comparisons',()=>{
  const doc=render();
- assert.deepEqual([...doc.querySelectorAll('.report-tabs button')].map(el=>el.textContent),['Summary','Findings','Blood results','Details']);
+ assert.deepEqual([...doc.querySelectorAll('.report-tabs button')].map(el=>el.textContent),['Insights','Summary','Blood results','Details']);
  assert.equal(doc.querySelector('#report-chapter'),null);assert.equal(doc.querySelectorAll('.report-panel:not([hidden])').length,1);
  assert.equal(doc.querySelector('.report-age-line strong').textContent,String(Math.round(clinical.value)));
- assert.equal(doc.querySelectorAll('.finding-card').length,5);
+ assert.ok(doc.querySelectorAll('.premium-report-card').length>=3);
+ assert.match(doc.querySelector('.premium-report-cover').textContent,/Your blood-based age, explained/);
+ assert.deepEqual([...doc.querySelectorAll('.premium-report-chapter h2')].map(el=>el.textContent),['What stands out','Small steps to consider','Questions for your next visit']);
  const answers=[...doc.querySelectorAll('.answer-row')];
  assert.ok(answers.some(el=>el.querySelector('dt').textContent==='How old are you?'&&el.querySelector('dd').textContent==='45 years'));
  assert.ok(answers.some(el=>el.querySelector('dd').textContent==='Bulgaria'));
@@ -36,21 +39,35 @@ test('a converted value near a guide boundary cannot round into an apparently co
  assert.equal(item.dataset.referenceStatus,'above');assert.equal(item.querySelector('.converted-value strong').textContent,'99.0001 mg/dL');
 });
 
-test('empty and earlier stored reports remain explicit instead of substituting new findings',()=>{
+test('empty and earlier stored reports preserve the recorded result and use available inputs for discussion points',()=>{
  const empty=render({...state,answers:{},lab:{},labSubmitted:false},{clinical:null});
- assert.equal(empty.querySelectorAll('.finding-card').length,0);assert.match(empty.querySelector('[data-report-panel="findings"]').textContent,/No questionnaire answers/);
+ assert.equal(empty.querySelectorAll('.premium-report-card').length,1);assert.match(empty.querySelector('[data-report-panel="findings"]').textContent,/Prepare for a conversation/);
  const saved=render({...state,savedReport:{priorities:[],version:'educational-report-v1'}});
- assert.equal(saved.querySelectorAll('.finding-card').length,0);assert.match(saved.body.textContent,/No findings were stored/);
+ assert.equal(saved.querySelector('.report-age-line strong').textContent,String(Math.round(clinical.value)));
  assert.match(saved.body.textContent,/stored result has not been recalculated/);
  const withheld=render(state,{clinical:{reason:'Fictional collection review reason'}});
  assert.equal(withheld.querySelector('.report-age-line'),null);assert.match(withheld.body.textContent,/Fictional collection review reason/);
 });
 
-test('server preview access still gates the detailed answers, all findings and blood comparisons',()=>{
- const doc=render(state,{full:false,reviewing:false,pagesPreview:false});
- assert.equal(doc.querySelectorAll('.finding-card').length,1);assert.equal(doc.querySelectorAll('.answer-row dt').length,4,'Collection metadata remains visible, not the full questionnaire.');
- assert.equal(doc.querySelectorAll('.blood-review-item').length,0);assert.equal(doc.querySelector('[data-action="print"]'),null);
- assert.ok(doc.querySelector('[data-action="save"]'));assert.ok(doc.querySelector('[data-action="checkout"]'));
+test('basic reports and PDFs include the submitted data and safety checks while insights require access',()=>{
+ const locked={...state,saved:'2026-11-02',savedReport:{guidance:[{name:'Full-only marker'}]}};
+ const doc=render(locked,{full:false,pagesPreview:false});
+ assert.equal(doc.querySelectorAll('.premium-report-card').length,0);
+ assert.ok(doc.querySelectorAll('.answer-row dt').length>4);
+ assert.equal(doc.querySelectorAll('.blood-review-item').length,9);
+ assert.ok(doc.querySelector('[data-action="print"]'));
+ assert.ok(doc.querySelector('.report-saved[disabled]'));
+ assert.ok(doc.querySelector('[data-action="checkout"]'));
+ const documentBody=doc=>JSON.stringify(reportDocument(doc.querySelector('.report-workspace')).content);
+ const basic=documentBody(doc);
+ assert.match(basic,/Clinical study based/);
+ assert.match(basic,/Age at blood draw/);
+ assert.match(basic,/Glucose/);
+ assert.doesNotMatch(basic,/Full-only marker|Insights from your assessment|Save PDF/);
+ const full=documentBody(render(locked));
+ assert.match(full,/Full-only marker/);
+ assert.ok(full.indexOf('Your blood-based age, explained')<full.indexOf('Full-only marker'));
+ assert.ok(full.indexOf('Full-only marker')<full.indexOf('Glucose'));
 });
 
 test('the report translates its explanations and statuses without translating measurement units',()=>{

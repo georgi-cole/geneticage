@@ -7,8 +7,10 @@
     "@capacitor/app": "8.1.2",
     "@capacitor/browser": "8.0.5",
     "@capacitor/core": "8.6.0",
+    "@capacitor/filesystem": "8.1.5",
     "@capacitor/ios": "8.6.0",
-    "@capacitor/share": "8.0.3"
+    "@capacitor/share": "8.0.3",
+    "pdfmake": "0.3.14"
   },
   "devDependencies": {
     "@capacitor/cli": "8.6.0"

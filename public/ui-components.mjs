@@ -63,7 +63,7 @@ export function resultInstrument({value,age=null,gap=null,sample=false,illustrat
 export function libraryMotif(){return '<div class="library-motif" aria-hidden="true"><i></i><i></i><i></i><img class="lunar-portrait" data-theme-asset="blood-moon" src="/assets/blood-moon-v2.webp" srcset="/assets/blood-moon-v2-small.webp 256w, /assets/blood-moon-v2.webp 512w" sizes="140px" width="512" height="512" alt="" decoding="async"></div>';}
 export function reportArtwork(){return `<div class="report-artwork" aria-hidden="true">${[['black-metal','black-metal-report-v2'],['blood-moon','blood-moon-report-v1'],['bionic','bionic-report-v3']].map(([theme,asset])=>`<img data-report-art="${theme}" data-theme-asset="${theme}" src="/assets/${asset}.webp" srcset="/assets/${asset}-small.webp 256w, /assets/${asset}.webp 512w" sizes="150px" width="512" height="512" alt="" decoding="async">`).join('')}</div>`;}
 export function statusMessage({loading,error}){return `${loading?'<span class="sync-status" role="status">Connecting to your account…</span>':''}${error?`<div class="connection-note" role="status">${escapeHTML(error)} <button class="text-link" data-action="refresh-account">Retry</button></div>`:''}`;}
-export function pageSlice(items,page=0,size=2){const pages=Math.max(1,Math.ceil(items.length/size)),index=Math.max(0,Math.min(Number(page)||0,pages-1));return {items:items.slice(index*size,(index+1)*size),page:index,pages};}
+export function pageSlice(items,page=0,size=8){const pages=Math.max(1,Math.ceil(items.length/size)),index=Math.max(0,Math.min(Number(page)||0,pages-1));return {items:items.slice(index*size,(index+1)*size),page:index,pages};}
 export function libraryPager(page,pages){return pages<2?'':`<nav class="compact-pager" aria-label="Saved records pages"><button class="text-btn" data-action="library-page" data-page="${page-1}" ${page===0?'disabled':''}>← Previous</button><span>${page+1} / ${pages}</span><button class="text-btn" data-action="library-page" data-page="${page+1}" ${page===pages-1?'disabled':''}>Next →</button></nav>`;}
 export const assessmentTitle=s=>systemAssessment(s.assessmentType)?.title||(s.assessmentType===HEART_ASSESSMENT?'Heart & Vascular':s.labSubmitted||Number.isFinite(s.value)?'Clinical PhenoAge':'Health & lifestyle');
 const removeLocalButton=(id='',iconOnly=false)=>`<button class="${iconOnly?'record-remove':'text-btn'}" type="button" data-action="remove-local" ${id?`data-id="${escapeHTML(id)}"`:''} ${iconOnly?'aria-label="Remove from this device" title="Remove from this device"':''}>${iconOnly?uiIcon('remove'):'Remove from this device'}</button>`;
@@ -79,8 +79,15 @@ function historyRows(history,reports=false,page=0){
  const rows=slice.items.map(entry=>{
   const system=systemAssessment(entry.assessmentType);
   const reportOnly=system||entry.assessmentType===HEART_ASSESSMENT;
-  const action=reports?'open-report':reportOnly?'':'open-saved';
-  return `<article class="record-row"><span class="record-icon">${uiIcon(reports?'report':system?.icon||(entry.labSubmitted||entry.value!==null?'drop':'pulse'))}</span><div><h3>${assessmentTitle(entry)}</h3><p>${escapeHTML(entry.labDate||new Date(entry.saved).toLocaleDateString('en-GB'))}${entry.sample?' · Sample':''}</p></div><div class="record-end"><strong>${recordStatus(entry)}</strong>${action?`<button class="text-link" data-action="${action}" data-id="${escapeHTML(entry.id)}">${reports?'Read report':'View result'} <span aria-hidden="true">↗</span></button>`:''}</div>${removeLocalButton(entry.id,true)}</article>`;
+  const recordId=escapeHTML(entry.id);
+  return `<article class="record-row${reports?' saved-report-row':''}">
+    <span class="record-icon">${uiIcon(reports?'report':system?.icon||(entry.labSubmitted||entry.value!==null?'drop':'pulse'))}</span>
+    <div class="record-copy"><h3>${assessmentTitle(entry)}</h3><p>${escapeHTML(entry.labDate||new Date(entry.saved).toLocaleDateString('en-GB'))}${entry.sample?' · Sample':''}</p>
+      ${reports?`<span class="saved-report-method">${recordStatus(entry)}</span>`:''}</div>
+    ${reports?`<button type="button" class="text-link saved-report-action" data-action="offer-report" data-id="${recordId}"><span>Full report</span>${uiIcon('external')}</button>`
+      :`<div class="record-end"><strong>${recordStatus(entry)}</strong>${reportOnly?'':`<button class="text-link" data-action="open-saved" data-id="${recordId}">View result <span aria-hidden="true">↗</span></button>`}</div>`}
+    ${removeLocalButton(entry.id,true)}
+  </article>`;
  });
  return `<div class="record-list">${rows.join('')}</div>${libraryPager(slice.page,slice.pages)}`;
 }
@@ -112,9 +119,10 @@ export function renderAssessments({profile,history=[],loading=false,error='',pag
 export function renderReportLibrary({profile,history=[],loading=false,error='',draft=null,latest=null,pagesPreview=false}){
  const featured=draft||latest;
  const label=latest?'LATEST ASSESSMENT':draft&&!draft.sample?'UNSAVED REPORT':'SAMPLE REPORT';
- const action=draft?'report':latest?'open-report':'sample-report';
+ const action=draft?'report':latest?'offer-report':'sample-report';
+ const actionLabel=draft?'Open report':latest?'Full report':'Explore a sample';
  return `<div class="wrap app-screen reports-screen">${screenHeading('YOUR WORKSPACE','Reports')}
-  <button class="report-feature" data-action="${action}" ${latest?`data-id="${escapeHTML(latest.id)}"`:''} data-theme-part>${reportArtwork()}<span class="eyebrow">${label}</span><strong>${featured?assessmentTitle(featured):'Clinical PhenoAge'}</strong>${latest?.sample?'<span class="report-feature-caption">Sample</span>':''}<span class="report-feature-action">Read report ${uiIcon('arrow')}</span></button>
+  <button class="report-feature" data-action="${action}" ${latest?`data-id="${escapeHTML(latest.id)}"`:''} data-theme-part>${reportArtwork()}<span class="eyebrow">${label}</span><strong>${featured?assessmentTitle(featured):'Clinical PhenoAge'}</strong>${latest?.sample?'<span class="report-feature-caption">Sample</span>':''}<span class="report-feature-action">${actionLabel} ${uiIcon('arrow')}</span></button>
   ${featured?`<div class="assessment-controls">${removeLocalButton(latest?.id)}</div>`:''}
   <section class="saved-records" aria-label="Saved reports">${statusMessage({loading,error})}${history.length?recordSummary(history,true):'<div class="section-caption"><h2>Saved reports</h2></div><div class="quiet-empty"><p>'+(pagesPreview?'Cloud history is available in the hosted app.':'Save an assessment to keep its dated report here.')+'</p></div>'}</section>
   ${pagesPreview?'<button class="account-nudge text-btn" data-action="pages-info">Cloud features ↗</button>':!profile?'<button class="account-nudge text-btn" data-action="signup">Sign in to access saved reports <span aria-hidden="true">↗</span></button>':''}

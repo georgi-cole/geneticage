@@ -35,7 +35,7 @@ try{
 for(const who of ['a','b']){tokens[who]=(await call(who,'session')).data.csrf;assert.equal((await call(who,'account','POST',{name:'Payment test',adult:true,consent:true,consentVersion:CONSENT_VERSION})).status,201);}
 const id=randomUUID(),entry={id,answers:sampleAnswers,lab:sampleLabs(),labAge:'45',labDate:'2026-11-01',labSubmitted:true,labContext:true,labFasting:'Yes',sample:false,unlocked:true};
 assert.equal((await call('a','assessments','POST',entry)).status,201);
-let report=(await call('a','assessments/'+id)).data;assert.equal(report.assessment.unlocked,false);assert.equal(report.report.full,false);assert.equal(report.report.priorities.length,1);
+let report=(await call('a','assessments/'+id)).data;assert.equal(report.assessment.unlocked,false);assert.equal(report.report.full,false);assert.equal(report.report.priorities.length,0);assert.equal(report.report.guidance,undefined);
 assert.equal((await call('b','payments/checkout','POST',{assessmentId:id,confirm:true})).status,404);
 env.PAYMENTS_ENABLED='false';assert.equal((await call('a','payments/checkout','POST',{assessmentId:id,confirm:true})).status,503);env.PAYMENTS_ENABLED='true';
 const purchase=await call('a','payments/checkout','POST',{assessmentId:id,confirm:true});assert.equal(purchase.status,200);assert.equal(new URL(purchase.data.url).origin,'https://checkout.stripe.com');
@@ -53,7 +53,7 @@ paid(session);
 session.amount_subtotal=1;assert.equal((await webhook('checkout.session.completed',session)).status,503);session.amount_subtotal=799;
 assert.equal((await webhook('checkout.session.completed',session,{live:true})).status,200);assert.equal((await call('a','assessments/'+id+'/report')).data.report.full,false);
 assert.equal((await webhook('checkout.session.completed',session)).status,200);assert.equal((await webhook('checkout.session.completed',session)).status,200);
-report=(await call('a','assessments/'+id)).data;assert.equal(report.report.full,true);assert.equal(report.report.access.testOnly,true);assert.ok(report.report.priorities.length>1);assert.equal((await call('b','assessments/'+id+'/report')).status,404);
+report=(await call('a','assessments/'+id)).data;assert.equal(report.report.full,true);assert.equal(report.report.access.testOnly,true);assert.ok(report.report.guidance.length>1);assert.equal((await call('b','assessments/'+id+'/report')).status,404);
 assert.equal((await call('a','payments/checkout','POST',{assessmentId:id,confirm:true})).data.purchased,true);assert.equal(sessions.size,1);
 const exportData=(await call('a','account/export')).data;assert.equal(exportData.purchases.length,1);assert.equal(exportData.assessments[0].report.full,true);
 // Partial refund retains access. Full refund revokes it, including after stale completion events.
