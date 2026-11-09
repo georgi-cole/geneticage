@@ -60,7 +60,13 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await submit('#questions');
  await click('[data-answer="sex"][value="Male"]');await submit('#questions');
  await enter('[data-answer="country"]','Fictional test country');await submit('#questions');
+ assert.equal($('[data-action="skip"]'),null,'Height is required in the health profile.');
+ await submit('#questions');
+ assert.equal($('#questions [role="alert"]').textContent,'Enter your height.');
  await enter('[data-answer="height"]','176');await submit('#questions');
+ assert.equal($('[data-action="skip"]'),null,'Weight is required in the health profile.');
+ await submit('#questions');
+ assert.equal($('#questions [role="alert"]').textContent,'Enter your weight.');
  await enter('[data-answer="weight"]','77');await submit('#questions');
  await enter('[data-answer="weightYearAgo"]','77');await submit('#questions');
  const health=$('[data-answer="health"][value="Good"]'),form=$('#questions');health.focus();health.click();await flush();

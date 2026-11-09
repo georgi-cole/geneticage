@@ -1,18 +1,23 @@
 import {escapeHTML as esc} from './ui-components.mjs';
 
-export function accountEntry({email = '', stage = 'email'} = {}) {
-  const error = '<p class="error" data-auth-error role="alert" hidden></p>';
+const signInOptions = {
+  apple: { label: 'Continue with Apple', logo: 'apple.svg' },
+  google: { label: 'Continue with Google', logo: 'google.png' },
+};
+
+export function accountEntry({email = '', stage = 'email', providers = [], keepDraft = false, message = ''} = {}) {
+  const error = `<p class="error" data-auth-error role="alert"${message?'':' hidden'}>${esc(message)}</p>`;
   const changeEmail = '<button class="text-btn" type="button" data-action="auth-change-email">Use a different email</button>';
-  if (stage === 'register') return {
+  if (stage === 'register' || stage === 'social-register') return {
     title:'Create your account',
-    body:`<p>Choose a nickname for your private health journal.</p>
+    body:`<p>Choose a nickname for your private health journal. You’ll enter your health details separately.</p>
       <form id="signup-form" class="form-stack">
         <label for="account-name">Account nickname</label>
         <input id="account-name" name="name" type="text" required maxlength="40" autocomplete="nickname">
         <label class="checkline"><input name="adult" type="checkbox" required><span>I am 18 or older.</span></label>
         <details class="reference-editor">
           <summary>Account storage notice</summary>
-          <p>We keep your email for sign-in. Resend delivers the code. Assessments are encrypted and stored only when you choose to save them. You can export or delete them in Data & settings.</p>
+          <p>${stage==='social-register'?'We keep a sign-in identifier from your provider.':'We keep your email for sign-in. Resend delivers the code.'} Assessments are encrypted and stored only when you choose to save them. You can export or delete them from your account.</p>
         </details>
         <label class="checkline"><input name="consent" type="checkbox" required><span>I consent to storing health information when I choose to save an assessment.</span></label>
         ${error}<button class="btn" type="submit">Create my account →</button>
@@ -29,13 +34,17 @@ export function accountEntry({email = '', stage = 'email'} = {}) {
         <div class="actions"><button class="text-btn" type="button" data-action="auth-resend">Send a new code</button>${changeEmail}</div>
       </form>`,
   };
+  const social = Object.entries(signInOptions).filter(([provider])=>providers.includes(provider)).map(([provider,{label,logo}])=>
+    `<a class="provider-sign-in ${provider}" href="/api/auth/oauth/${provider}/start" target="${keepDraft?'_blank':'_top'}" rel="noopener noreferrer"><img src="/assets/auth/${logo}" alt=""><span>${label}</span></a>`).join('');
   return {
     title:'Sign in or create an account',
-    body:`<p>We’ll email you a one-time code to open your private health journal.</p>
+    body:`${social?`<div class="provider-sign-in-options">${social}</div><p>Use the same sign-in method to open an existing account.</p>${keepDraft?`<p>Provider sign-in opens in a new tab so your entries stay here. Return to this tab when you’re done.</p>`:''}`:''}
+      <p>${social?'Or sign in with a code sent to your email.':'We’ll email you a one-time code to open your private health journal.'}</p>
       <form id="auth-email-form" class="form-stack">
         <label for="auth-email">Email address</label>
         <input id="auth-email" name="email" type="email" autocomplete="email" required maxlength="254" value="${esc(email)}">
         ${error}<button class="btn" type="submit">Send sign-in code →</button>
+        ${social&&keepDraft?'<button class="text-btn" type="button" data-action="auth-resume">Continue here after signing in</button>':''}
       </form>`,
   };
 }

@@ -23,7 +23,7 @@ import {assessSystem, systemAssessment, systemAssessments, systemField, systemPr
 import {readSystemForm, refreshSystemFeedback, renderSystemForm, renderSystemReport, systemMethods, systemRoute, systemSampleButton, systemStepFor} from './system-assessment-ui.mjs';
 import {resultInstrument,screenHeading,uiIcon,backButton,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,assessmentTitle,statusMessage,unmeasuredMark} from './ui-components.mjs';
 import {questionContext,questionChoices,questionDestination,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
-import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,insights,sampleAnswers,sampleLabs} from './model.mjs';
+import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,profileMeasurementErrors,profileBmi,insights,sampleAnswers,sampleLabs} from './model.mjs';
 import {references,clockComparison} from './evidence.mjs';
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state={...freshAssessment(),view:'home'},draftBackup=null;
@@ -43,7 +43,7 @@ const assessmentType=draft=>draft.assessmentType||'profile';
 const isHeartAssessment=draft=>assessmentType(draft)===HEART_ASSESSMENT;
 const isSystemAssessment=draft=>!!systemAssessment(assessmentType(draft));
 const independentAssessment=draft=>isHeartAssessment(draft)||isSystemAssessment(draft);
-let auth={loading:true,authenticated:false,csrf:null,profile:null,history:[],purchases:[],reportReview:false,payments:{enabled:false,label:'US$7.99'},error:''};
+let auth={loading:true,authenticated:false,csrf:null,profile:null,history:[],purchases:[],providers:[],reportReview:false,payments:{enabled:false,label:'US$7.99'},error:''};
 let signIn={};
 function discardCurrentDraft(){
  const {view,accountTab,libraryPage}=state;
@@ -81,10 +81,14 @@ async function refreshAccount(){
  auth.loading=true;auth.error='';auth.collectionsError='';auth.purchaseError='';
  accountRefresh=(async()=>{try{
   const response=await fetch('/api/session',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000)});
-  if(response.status===401){auth.authenticated=false;auth.profile=null;auth.history=[];auth.purchases=[];auth.csrf=null;overviewSnapshots.clear();return;}
+  if(response.status===401){
+   const session=await response.json().catch(()=>null);
+   auth.providers=session?.providers||[];
+   auth.authenticated=false;auth.profile=null;auth.history=[];auth.purchases=[];auth.csrf=null;overviewSnapshots.clear();return;
+  }
   const session=await response.json();if(!response.ok)throw new Error(session.error||'Account storage is unavailable.');
   if(auth.csrf!==session.csrf){auth.history=[];auth.purchases=[];overviewSnapshots.clear();}
-  auth.authenticated=true;auth.csrf=session.csrf;auth.reportReview=!!session.reportReview;auth.payments=session.payments;auth.profile=session.profile;
+  auth.authenticated=true;auth.csrf=session.csrf;auth.reportReview=!!session.reportReview;auth.payments=session.payments;auth.profile=session.profile;auth.providers=session.providers||[];
   if(session.profile){const [history,purchases]=await Promise.allSettled([api('assessments'),api('purchases')]);
    if(history.status==='fulfilled'){
     auth.history=history.value.assessments.filter(record=>!hiddenRecords.has(record.id));
@@ -230,7 +234,7 @@ function displayGap(gap){const n=Math.round(gap);return n>0?'+'+n:String(n===0?0
 function ageComparison(c,age){const n=Math.round(c.value)-Number(age);return n===0?'Rounded to the nearest year, the estimate matches your age at the blood draw.':'The estimate is about '+Math.abs(n)+' '+(Math.abs(n)===1?'year':'years')+' '+(n>0?'higher':'lower')+' than your age at the blood draw.';}
 
 function method(){modal('About the assessments',`<p>Biological age is an estimate of aspects of health and aging. Different methods measure different features, so their results are not interchangeable.</p><details open><summary>Health and lifestyle profile</summary><p>Your answers are compared with selected health guidance to identify topics for review. This is an educational profile, not a validated age clock or a clinical risk score. It does not calculate an age in years.</p></details><details><summary>Blood-based age: clinical PhenoAge</summary><p>The published formula combines your age with nine blood measurements. It was developed using US population data and expresses a pattern associated with health outcomes on an age scale.</p><p>This version reports estimates for ages 20–84, using confirmed fasting samples and a collection-history check. These are the app’s interpretation rules. They do not establish accuracy for every person or country.</p><p>The displayed difference is clinical PhenoAge minus age at the blood draw. It is not the study’s age-adjusted PhenoAgeAccel measure, a measure of aging speed, or a forecast of years left to live.</p></details><details><summary>Heart & Vascular</summary><p>For eligible adults aged 18–29, PDAY estimates an early vascular age range from routine measurements and health history.</p><p>For eligible adults aged 30–39, the Framingham model compares vascular age using blood pressure and routine cholesterol results.</p><p>SCORE2 and SCORE2-Diabetes cover eligible adults aged 40–69. SCORE2-OP covers ages 70–89. The 10-year risk estimate uses the region for your country of residence.</p><p>Younger adults can add a clinical pulse-wave result for a separate arterial stiffness age comparison.</p></details>${Object.entries(systemAssessments).map(([type,spec])=>`<details><summary>${spec.title}</summary>${systemMethods(type)}${sourceLinks(spec.sources)}</details>`).join('')}<details><summary>Glycan and protein clocks</summary><p>GlycanAge uses IgG glycans. Organ proteomic clocks use panels of blood proteins. Each needs the measurements and reference from its own study.</p>${sourceLinks(['glycan-age','igg-diabetes','organ-proteome','grimage-2'])}</details><details><summary>Epigenetic laboratory tests</summary><p>These use DNA methylation: chemical marks on DNA. They require a suitable laboratory assay and a defined calculation. Routine blood chemistry and lifestyle answers cannot substitute for those measurements.</p><div class="clock-list">${clockComparison.slice(1).map(c=>`<article><h3>${c.name}</h3><p>${c.meaning}</p><p class="small muted">${c.availability}</p></article>`).join('')}</div><p>Laboratory clocks also produce estimates. A test cannot establish one exact biological or “genetic” age. KoleQuant can advise which question a test may help answer and whether it is available.</p></details><details><summary>Mortality risk and progress over time</summary><p>Some clocks are associated with mortality in research populations. That association does not, by itself, provide your probability of death. A personal risk estimate needs a model with a defined time period and evidence that it applies to the relevant population.</p><p>Repeated clinical age estimates can be compared as a history. Changes may reflect illness, sampling conditions, measurement variation or a change in health. A falling result is not proof of reversed aging.</p></details><details><summary>Research and health guidance</summary>${sourceLinks(references.map(r=>r.id))}</details>`);}
-function privacy(){if(PAGES_PREVIEW){modal('Privacy & data','<p>Your answers stay in this page’s memory. Reloading or closing the page clears them. Only theme and language preferences are stored on this device.</p><p>This preview does not send your answers to an account database or payment service. GitHub delivers the static app files.</p>');return;}modal('Your account & information',`<p>You can explore an assessment without saving it. Unsaved questionnaire and blood entries stay in this page’s memory.</p><p>KoleQuant stores your sign-in email, nickname and consent record. Resend delivers a one-time code to your email address. Sign-in emails contain no health information.</p><p>When you explicitly save, your questionnaire, blood entries, results and educational report are sent over HTTPS and stored in the hosted account database. Health records are encrypted by the application before database storage. Authorized service operators can administer the service; this is not end-to-end encryption.</p><p>Saving is optional and is not permission for research, marketing or sharing with a consultation team. Those uses are not enabled. Hosting providers may process ordinary connection logs.</p><p>You can remove individual records from this browser. The browser stores only the IDs needed to hide those records. In Data & settings you can export your account or delete it and its live records. Provider backups may retain deleted data for a limited period. Downloaded copies remain on your device.</p><p>For a report purchase, Stripe collects payment and billing details. We store the purchase status, amount, payment references and receipt link. No questionnaire, blood entries or results are sent to Stripe. Stripe retains its own payment records.</p><p>Legacy demo accounts remain in their original browser storage unless you remove them. They are not uploaded automatically.</p><p class="small muted">Reports are generated automatically. Consultation enquiries are previews. Stripe handles checkout when report purchases are available.</p>`);}
+function privacy(){if(PAGES_PREVIEW){modal('Privacy & data','<p>Your answers stay in this page’s memory. Reloading or closing the page clears them. Only theme and language preferences are stored on this device.</p><p>This preview does not send your answers to an account database or payment service. GitHub delivers the static app files.</p>');return;}modal('Your account & information',`<p>You can explore an assessment without saving it. Unsaved questionnaire and blood entries stay in this page’s memory.</p><p>KoleQuant stores your nickname, consent record and sign-in information. If you use email, we store your address and Resend delivers the sign-in code. If you use Apple or Google, we keep a sign-in identifier. Sign-in providers receive no health information.</p><p>When you explicitly save, your questionnaire, blood entries, results and educational report are sent over HTTPS and stored in the hosted account database. Health records are encrypted by the application before database storage. Authorized service operators can administer the service; this is not end-to-end encryption.</p><p>Saving is optional and is not permission for research, marketing or sharing with a consultation team. Those uses are not enabled. Hosting providers may process ordinary connection logs.</p><p>You can remove individual records from this browser. The browser stores only the IDs needed to hide those records. In Data & settings you can export your account or delete it and its live records. Provider backups may retain deleted data for a limited period. Downloaded copies remain on your device.</p><p>For a report purchase, Stripe collects payment and billing details. We store the purchase status, amount, payment references and receipt link. No questionnaire, blood entries or results are sent to Stripe. Stripe retains its own payment records.</p><p>Legacy demo accounts remain in their original browser storage unless you remove them. They are not uploaded automatically.</p><p class="small muted">Reports are generated automatically. Consultation enquiries are previews. Stripe handles checkout when report purchases are available.</p>`);}
 
 function overviewSelection(){
  const history=auth.profile?auth.history:[];
@@ -289,12 +293,12 @@ async function hydrateOverview(retry=false){
 }
 function consent(){
  const sample=state.goal==='labs'?'<button class="text-btn" data-action="sample">Try a PhenoAge sample</button>':systemSampleButton(state.goal);
- return `<div class="wrap narrow"><div class="eyebrow">${esc(goalTitle(state.goal))}</div><h1>Before you begin</h1><p class="lead">This assessment puts your information in context using published research. Discuss your results with a healthcare professional when making decisions about your care.</p><div class="notice">${PAGES_PREVIEW?'Your answers stay in this page’s memory. Cloud saving is available in the hosted app.':'Unsaved answers stay on this page. If you choose to save an assessment, its health information and report are stored in your account.'}</div><label class="checkline"><input id="consent" type="checkbox" ${state.consent?'checked':''}><span>I am 18 or older and have read the assessment note and <button class="text-link" data-action="privacy">information about my data</button>.</span></label>${state.errors.consent?`<p class="error" role="alert">${state.errors.consent}</p>`:''}<div class="actions"><button class="btn" data-action="consent-next">Continue ${arrow}</button>${sample}</div></div>`;
+ return `<div class="wrap narrow"><div class="eyebrow">${esc(goalTitle(state.goal))}</div><h1>Before you begin</h1><p class="lead">This assessment puts your information in context using published research. Discuss your results with a healthcare professional when making decisions about your care.</p>${state.goal==='profile'?'<p>Enter your age, height and weight. We calculate BMI from your height and weight.</p>':''}<div class="notice">${PAGES_PREVIEW?'Your answers stay in this page’s memory. Cloud saving is available in the hosted app.':'Unsaved answers stay on this page. If you choose to save an assessment, its health information and report are stored in your account.'}</div><label class="checkline"><input id="consent" type="checkbox" ${state.consent?'checked':''}><span>I am 18 or older and have read the assessment note and <button class="text-link" data-action="privacy">information about my data</button>.</span></label>${state.errors.consent?`<p class="error" role="alert">${state.errors.consent}</p>`:''}<div class="actions"><button class="btn" data-action="consent-next">Continue ${arrow}</button>${sample}</div></div>`;
 }
 function inputField(q){const a=state.answers,v=a[q.id]??'';if(q.type==='multi'||q.options)return `<div class="options">${q.options.map(o=>`<label class="option"><input type="${q.type==='multi'?'checkbox':'radio'}" name="${q.id}" value="${esc(o)}" data-answer="${q.id}" ${q.type==='multi'?(Array.isArray(v)&&v.includes(o)?'checked':''):(v===o?'checked':'')}><i class="choice-mark" aria-hidden="true"></i><span>${esc(q.optionLabels?.[o]||o)}</span></label>`).join('')}</div>`;
  if(q.type==='country')return `<input type="text" data-answer="${q.id}" id="${q.id}" aria-label="${esc(q.label)}" value="${esc(v)}" list="countries" placeholder="Search or enter a country" autocomplete="off"><datalist id="countries">${['Australia','Austria','Belgium','Brazil','Bulgaria','Canada','China','Croatia','Cyprus','Czechia','Denmark','Estonia','Finland','France','Germany','Greece','Hungary','India','Ireland','Israel','Italy','Japan','Latvia','Lithuania','Malta','Netherlands','New Zealand','Norway','Poland','Portugal','Romania','Singapore','South Africa','Spain','Sweden','Switzerland','United Kingdom','United States'].map(x=>`<option>${x}</option>`).join('')}</datalist>`;
  if(q.type==='drinks')return `<div class="drink-list">${(a.drinks||[]).map((d,i)=>`<div class="drink-summary"><span><strong>${esc(d.type)}</strong><small>${esc(d.count||'?')} × ${esc(d.ml||'?')} mL · ${esc(d.abv||'?')}%</small></span><button class="text-link" type="button" data-action="edit-drink" data-index="${i}">Edit</button><button class="text-btn" type="button" data-action="remove-drink" data-index="${i}" aria-label="Remove drink ${i+1}">×</button></div>`).join('')}</div><button class="btn secondary" data-action="add-drink" type="button">+ Add a drink type</button>`;
- return `<div class="input-row"><input type="number" id="${q.id}" aria-label="${esc(q.label)}" data-answer="${q.id}" value="${esc(v)}" min="${q.min??0.1}" ${q.max?`max="${q.max}"`:''} step="${q.step??'any'}" inputmode="decimal" placeholder="${q.required?'Required':'Optional'}">${q.type==='measure'?`<select data-unit="${q.id}" aria-label="Unit for ${esc(q.label)}">${q.units.map(x=>`<option ${(a[q.id+'Unit']||q.units[0])===x?'selected':''}>${x}</option>`).join('')}</select>`:q.unit?`<span class="unit">${q.unit}</span>`:''}</div>`;
+ return `<div class="input-row"><input type="number" id="${q.id}" aria-label="${esc(q.label)}" data-answer="${q.id}" value="${esc(v)}" min="${q.min??0.1}" ${q.max?`max="${q.max}"`:''} step="${q.step??'any'}" inputmode="decimal" ${q.required?'required':''} placeholder="${q.required?'Required':'Optional'}">${q.type==='measure'?`<select data-unit="${q.id}" aria-label="Unit for ${esc(q.label)}">${q.units.map(x=>`<option ${(a[q.id+'Unit']||q.units[0])===x?'selected':''}>${x}</option>`).join('')}</select>`:q.unit?`<span class="unit">${q.unit}</span>`:''}</div>`;
 }
 function pruneSmokingAnswers(){
  const a=state.answers,current=['Every day','Some days'].includes(a.smoking),regularQuestionApplies=a.smokingEver100==='Yes'||current;
@@ -315,7 +319,7 @@ function advanceQuestion(opener){
  Object.assign(state,next);
  finishAt(next.view);
 }
-function review(){return `<div class="wrap narrow"><div class="eyebrow">Questionnaire</div><h1>Review your answers</h1><p class="lead">Edit any section before viewing your health profile.</p>${sampleBadge()}<div class="card">${sections.map((s,i)=>{const qs=s.questions.filter(q=>!q.show||q.show(state.answers));const n=qs.filter(q=>state.answers[q.id]!==undefined&&state.answers[q.id]!==''&&(!Array.isArray(state.answers[q.id])||state.answers[q.id].length)).length;return `<div class="row" style="display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line)"><span>${s.name} <span class="small muted">${n} of ${qs.length} answered</span></span><button class="text-link" data-action="edit-section" data-index="${i}">Edit</button></div>`;}).join('')}</div><div class="actions" style="margin-top:25px"><button class="btn" data-action="results">View health profile ${arrow}</button><button class="btn secondary" data-action="labs">Add blood results</button></div></div>`;}
+function review(){const bmi=profileBmi(state.answers);return `<div class="wrap narrow"><div class="eyebrow">Questionnaire</div><h1>Review your answers</h1><p class="lead">Edit any section before viewing your health profile.</p>${bmi!==null?`<p><strong>BMI</strong> <span data-no-translate>${bmi.toFixed(1)} kg/m²</span></p>`:''}${sampleBadge()}<div class="card">${sections.map((s,i)=>{const qs=s.questions.filter(q=>!q.show||q.show(state.answers));const n=qs.filter(q=>state.answers[q.id]!==undefined&&state.answers[q.id]!==''&&(!Array.isArray(state.answers[q.id])||state.answers[q.id].length)).length;return `<div class="row" style="display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line)"><span>${s.name} <span class="small muted">${n} of ${qs.length} answered</span></span><button class="text-link" data-action="edit-section" data-index="${i}">Edit</button></div>`;}).join('')}</div><div class="actions" style="margin-top:25px"><button class="btn" data-action="results">View health profile ${arrow}</button><button class="btn secondary" data-action="labs">Add blood results</button></div></div>`;}
 function labForm(){
  const origin=returnTrail.at(-1);
  return renderLabForm(state,labHelp,returnLabel(),origin?.editStep===String(state.labStep)?origin.label:undefined);
@@ -343,7 +347,7 @@ function report(){
 }
 function checkout(){if(PAGES_PREVIEW){pagesInfo();return;}if(!auth.payments?.enabled){modal('Report purchases are opening soon.',`<p>The full report will be available for <strong>US$7.99</strong> per saved assessment. Purchasing is not enabled yet, and no payment will be taken.</p><p>Your free insight, saved assessments and account history remain available.</p><button class="btn" data-action="close">Back to my report</button>`);return;}if(!account()){state.pendingCheckout=true;signup();return;}if(state.sample){modal('Explore this sample for free.','<p>This assessment contains illustrative data. Create an assessment with your own inputs before buying a personal report.</p><button class="btn" data-action="close">Back to sample</button>');return;}if(!state.saveId||!state.savedReport){modal('Save before you buy.',`<p>Save this assessment and report preview to your private account first. Your purchase will unlock this dated report on every device where you sign in.</p><button class="btn" data-action="save-before-checkout">Save & review purchase</button>`);return;}modal('Your full report. One simple purchase.',`<span class="pill">${auth.payments.mode==='test'?'Stripe test checkout · no real charge':'One-time purchase · no subscription'}</span><p style="margin-top:20px">Unlock the complete educational report for this saved assessment: all applicable priorities, your input summary, methods, and questions for a professional.</p><div class="notice"><strong>US$7.99</strong> · Any applicable taxes and the final total are shown on Stripe before you pay. This is an automated educational report, not a clinical consultation or diagnosis.</div><p class="small muted">Stripe handles payment details. Your questionnaire, blood measurements and results are not sent to Stripe. You’ll return here after checkout; purchased reports will also appear in your account.</p><button class="btn" data-action="purchase-checkout">Continue to secure payment →</button><button class="text-btn" data-action="close" style="margin-top:14px">Cancel</button>`);}
 function savedDraft(s,report,goal=s.labSubmitted?'labs':assessmentType(s)){
- return {...freshAssessment(goal),...s,labReferenceMode:s.labReferenceMode||'lab-only',labReferenceVersion:s.labReferenceVersion||null,labReferenceGroup:s.labReferenceGroup||'unspecified',profileCompleted:Object.keys(s.answers||{}).length>1,saveId:s.id,savedReport:report,unlocked:report.full===true,assessment:true,labValid:true,consent:true};
+ return {...freshAssessment(goal),...s,labReferenceMode:s.labReferenceMode||'lab-only',labReferenceVersion:s.labReferenceVersion||null,labReferenceGroup:s.labReferenceGroup||'unspecified',profileCompleted:!Object.keys(profileMeasurementErrors(s.answers)).length,saveId:s.id,savedReport:report,unlocked:report.full===true,assessment:true,labValid:true,consent:true};
 }
 async function openSaved(id,view='results',origin){
  if(hiddenRecords.has(id))return;
@@ -366,10 +370,12 @@ function enquiryDone(summary){return `<div class="wrap narrow"><div class="card"
 function signup(){
  if(PAGES_PREVIEW){pagesInfo();return;}
  if(account()){state.accountTab='settings';goto('account');return;}
- const {title,body}=accountEntry(signIn);
+ const drafts=[state,draftBackup,...parkedAssessments.values()];
+ const keepDraft=drafts.some(draft=>draft&&!draft.sample&&assessmentProgress(draft).hasData);
+ const {title,body}=accountEntry({...signIn,providers:auth.providers,keepDraft});
  modal(title,body);
  language.refresh();
- requestAnimationFrame(()=>$('.modal input')?.focus({preventScroll:true}));
+ requestAnimationFrame(()=>$('.modal .provider-sign-in, .modal input')?.focus({preventScroll:true}));
 }
 async function emailAction(form,job,button=form.querySelector('[type="submit"]')){
  if(form.getAttribute('aria-busy')==='true')return;
@@ -386,14 +392,32 @@ async function sendEmailCode(form,email,button){
  },button);
 }
 async function finishSignIn(){
- signIn={};
  if(accountRefresh)await accountRefresh;
  await refreshAccount();
  if(!account())throw new Error(auth.error||'Your session could not be opened. Try signing in again.');
+ afterSignIn();
+}
+function afterSignIn(){
+ signIn={};
  close();
  if(state.pendingCheckout){state.pendingCheckout=false;checkout();}
  else if(state.pendingSave){state.pendingSave=false;save();}
- else{state.accountTab='settings';goto('account');}
+ else{
+  state.accountTab='settings';
+  gotoRoot('account',{replace:true});
+  if(needsHealthProfile())startHealthProfile();
+ }
+}
+function handleSignInReturn(){
+ if(PAGES_PREVIEW)return;
+ const url=new URL(location.href),status=url.searchParams.get('auth');
+ if(!['signed-in','register','cancelled','retry'].includes(status))return;
+ url.searchParams.delete('auth');
+ history.replaceState(history.state,'',url);
+ if(status==='signed-in'&&account()){afterSignIn();return;}
+ if(status==='register'){signIn={stage:'social-register'};signup();return;}
+ signIn={message:status==='cancelled'?'Sign-in was cancelled. Choose a sign-in method to try again.':'Sign-in could not be completed. Please try again.'};
+ signup();
 }
 function clearAccountState(){
  signIn={};
@@ -428,7 +452,7 @@ function dashboard(){
   const latest=draft?null:auth.history.at(-1);
   return renderReportLibrary({...common,draft,latest});
  }
- if(state.accountTab==='settings')return PAGES_PREVIEW?renderPagesAccount():renderAccount(common);
+ if(state.accountTab==='settings')return PAGES_PREVIEW?renderPagesAccount():renderAccount({...common,needsHealthProfile:needsHealthProfile()});
  const back=backButton('account-tab','Account','settings');
  if(state.accountTab==='about')return `<div class="wrap app-screen account-subscreen">${back}${screenHeading('INFORMATION & SUPPORT','About this app')}<section class="card" data-theme-part><h2>Understand the assessment</h2><p>Explore the assessment experience and its methods. Automated educational estimates do not diagnose disease or predict lifespan.</p><a class="text-link" href="https://kolequant.xyz/en/index.html" target="_blank" rel="noopener noreferrer">KoleQuant website ↗</a></section><section class="account-settings utility-actions" aria-label="Support and assessment controls"><button class="account-setting" data-action="consult"><span class="setting-symbol">${uiIcon('consult')}</span><span class="setting-copy"><strong>Contact options</strong><small>Questions, interpretation and support</small></span>${uiIcon('external')}</button><button class="account-setting quiet-setting" data-action="reset"><span class="setting-symbol">${uiIcon('reset')}</span><span class="setting-copy"><strong>Reset assessment</strong><small>Clear the current assessment</small></span>${uiIcon('forward')}</button></section></div>`;
  if(state.accountTab==='progress')return `<div class="wrap app-screen account-subscreen">${backButton('account-tab','My assessments','history')}${screenHeading('YOUR HISTORY','Progress over time')}<div class="actions"><button class="btn secondary" data-action="trend-personal">My results</button><button class="text-link" data-action="trend-sample">Sample history</button></div>${trend(auth.history)}</div>`;
@@ -761,6 +785,29 @@ function draftForGoal(goal){
  const type=draftTypeForGoal(goal);
  return active&&assessmentType(active)===type?active:parkedAssessments.get(type);
 }
+function needsHealthProfile(){
+ if(!auth.profile||auth.loading||auth.collectionsError)return false;
+ const draft=draftForGoal('profile');
+ const completeHere=draft?.profileCompleted&&!Object.keys(profileMeasurementErrors(draft.answers)).length;
+ return !completeHere&&!auth.history.some(record=>record.hasCompleteProfile&&!record.sample);
+}
+function startHealthProfile(opener){
+ rememberReturn(opener);
+ beginAssessment('profile');
+}
+function checkProfileMeasurements(){
+ const errors=profileMeasurementErrors(state.answers);
+ const id=Object.keys(errors)[0];
+ if(!id)return true;
+ state.profileCompleted=false;
+ state.step=0;
+ state.questionIndex=sections[0].questions.findIndex(question=>question.id===id);
+ state.optionPage=0;
+ goto('questionnaire');
+ state.errors={[id]:errors[id]};
+ render();
+ return false;
+}
 function hasEntriesForGoal(draft,goal){
  if(!draft)return false;
  if(goal==='profile')return Object.keys(draft.answers||{}).length>0;
@@ -832,7 +879,7 @@ async function editExistingAssessment(goal,id,button){
  return resumeAssessment(goal);
 }
 function beginAssessment(goal){
- if(state.view==='review')state.profileCompleted=true;
+ if(state.view==='review')state.profileCompleted=!Object.keys(profileMeasurementErrors(state.answers)).length;
  selectAssessment(draftTypeForGoal(goal));
  return resumeAssessment(goal);
 }
@@ -933,6 +980,8 @@ document.addEventListener('click',async e=>{
  }
  if(act==='auth-change-email'){signIn={};signup();return;}
  if(act==='auth-resend'){await sendEmailCode(b.closest('form'),signIn.email,b);return;}
+ if(act==='auth-resume'){await emailAction(b.closest('form'),finishSignIn,b);return;}
+ if(act==='complete-health-profile'){startHealthProfile(b);return;}
  if(act==='sign-out'){
   await action(b,async()=>{
    if(accountRefresh)await accountRefresh;
@@ -1034,7 +1083,7 @@ document.addEventListener('click',async e=>{
   else{Object.assign(state,previous);goto(previous.view,0,{backward:true});}
   return;
  }
- if(act==='skip'){dirty();delete state.answers[b.dataset.id];advanceQuestion(b);return;}
+ if(act==='skip'&&!questionContext(state).question.required){dirty();delete state.answers[b.dataset.id];advanceQuestion(b);return;}
  if(act==='edit-section'){
   rememberReturn(b,{editStep:b.dataset.index});
   state.step=Number(b.dataset.index);state.questionIndex=0;state.optionPage=0;goto('questionnaire');return;
@@ -1043,6 +1092,7 @@ document.addEventListener('click',async e=>{
  if(act==='edit-drink'){editDrink(Number(b.dataset.index));return;}
  if(act==='remove-drink'){dirty();state.answers.drinks.splice(Number(b.dataset.index),1);render();return;}
  if(act==='without-labs'){
+  if(!checkProfileMeasurements())return;
   rememberReturn(b);state.profileCompleted=true;dirty();state.labSubmitted=false;state.assessment=true;goto('results');return;
  }
  if(act==='labs'){
@@ -1052,7 +1102,10 @@ document.addEventListener('click',async e=>{
  }
  if(act==='sample-labs'){loadSample(undefined,b,'labs');return;}
  if(act==='results'){
-  if(state.view==='review')state.profileCompleted=true;
+  if(state.view==='review'){
+   if(!checkProfileMeasurements())return;
+   state.profileCompleted=true;
+  }
   state.assessment=true;
   const view=independentAssessment(state)?'report':'results';
   if(returnTrail.at(-1)?.view===view)goBack();
@@ -1112,7 +1165,7 @@ document.addEventListener('click',async e=>{
   announce(persisted?'Removed from this device.':'Removed for this session.');
   return;
  }
- if(act==='delete-account'){modal('Delete your KoleQuant account?',`<p>This removes your profile, email sign-in, sessions, and saved reports from the live database. Provider backups, downloads and Stripe payment records have separate lifecycles.</p><form id="delete-account-form"><label for="delete-confirm">Type DELETE to confirm</label><input id="delete-confirm" type="text" required pattern="DELETE" autocomplete="off"><button class="btn" type="submit" style="margin-top:20px">Delete my account & history</button></form>`);return;}
+ if(act==='delete-account'){modal('Delete your KoleQuant account?',`<p>This removes your profile, sign-in information, sessions and saved reports from the live database. Provider backups, downloads and Stripe payment records have separate lifecycles.</p><form id="delete-account-form"><label for="delete-confirm">Type DELETE to confirm</label><input id="delete-confirm" type="text" required pattern="DELETE" autocomplete="off"><button class="btn" type="submit" style="margin-top:20px">Delete my account & history</button></form>`);return;}
  if(act==='export'){await action(b,async()=>{const data=await api('account/export');const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kolequant-account-export.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);});return;}
  if(act==='import-legacy'){importLegacy();return;}
  if(act==='seed-history'){await action(b,async()=>{for(const [date,rdw] of [['2026-10-01',14.4],['2026-11-01',14]]){const l=sampleLabs();l.rdw.value=String(rdw);await api('assessments','POST',{id:crypto.randomUUID(),answers:structuredClone(sampleAnswers),lab:l,labAge:'45',labDate:date,labSubmitted:true,labContext:true,labFasting:'Yes',sample:true,unlocked:false});}await refreshAccount();state.accountTab='progress';state.showSampleTrends=true;goto('account');});return;}
@@ -1143,7 +1196,7 @@ document.addEventListener('submit',async e=>{
   captureQuestion();
   const choices=questionChoices(state);
   if(choices.page<choices.pages-1){state.optionPage=choices.page+1;goto('questionnaire');return;}
-  const q=questionContext(state).question,errors=validateQuestionnaire(state.answers);
+  const q=questionContext(state).question,errors=validateQuestionnaire(state.answers,{requireMeasurements:true});
   state.errors=errors[q.id]?{[q.id]:errors[q.id]}:{};
   if(Object.keys(state.errors).length){render();return;}
   advanceQuestion(e.submitter);return;
@@ -1227,7 +1280,7 @@ document.addEventListener('submit',async e=>{
   else await finishSignIn();
  });
  if(f.id==='signup-form'&&f.reportValidity())await emailAction(f,async()=>{
-  await api('auth/register','POST',{name:f.elements.name.value,adult:f.elements.adult.checked,consent:f.elements.consent.checked,consentVersion:CONSENT_VERSION});
+  await api('auth/register','POST',{name:f.elements.name.value,adult:f.elements.adult.checked,consent:f.elements.consent.checked,consentVersion:CONSENT_VERSION,signInMethod:signIn.stage==='social-register'?'social':'email'});
   await finishSignIn();
  });
  if(f.id==='delete-account-form'){if(!f.reportValidity())return;await action(f.querySelector('[type="submit"]'),async()=>{await api('account','DELETE',{confirm:$('#delete-confirm').value});clearAccountState();close();state.accountTab='settings';goto('account');announce('Your KoleQuant account and live records have been deleted.');});}
@@ -1264,7 +1317,12 @@ document.addEventListener('pointercancel',e=>{if(overviewSwipe?.id===e.pointerId
 initializeAppearance();
 render();
 navigationHistory.visit({replace:true});
-refreshAccount().then(async()=>{if(location.hash==='#account'){state.accountTab='settings';goto('account',0,{replace:true});}else if(['account','report','results'].includes(state.view))render();await paymentReturn();});
+refreshAccount().then(async()=>{
+ if(location.hash==='#account'){state.accountTab='settings';goto('account',0,{replace:true});}
+ else if(['account','report','results'].includes(state.view))render();
+ handleSignInReturn();
+ await paymentReturn();
+});
 window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
 window.addEventListener('storage',event=>{
  if(event.key!==hiddenRecordsKey)return;

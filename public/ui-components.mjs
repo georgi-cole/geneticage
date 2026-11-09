@@ -121,11 +121,11 @@ export function renderReportLibrary({profile,history=[],loading=false,error='',d
  </div>`;
 }
 
-export function renderAccount({profile,loading,error}){
+export function renderAccount({profile,loading,error,needsHealthProfile}){
  const row=(name,sub,action,extra='',symbol='report')=>`<button class="account-setting" data-action="${action}" ${extra}><span class="setting-symbol">${uiIcon(symbol)}</span><span class="setting-copy"><strong>${name}</strong><small>${sub}</small></span>${uiIcon('external')}</button>`;
  return `<div class="wrap app-screen account-screen">${screenHeading('YOUR WORKSPACE','Account')}
- <section class="profile-card" data-theme-part><span class="profile-avatar">${uiIcon('person')}</span><div><h2${profile?' data-no-translate':''}>${escapeHTML(profile?.name||'Your private workspace')}</h2><p>${profile?'Signed in with email':'Keep your assessments across devices'}</p></div>${!profile?'<button class="btn" data-action="signup">Sign in / Create account →</button>':''}</section>
- ${statusMessage({loading,error})}<section class="account-settings" data-theme-part>${row('Privacy notice','How your information is used','privacy','','shield')}${row('Assessment methods','Evidence and interpretation','method','','science')}${row('Purchases','Report access and payments','account-tab','data-tab="purchases"')}${profile?row('Manage saved data','Export your data or delete your account','account-tab','data-tab="data"','history'):''}${row('About this app','Information and support','account-tab','data-tab="about"','spark')}</section>
+ <section class="profile-card" data-theme-part><span class="profile-avatar">${uiIcon('person')}</span><div><h2${profile?' data-no-translate':''}>${escapeHTML(profile?.name||'Your private workspace')}</h2><p>${profile?'Signed in':'Keep your assessments across devices'}</p></div>${!profile?'<button class="btn" data-action="signup">Sign in / Create account →</button>':''}</section>
+ ${statusMessage({loading,error})}<section class="account-settings" data-theme-part>${needsHealthProfile?row('Complete your health profile','Enter your age, height and weight','complete-health-profile','','person'):''}${row('Privacy notice','How your information is used','privacy','','shield')}${row('Assessment methods','Evidence and interpretation','method','','science')}${row('Purchases','Report access and payments','account-tab','data-tab="purchases"')}${profile?row('Manage saved data','Export your data or delete your account','account-tab','data-tab="data"','history'):''}${row('About this app','Information and support','account-tab','data-tab="about"','spark')}</section>
  ${profile?'<button class="account-signout text-btn" type="button" data-action="sign-out">Sign out</button>':''}
  <p class="account-footnote">${uiIcon('shield')}<span>You choose what to save.</span></p></div>`;
 }
