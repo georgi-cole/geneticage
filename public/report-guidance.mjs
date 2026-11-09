@@ -2,6 +2,7 @@ import {insights, labs, profileBmi} from './model.mjs';
 import {profileProgress} from './assessment-flow.mjs';
 import {labDescriptions, reviewLabReference} from './lab-review.mjs';
 import {clinicalForDisplay} from './lab-safety.mjs';
+import {markerGuidance} from './report-marker-guidance.mjs';
 
 const fitnessSources={
  FRIEND:['friend-2022'],
@@ -72,11 +73,12 @@ export function reportHighlights({answers={},labAge,clinical,heart,system,assess
  };
 }
 
-function lifestyleGuidance(answers) {
+function lifestyleGuidance(answers,coversMovement) {
  return insights(answers).flatMap(item=>{
   const {key,tag,sources}=item;
   if(key==='weight-change')return [{...item,section:'clinician'}];
   if(key==='movement'&&tag==='Adapt activity to your health')return [{...item,section:'clinician'}];
+  if(key==='movement'&&coversMovement)return [];
   if(key==='movement')return [{
    name:'Make room for a little more movement',section:'steps',sources,
    text:'Your weekly activity falls below the World Health Organization’s starting target for adults. The target is 150 minutes of moderate activity a week. More intense activity can count toward it.',
@@ -106,7 +108,11 @@ function lifestyleGuidance(answers) {
 // Discussion points use recorded answers and the original result. No model is run here.
 export function reportGuidance(assessment) {
  const answers=assessment.answers||{};
- const guidance=lifestyleGuidance(answers);
+ const comparisons=assessment.labSubmitted?labs.map(lab=>({lab,...reviewLabReference(lab.id,assessment.lab?.[lab.id],assessment)})):[];
+ const outside=comparisons.filter(item=>item.sourceKind&&!item.threshold&&['above','below'].includes(item.status));
+ const aboveFastingGuide=outside.some(item=>item.lab.id==='glucose'&&item.status==='above')&&assessment.labFasting==='Yes';
+ const matches=markerGuidance(assessment,aboveFastingGuide);
+ const guidance=[...matches,...lifestyleGuidance(answers,matches.some(item=>item.coversMovement))];
  const add=(section,name,text,action,sources,measurements)=>guidance.push({section,name,text,action,sources,measurements});
  const smoking=assessment.heart?.inputs?.smoking??answers.smoking;
  if(['Yes','Every day','Some days','Smoke now'].includes(smoking)){
@@ -115,24 +121,28 @@ export function reportGuidance(assessment) {
  }
 
  if(assessment.labSubmitted){
-  const comparisons=labs.map(lab=>({lab,...reviewLabReference(lab.id,assessment.lab?.[lab.id],assessment)}));
-  const outside=comparisons.filter(item=>item.sourceKind&&!item.threshold&&['above','below'].includes(item.status));
   const critical=assessment.clinical?.withheld==='critical-values';
+  const lymphocytes=outside.find(item=>item.lab.id==='lymphocytes');
   if(outside.length){
    add('context','Readings to look at more closely',
-    'These readings fall outside the comparison range shown in the Blood results tab. A range helps you spot readings worth a closer look. Your lab report and the circumstances of the blood draw help explain them.',
-    'Bring the original report to a healthcare professional and ask which readings need follow-up.',['lab-intervals'],outside.map(({lab,label})=>{
+    'These readings fall outside the comparison ranges shown under Blood results. Your lab report and the circumstances of the blood draw help put them in context.',
+    'Bring the original report to a healthcare professional and ask which readings need follow-up.',['lab-intervals',...(lymphocytes?['blood-differential']:[])],outside.map(({lab,label})=>{
      const reading=assessment.lab[lab.id];
-     return {title:`${lab.name} · ${reading.value} ${reading.unit||lab.units[0]} · ${label}`,description:labDescriptions[lab.id]};
+     const description=lab.id==='lymphocytes'?'Lymphocytes are white blood cells that help your body respond to infection. This percentage shows their share of all your white blood cells.':labDescriptions[lab.id];
+     return {title:`${lab.name} · ${reading.value} ${reading.unit||lab.units[0]} · ${label}`,description};
     }));
   }
-  if(!critical&&outside.some(item=>item.lab.id==='glucose'&&item.status==='above')&&assessment.labFasting==='Yes'){
+  if(!critical&&aboveFastingGuide){
    add('clinician','Your blood sugar over time','Fasting glucose shows your blood sugar at the time of the blood draw. HbA1c gives a picture of your average blood sugar over the previous few months.',
     'Would a repeat fasting blood sugar test or an HbA1c help put this result in context?',['diabetes-diagnosis']);
   }
   if(!critical&&outside.some(item=>item.lab.id==='creatinine'&&item.status==='above')){
    add('clinician','A closer look at kidney filtration','Creatinine helps estimate how well your kidneys filter blood. A urine test for albumin, a type of protein, adds a different piece of information.',
     'Would a kidney filtration estimate or a urine test for albumin help explain this reading?',['kdigo-ckd']);
+  }
+  if(!critical&&lymphocytes){
+   add('clinician','The count behind the percentage','The lab may also report an absolute lymphocyte count. That number tells you how many lymphocytes were measured in a volume of blood.',
+    'Is the absolute count on my original blood report, and would it help explain this percentage?',['blood-differential']);
   }
   if(Number.isFinite(assessment.clinical?.value)&&!assessment.clinical.reason){
    add('context','When two blood tests tell a clearer story','Recent illness, fasting and differences between laboratories can all affect the numbers.',

@@ -16,18 +16,21 @@ export function reportFootnote(studyBased=true,print=false) {
 }
 
 const chapters=[
+ ['matched','Steps linked to your readings','See what research found about the specific measurements you entered.'],
  ['context','What stands out','The details that give your result more meaning.'],
  ['steps','Small steps to consider','Pick a change that fits your health and your routine.'],
  ['clinician','Questions for your next visit','Bring the questions that fit your situation and any earlier results you have.'],
 ];
 
-function insightCard(item,label){
- return `<article class="premium-report-card">
+function insightCard(item,label,sourceLinks){
+ return `<article class="premium-report-card${item.evidence?' premium-report-matched':''}">
   <h3>${esc(item.name)}</h3>
   ${item.text?`<p>${esc(item.text)}</p>`:''}
   ${item.measurements?.length?`<ul class="premium-report-readings">${item.measurements.map(reading=>typeof reading==='string'?`<li>${esc(reading)}</li>`
    :`<li><strong>${esc(reading.title)}</strong><small>${esc(reading.description)}</small></li>`).join('')}</ul>`:''}
+  ${item.evidence?`<div class="premium-report-evidence"><strong>What the study found</strong><p>${esc(item.evidence)}</p></div>`:''}
   ${item.action?`<div class="premium-report-next"><strong>${label}</strong><p>${esc(item.action)}</p></div>`:''}
+  ${item.evidence?sourceLinks(item.sources):''}
  </article>`;
 }
 
@@ -40,7 +43,8 @@ export function renderReportInsights({guidance,assessment,safety='',sourceLinks=
  const {title,intro,stats=[]}=reportHighlights(assessment);
  const groups=chapters.map(([key,name,description])=>({key,name,description,items:guidance.filter(item=>(item.section||'context')===key)}))
   .filter(chapter=>chapter.items.length);
- const sources=[...new Set(guidance.flatMap(item=>item.sources||[]))];
+ const matchedSources=new Set(guidance.filter(item=>item.evidence).flatMap(item=>item.sources||[]));
+ const sources=[...new Set(guidance.flatMap(item=>item.sources||[]))].filter(id=>!matchedSources.has(id));
  return `<section class="premium-report">
   <div class="premium-report-cover" data-theme-part>
    ${reportArtwork()}
@@ -51,7 +55,7 @@ export function renderReportInsights({guidance,assessment,safety='',sourceLinks=
   ${safety}
   ${groups.map(({key,name,description,items},index)=>`<section class="premium-report-chapter">
    <header><span class="premium-report-number" aria-hidden="true">${String(index+1).padStart(2,'0')}</span><div><h2>${name}</h2><p>${description}</p></div></header>
-   ${items.map(item=>insightCard(item,key==='steps'?'A place to start':key==='clinician'?'Bring this up':'Keep in mind')).join('')}
+   ${items.map(item=>insightCard(item,{steps:'A place to start',clinician:'Bring this up',matched:'An option for you'}[key]||'Keep in mind',sourceLinks)).join('')}
   </section>`).join('')}
   ${sources.length?`<details class="report-answer-group premium-report-sources"><summary>Research and guidance behind this report</summary>${sourceLinks(sources)}</details>`:''}
  </section>`;
@@ -69,7 +73,7 @@ export function reportOffer({assessment,price='US$7.99',sample,review,purchased,
   <p><strong>${esc(assessment)}</strong></p>
   <ul>
    <li><strong>Your results in everyday language</strong><span>See what the numbers mean and which readings deserve a closer look.</span></li>
-   <li><strong>Practical next steps</strong><span>Ideas that fit your answers, based on World Health Organization guidance where applicable.</span></li>
+   <li><strong>Practical next steps</strong><span>See where a study relates to your measurements and what you could try, using WHO guidance where applicable.</span></li>
    <li><strong>Questions for your next visit</strong><span>Bring the full PDF and ask about tests that could add context.</span></li>
   </ul>
   <p>${status}</p>

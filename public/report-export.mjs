@@ -56,7 +56,7 @@ function blocks(element) {
   if(!text)return [];
   if(tag==='A'&&/^https:\/\//i.test(element.href))return [{text,link:element.href,style:'link'}];
   const style=element.matches('.report-age-line')?'result':element.matches('.premium-report-cover h2')?'briefing'
-   :element.matches('.premium-report-chapter h2')?'section':element.matches('.premium-report-next strong,.premium-report-cover .eyebrow')?'eyebrow'
+   :element.matches('.premium-report-chapter h2')?'section':element.matches('.premium-report-next strong,.premium-report-evidence strong,.premium-report-cover .eyebrow')?'eyebrow'
    :tag==='H1'?'title':tag==='H2'?'heading':tag==='SUMMARY'||/^H[34]$/.test(tag)?'subheading':'body';
   return [{text,style}];
  }

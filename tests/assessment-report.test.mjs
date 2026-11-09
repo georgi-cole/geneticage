@@ -6,6 +6,8 @@ import {freshAssessment} from '../public/assessment-flow.mjs';
 import {sampleAnswers,sampleLabs,assessClinical} from '../public/model.mjs';
 import {translateText} from '../public/language-system.mjs';
 import {reportDocument} from '../public/report-export.mjs';
+import {reportGuidance} from '../public/report-guidance.mjs';
+import {assessHeartVascular} from '../public/heart-vascular.mjs';
 
 const state={...freshAssessment(),answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labDate:'2026-11-01',labFasting:'Yes',labContext:true,labReferenceGroup:'male',labSubmitted:true,reportTab:'summary'};
 state.lab.crp.assay='standard-crp';state.lab.albumin.referenceLow='35';state.lab.albumin.referenceHigh='50';
@@ -19,7 +21,7 @@ test('report has four stable sections, a focal estimate, actual answers and dist
  assert.equal(doc.querySelector('.report-age-line strong').textContent,String(Math.round(clinical.value)));
  assert.ok(doc.querySelectorAll('.premium-report-card').length>=3);
  assert.match(doc.querySelector('.premium-report-cover').textContent,/Your blood-based age, explained/);
- assert.deepEqual([...doc.querySelectorAll('.premium-report-chapter h2')].map(el=>el.textContent),['What stands out','Small steps to consider','Questions for your next visit']);
+ assert.deepEqual([...doc.querySelectorAll('.premium-report-chapter h2')].map(el=>el.textContent),['Steps linked to your readings','What stands out','Small steps to consider','Questions for your next visit']);
  const answers=[...doc.querySelectorAll('.answer-row')];
  assert.ok(answers.some(el=>el.querySelector('dt').textContent==='How old are you?'&&el.querySelector('dd').textContent==='45 years'));
  assert.ok(answers.some(el=>el.querySelector('dd').textContent==='Bulgaria'));
@@ -37,6 +39,37 @@ test('a converted value near a guide boundary cannot round into an apparently co
  const boundary=structuredClone(state);boundary.lab.glucose.value=String(99.0001/18.0182);
  const doc=render(boundary),item=doc.querySelectorAll('.blood-review-item')[2];
  assert.equal(item.dataset.referenceStatus,'above');assert.equal(item.querySelector('.converted-value strong').textContent,'99.0001 mg/dL');
+});
+
+test('fasting glucose guidance uses the actual result, known context and the reported activity',()=>{
+ const assessment={...state,clinical};
+ const match=draft=>reportGuidance(draft).find(item=>item.section==='matched');
+ assert.deepEqual(match(assessment).measurements,['Fasting blood sugar · 6.2 mmol/L','Moderate activity · 90 min/week','Vigorous activity · 0 min/week']);
+ assert.match(match(assessment).action,/short walk after a meal/);
+ assert.match(match(assessment).evidence,/0\.32 mmol\/L/);
+ assert.match(match({...assessment,answers:{...state.answers,moderate:'180'}}).action,/already reach/);
+ assert.doesNotMatch(match({...assessment,answers:{...state.answers,limitations:'Often'}}).action,/short walk/);
+ assert.equal(match({...assessment,labFasting:'No'}),undefined);
+ assert.equal(match({...assessment,answers:{...state.answers,conditions:[]}}),undefined);
+ assert.equal(match({...assessment,answers:{...state.answers,conditions:['Diabetes']}}),undefined);
+ assert.equal(match({...assessment,lab:{...state.lab,glucose:{value:'126',unit:'mg/dL'}}}),undefined);
+ assert.equal(match({...assessment,clinical:{withheld:'critical-values',reason:'Review needed'}}),undefined);
+ assert.equal(match({...assessment,lab:{...state.lab,glucose:{value:'112',unit:'mg/dL'}}}).measurements[0],'Fasting blood sugar · 112 mg/dL');
+ const {content}=reportDocument(render().querySelector('.report-workspace'));
+ const pdfText=JSON.stringify(content);
+ assert.match(pdfText,/What the study found/);
+ assert.match(pdfText,/Fasting blood sugar · 6.2 mmol\/L/);
+ assert.match(pdfText,/The count behind the percentage/);
+});
+
+test('heart guidance matches measured pressure and total cholesterol within the studied contexts',()=>{
+ const inputs={age:50,country:'Germany',sex:'Male',smoking:'Yes',conditions:'No',treatment:'No',
+  systolic:{value:'140',unit:'mmHg'},diastolic:{value:'85',unit:'mmHg'},
+  total:{value:'5.5',unit:'mmol/L'},hdl:{value:'1.3',unit:'mmol/L'}};
+ const matches=changes=>reportGuidance({heart:assessHeartVascular({...inputs,...changes})}).filter(item=>item.section==='matched');
+ assert.deepEqual(matches({}).map(item=>item.measurements[0]),['Systolic blood pressure · 140 mmHg','Total cholesterol · 5.5 mmol/L']);
+ assert.deepEqual(matches({systolic:{value:'185',unit:'mmHg'}}),[]);
+ assert.deepEqual(matches({total:{value:'4.5',unit:'mmol/L'}}).map(item=>item.measurements[0]),['Systolic blood pressure · 140 mmHg']);
 });
 
 test('empty and earlier stored reports preserve the recorded result and use available inputs for discussion points',()=>{

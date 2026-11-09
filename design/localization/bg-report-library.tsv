@@ -64,7 +64,7 @@ Research and guidance behind this report	Проучвания и насоки з
 Your results in everyday language	Резултатите ти на достъпен език
 See what the numbers mean and which readings deserve a closer look.	Разбери какво означават числата и кои стойности заслужават внимание.
 Practical next steps	Практически следващи стъпки
-Ideas that fit your answers, based on World Health Organization guidance where applicable.	Идеи според отговорите ти, основани на насоки на Световната здравна организация, когато са приложими.
+See where a study relates to your measurements and what you could try, using WHO guidance where applicable.	Виж как проучване се свързва с твоите измервания и какво можеш да опиташ според насоките на СЗО, когато са приложими.
 Bring the full PDF and ask about tests that could add context.	Вземи пълния PDF и попитай за изследвания, които биха дали повече контекст.
 Start with the readings that need review	Започни със стойностите, които изискват внимание
 Some entries need a closer look before an age estimate can be shown. Use the notes below to check the values and the circumstances of your blood draw.	Някои записи трябва да се проверят, преди да се покаже оценка на възрастта. Бележките по-долу ще ти помогнат да провериш стойностите и условията при вземане на кръвната проба.
@@ -109,7 +109,7 @@ You reported drinking alcohol. Writing down when and how much you drink can help
 You reported smoking cigarettes. The World Health Organization recommends offering support to adults who use tobacco.	Отбеляза, че пушиш цигари. Световната здравна организация препоръчва подкрепа за възрастните, които употребяват тютюн.
 What support is available to help me stop smoking?	Каква подкрепа мога да получа, за да спра да пуша?
 Readings to look at more closely	Стойности, които заслужават повече внимание
-These readings fall outside the comparison range shown in the Blood results tab. A range helps you spot readings worth a closer look. Your lab report and the circumstances of the blood draw help explain them.	Тези стойности са извън диапазона в раздел „Кръвни резултати“. Диапазонът помага да откроиш стойности за допълнителен преглед. Лабораторният доклад и условията при вземане на пробата помагат за тълкуването им.
+These readings fall outside the comparison ranges shown under Blood results. Your lab report and the circumstances of the blood draw help put them in context.	Тези стойности са извън диапазоните за сравнение в „Кръвни резултати“. Лабораторният доклад и условията при вземане на пробата помагат за тълкуването им.
 Your blood sugar over time	Кръвната ти захар във времето
 Fasting glucose shows your blood sugar at the time of the blood draw. HbA1c gives a picture of your average blood sugar over the previous few months.	Глюкозата на гладно показва кръвната захар при вземане на пробата. HbA1c дава представа за средната кръвна захар през последните няколко месеца.
 Would a repeat fasting blood sugar test or an HbA1c help put this result in context?	Би ли помогнало повторно изследване на кръвна захар на гладно или HbA1c да разбера този резултат?
@@ -138,3 +138,34 @@ How might the test setup and my effort have influenced this result?	Как ус�
 Would a measured exercise test add useful information for my health or fitness goals?	Би ли дал тест с измерване при натоварване полезна информация за здравето или целите ми?
 Making sense of your blood pressure	Как да разбереш кръвното си налягане
 When and how should I check my blood pressure again?	Кога и как да проверя кръвното си налягане отново?
+Steps linked to your readings	Стъпки според твоите измервания
+See what research found about the specific measurements you entered.	Виж какво показват проучванията за конкретните измервания, които въведе.
+What the study found	Какво установи проучването
+An option for you	Какво можеш да опиташ
+Fasting blood sugar	Кръвна захар на гладно
+Activity you reported	Въведена физическа активност
+Ask your clinician whether repeating the fasting test or trying a structured food-and-activity program would be useful for you.	Попитай лекаря си дали повторно изследване на гладно или организирана програма за хранене и движение би била полезна за теб.
+If walking suits your health, try adding a short walk after a meal you have most days. Ask your clinician whether a program that combines food changes and activity fits this result.	Ако ходенето е подходящо за здравето ти, опитай кратка разходка след хранене, което имаш почти всеки ден. Попитай лекаря си дали програма, която съчетава промени в храненето и движение, е подходяща според резултата.
+You already reach the WHO’s general activity starting target. Bring your activity pattern and the fasting result to your next visit to discuss whether a repeat test or changes to eating would help.	Вече достигаш общата начална цел за активност на СЗО. Покажи данните за активността и резултата на гладно при следващия преглед и обсъди дали повторно изследване или промени в храненето биха помогнали.
+Food and activity for fasting blood sugar	Хранене, движение и кръвна захар на гладно
+Your fasting blood sugar was above the comparison range. The activity you recorded gives you a starting point for choosing a next step.	Кръвната ти захар на гладно е над диапазона за сравнение. Записаната активност ти дава отправна точка за избор на следваща стъпка.
+Your fasting blood sugar was above the comparison range. Bring this reading to your next visit to discuss what follow-up fits.	Кръвната ти захар на гладно е над диапазона за сравнение. Покажи стойността на следващия преглед, за да обсъдите какво проследяване е подходящо.
+In a six-month study of inactive adults aged 45 to 75 with elevated fasting blood sugar, the group that combined dietary changes and regular exercise averaged a drop of 0.32 mmol/L (about 6 mg/dL). That was the result of the full program.	В шестмесечно проучване на физически неактивни възрастни между 45 и 75 години с повишена кръвна захар на гладно групата, която съчетава промени в храненето и редовно движение, отчита среден спад от 0,32 mmol/L (около 6 mg/dL). Това е резултатът от цялата програма.
+Less salt and the top blood pressure number	По-малко сол и горната стойност на кръвното налягане
+Systolic is the top number. It measures pressure when your heart beats. Several readings give a clearer picture of your usual blood pressure.	Систоличното налягане е горната стойност. То показва налягането при свиване на сърцето. Няколко измервания дават по-ясна представа за обичайното ти кръвно налягане.
+In the DASH-Sodium feeding trial, reducing sodium lowered systolic blood pressure on average in adults with above-optimal or mildly elevated readings.	В хранителното проучване DASH-Sodium намаленият прием на натрий води средно до по-ниско систолично налягане при възрастни със стойности над оптималните или леко повишени.
+Compare the sodium on two versions of a packaged food you buy regularly and choose the lower one if it fits your care plan.	Сравни натрия в два варианта на пакетирана храна, която купуваш редовно. Избери варианта с по-малко натрий, ако е подходящ за твоите грижи.
+A cooking swap and total cholesterol	Промяна в готвенето и общ холестерол
+Total cholesterol includes HDL and other types of cholesterol. Your clinician can use those individual results to give the total more context.	Общият холестерол включва HDL и други видове холестерол. Лекарят може да използва отделните резултати, за да обясни общата стойност.
+In a four-week randomized trial of adults aged 50 to 75, total cholesterol rose more in the butter group than in the olive oil group. WHO recommends replacing saturated fats with unsaturated fats where possible.	В четириседмично рандомизирано проучване на възрастни от 50 до 75 години общият холестерол се повишава повече в групата с масло, отколкото в групата със зехтин. СЗО препоръчва при възможност наситените мазнини да се заменят с ненаситени.
+If you cook with butter, try using olive oil in a familiar dish where the swap works for you. Follow any dietary guidance you already have.	Ако готвиш с масло, опитай зехтин в познато ястие, за което замяната е подходяща. Спазвай хранителните насоки, които вече си получил.
+Lymphocytes are white blood cells that help your body respond to infection. This percentage shows their share of all your white blood cells.	Лимфоцитите са бели кръвни клетки, които помагат на организма да реагира на инфекции. Този процент показва дела им от всички бели кръвни клетки.
+The count behind the percentage	Броят зад процента
+The lab may also report an absolute lymphocyte count. That number tells you how many lymphocytes were measured in a volume of blood.	Лабораторията може да посочи и абсолютен брой лимфоцити. Той показва колко лимфоцита са измерени в определен обем кръв.
+Is the absolute count on my original blood report, and would it help explain this percentage?	Посочен ли е абсолютният брой в оригиналния ми резултат и би ли помогнал да разберем този процент?
+WHO · Reducing sodium	СЗО · Намаляване на натрия
+WHO · Choosing dietary fats	СЗО · Избор на хранителни мазнини
+STRRIDE-PD trial · Diet, activity and fasting blood sugar	Проучване STRRIDE-PD · Хранене, движение и кръвна захар на гладно
+DASH-Sodium trial · Sodium and blood pressure	Проучване DASH-Sodium · Натрий и кръвно налягане
+Khaw et al. · Cooking fats and blood cholesterol	Khaw и съавт. · Мазнини за готвене и холестерол в кръвта
+MedlinePlus · Types of white blood cells	MedlinePlus · Видове бели кръвни клетки
