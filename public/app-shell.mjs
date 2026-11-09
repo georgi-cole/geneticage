@@ -5,14 +5,14 @@ import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
 const brand = `<button class="brand" data-action="home" aria-label="${APP_NAME} home"><img src="/assets/kolequant-mark.webp" width="19" height="28" alt=""/><span>${APP_NAME}<em>${PUBLISHER_NAME}</em></span></button>`;
 const accountDestination = `<button class="workspace-link" data-action="account" data-route="settings">${icon('person')}<span>Account</span></button>`;
 const destinations = `<button class="workspace-link" data-action="home" data-route="home">${icon('home')}<span>Overview</span></button><button class="workspace-link" data-action="account-area" data-tab="history" data-route="history">${icon('history')}<span>Assessments</span></button><button class="workspace-link" data-action="account-area" data-tab="reports" data-route="reports">${icon('report')}<span>Reports</span></button>`;
-export const shell = `
+export const renderShell = ({consultations = true} = {}) => `
 ${launchMarkup}
 <a class="skip" href="#main">Skip to content</a>
 <div class="app-frame">
   <aside class="app-sidebar" aria-label="Workspace sidebar">
     ${brand}
     <span class="rail-label">WORKSPACE</span>
-    <nav class="sidebar-nav" aria-label="Workspace navigation">${destinations}${accountDestination}<button class="workspace-link" data-action="consult" data-route="consult">${icon('consult')}<span>Consultation</span></button></nav>
+    <nav class="sidebar-nav" aria-label="Workspace navigation">${destinations}${accountDestination}${consultations?`<button class="workspace-link" data-action="consult" data-route="consult">${icon('consult')}<span>Consultation</span></button>`:''}</nav>
     <div class="sidebar-bottom"><button class="workspace-link" data-action="method">${icon('science')}<span>The science</span></button></div>
   </aside>
   <div class="workspace-body">
@@ -33,3 +33,4 @@ ${launchMarkup}
   </div>
 </div>
 <div id="modal-root"></div><div class="sr-only" id="live" aria-live="polite"></div>`;
+export const shell = renderShell();

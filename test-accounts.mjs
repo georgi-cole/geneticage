@@ -57,10 +57,13 @@ assert.equal((await call(a, 'assessments', 'POST', { ...entry, id:withheldId, la
 assert.equal((await call(a, 'assessments/'+withheldId)).data.assessment.value,null);
 const exported=await call(a,'account/export');assert.equal(exported.data.assessments.length,2);assert.ok(exported.data.assessments.every(x=>x.report.version));
 const referenced=structuredClone(entry);referenced.id=randomUUID();referenced.labReferenceMode='published';referenced.labReferenceGroup='female';referenced.labReferenceVersion=REFERENCE_CATALOG_VERSION;
+const bodyMeasurements={waist:'35',waistUnit:'in',compositionMethod:'Smart scale or bioimpedance',bodyFat:'24',skeletalMuscle:'39',bodyWater:'55'};
+Object.assign(referenced.answers,bodyMeasurements);
 Object.assign(referenced.lab.crp,{referenceLow:'0',referenceHigh:'5',referenceHighExclusive:true,assay:'standard-crp'});
 assert.equal((await call(a,'assessments','POST',referenced)).response.status,201);
 const roundTrip=(await call(a,'assessments/'+referenced.id)).data.assessment;
 assert.deepEqual(roundTrip.lab.crp,referenced.lab.crp);assert.equal(roundTrip.labReferenceVersion,REFERENCE_CATALOG_VERSION);assert.equal(roundTrip.labReferenceGroup,'female');
+for(const [key,value] of Object.entries(bodyMeasurements))assert.equal(roundTrip.answers[key],value);
 assert.equal(roundTrip.value,result.data.assessment.value,'Reference context does not change the clinical calculation.');
 referenced.lab.crp.referenceHigh='10';referenced.labReferenceGroup='male';
 assert.equal((await call(a,'assessments','POST',referenced)).response.status,201);

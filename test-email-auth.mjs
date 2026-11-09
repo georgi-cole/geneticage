@@ -14,7 +14,12 @@ function prepared(sql, values = []) {
     bind(...args) { return prepared(sql, args); },
     async first() { return db.prepare(sql).get(...values) ?? null; },
     async all() { return { results: db.prepare(sql).all(...values) }; },
-    async run() { const result = db.prepare(sql).run(...values); return { meta: { changes: Number(result.changes) } }; },
+    async run() {
+      const statement = db.prepare(sql);
+      if (sql.includes('RETURNING')) return { results: statement.all(...values) };
+      const result = statement.run(...values);
+      return { meta: { changes: Number(result.changes) } };
+    },
   };
 }
 const env = {
@@ -62,7 +67,7 @@ async function verifySocialSignIn(emailOwner) {
   const client = await generateKeyPair('ES256', { extractable: true });
   const key = { ...await exportJWK(signing.publicKey), kid: 'fixture-key', alg: 'RS256' };
   const socialEnv = {
-    ...env, PUBLIC_SITE_ORIGIN: 'https://site.test', GOOGLE_CLIENT_ID: 'google-fixture',
+    ...env, PUBLIC_SITE_ORIGIN: 'https://site.test', NATIVE_AUTH_ENABLED: 'true', GOOGLE_CLIENT_ID: 'google-fixture',
     GOOGLE_CLIENT_SECRET: 'google-secret-fixture', APPLE_SERVICES_ID: 'apple-fixture',
     APPLE_TEAM_ID: 'team-fixture', APPLE_KEY_ID: 'apple-key-fixture', APPLE_PRIVATE_KEY: await exportPKCS8(client.privateKey),
   };
@@ -70,8 +75,9 @@ async function verifySocialSignIn(emailOwner) {
     google: { issuer: 'https://accounts.google.com', clientId: socialEnv.GOOGLE_CLIENT_ID, token: 'https://oauth2.googleapis.com/token' },
     apple: { issuer: 'https://appleid.apple.com', clientId: socialEnv.APPLE_SERVICES_ID, token: 'https://appleid.apple.com/auth/token' },
   };
-  const start = async provider => {
-    const response = await handleAuthApi(request(`/api/auth/oauth/${provider}/start`), socialEnv);
+  const start = async (provider, challenge = '', returnToApp = false) => {
+    const queryString = challenge ? '?native_challenge=' + challenge + (returnToApp ? '&native_return=app' : '') : '';
+    const response = await handleAuthApi(request(`/api/auth/oauth/${provider}/start${queryString}`), socialEnv);
     assert.equal(response.status, 303);
     const authorize = new URL(response.headers.get('Location'));
     const stateCookie = response.headers.getSetCookie()[0];
@@ -91,13 +97,26 @@ async function verifySocialSignIn(emailOwner) {
   };
   const consent = { name: 'Fictional social user', adult: true, consent: true, consentVersion: CONSENT_VERSION, signInMethod: 'social' };
   const register = (cookie, fields = {}) => handleAuthApi(request('/api/auth/register', 'POST', { ...consent, ...fields }, { cookie }), socialEnv);
+  const completeNative = (ticket, verifier) => handleAuthApi(request('/api/auth/native-complete', 'POST', { ticket, verifier }), socialEnv);
   const outcome = response => response.headers.get('Location');
   const emailFetch = globalThis.fetch;
-  let flow, invalidClaim = '', exchanges = 0;
+  let flow, invalidClaim = '', exchanges = 0, revocations = 0, appleRefreshToken, revokeFails = false;
   globalThis.fetch = async (url, options = {}) => {
     const address = String(url);
     if (address === 'https://www.googleapis.com/oauth2/v3/certs' || address === 'https://appleid.apple.com/auth/keys') {
       return Response.json({ keys: [key] });
+    }
+    if (address === 'https://appleid.apple.com/auth/revoke') {
+      assert.equal(options.method, 'POST');
+      assert.equal(options.redirect, 'manual');
+      assert.equal(options.body.get('client_id'), fixtures.apple.clientId);
+      assert.equal(options.body.get('token_type_hint'), 'refresh_token');
+      assert.equal(options.body.get('token'), appleRefreshToken);
+      await jwtVerify(options.body.get('client_secret'), client.publicKey, {
+        algorithms: ['ES256'], issuer: socialEnv.APPLE_TEAM_ID, audience: fixtures.apple.issuer, subject: fixtures.apple.clientId,
+      });
+      revocations++;
+      return new Response(null, { status: revokeFails ? 503 : 200 });
     }
     const fixture = fixtures[flow.provider];
     assert.equal(address, fixture.token);
@@ -121,7 +140,8 @@ async function verifySocialSignIn(emailOwner) {
     }).setProtectedHeader({ alg: 'RS256', kid: key.kid }).setIssuer(fixture.issuer)
       .setAudience(invalidClaim === 'aud' ? 'different-app' : fixture.clientId)
       .setSubject('fictional-provider-subject').setIssuedAt().setExpirationTime('5m').sign(signing.privateKey);
-    return Response.json({ id_token: token });
+    appleRefreshToken = 'fictional-apple-refresh-' + exchanges;
+    return Response.json({ id_token: token, refresh_token: flow.provider === 'apple' ? appleRefreshToken : 'unused-google-refresh' });
   };
   try {
     const options = await handleAccountApi(request('/api/session'), socialEnv, null);
@@ -150,6 +170,11 @@ async function verifySocialSignIn(emailOwner) {
       assert.equal(responses.filter(response=>outcome(response)==='/?auth=retry#account').length, 1);
       const proof = cookieValue(verified.headers.getSetCookie()[0]);
       assert.match(proof, /^__Host-kq_oauth_proof=/);
+      const pendingGrant = db.prepare('SELECT apple_grant FROM oauth_pending WHERE subject_hash IS NOT NULL').get().apple_grant;
+      if (provider === 'apple') {
+        assert.match(pendingGrant, /^v1\./);
+        assert.ok(!pendingGrant.includes(appleRefreshToken));
+      } else assert.equal(pendingGrant, null);
       assert.equal(await getSessionUser(request('/api/session', 'GET', undefined, { cookie: proof }), socialEnv), null);
       assert.equal((await register(proof, { consent: false })).status, 400);
       const registration = await register(proof);
@@ -161,7 +186,10 @@ async function verifySocialSignIn(emailOwner) {
       const session = await (await handleAccountApi(request('/api/session'), socialEnv, owner)).json();
       assert.equal(session.email, null);
       assert.equal(session.profile.name, consent.name);
+      assert.equal(db.prepare('SELECT apple_grant FROM oauth_accounts WHERE user_id=?').get(owner.userId).apple_grant, pendingGrant);
 
+      // Simulate a pre-migration Apple account. Its next sign-in backfills the grant.
+      if (provider === 'apple') db.prepare('UPDATE oauth_accounts SET apple_grant=NULL WHERE user_id=?').run(owner.userId);
       flow = await start(provider);
       const returning = await callback(flow);
       assert.equal(outcome(returning), '/?auth=signed-in#account');
@@ -169,8 +197,55 @@ async function verifySocialSignIn(emailOwner) {
       assert.deepEqual(await getSessionUser(request('/api/session', 'GET', undefined, { cookie: returningCookie }), socialEnv), owner);
       const deletion = await handleAccountApi(request('/api/account', 'DELETE', { confirm: 'DELETE' }, { csrf: session.csrf }), socialEnv, owner);
       assert.equal(deletion.status, 200);
+      assert.deepEqual(await deletion.json(), provider === 'apple' ? { deleted: true, appleRevocation: 'revoked' } : { deleted: true });
+      assert.equal(revocations, provider === 'apple' ? 1 : 0);
       assert.equal(db.prepare('SELECT COUNT(*) n FROM oauth_accounts WHERE user_id=?').get(owner.userId).n, 0);
       assert.equal(await getSessionUser(request('/api/session', 'GET', undefined, { cookie: returningCookie }), socialEnv), null);
+    }
+    for (const legacy of [true, false]) {
+      flow = await start('apple');
+      const verified = await callback(flow);
+      const registration = await register(cookieValue(verified.headers.getSetCookie()[0]));
+      const cookie = cookieValue(registration.headers.getSetCookie()[0]);
+      const owner = await getSessionUser(request('/api/session', 'GET', undefined, { cookie }), socialEnv);
+      if (legacy) db.prepare('UPDATE oauth_accounts SET apple_grant=NULL WHERE user_id=?').run(owner.userId);
+      const session = await (await handleAccountApi(request('/api/session'), socialEnv, owner)).json();
+      revokeFails = true;
+      const deletion = await handleAccountApi(request('/api/account', 'DELETE', { confirm: 'DELETE' }, { csrf: session.csrf }), socialEnv, owner);
+      assert.deepEqual(await deletion.json(), { deleted: true, appleRevocation: 'manual' });
+      assert.equal(await getSessionUser(request('/api/session', 'GET', undefined, { cookie }), socialEnv), null);
+      assert.equal(revocations, legacy ? 1 : 2);
+    }
+    const verifier = randomBytes(32).toString('hex');
+    const challenge = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))).toString('hex');
+    flow = await start('apple', challenge, true);
+    assert.equal(outcome(await callback(flow, flow.cookie, {error:'user_cancelled_authorize'})), 'xyz.kolequant.geneticage://signin/complete#cancelled');
+    flow = await start('apple', challenge, true);
+    const changedMode = flow.cookie.replace('=app.', '=');
+    assert.equal(outcome(await callback(flow, changedMode)), '/?auth=retry#account', 'OAuth state is bound to the app-return mode.');
+    for (const provider of ['apple', 'google']) {
+      const directReturn = provider === 'apple';
+      flow = await start(provider, challenge, directReturn);
+      const redirected = await callback(flow);
+      const ticket = outcome(redirected).split('#')[1];
+      const location = directReturn ? 'xyz.kolequant.geneticage://signin/complete#' : '/sign-in-return/#';
+      assert.equal(outcome(redirected), location + ticket);
+      assert.match(ticket, /^[a-f0-9]{64}$/);
+      assert.equal((await register('__Host-kq_oauth_proof=' + ticket)).status, 401);
+      assert.equal((await completeNative(ticket, '0'.repeat(64))).status, 401);
+      const native = await completeNative(ticket, verifier);
+      assert.deepEqual(await native.json(), { registrationRequired: true });
+      assert.equal((await completeNative(ticket, verifier)).status, 401);
+      const created = await register(cookieValue(native.headers.getSetCookie()[0]));
+      assert.equal(created.status, 201);
+      const cookie = cookieValue(created.headers.getSetCookie()[0]);
+      const firstUser = await getSessionUser(request('/api/session', 'GET', undefined, { cookie }), socialEnv);
+      assert.ok(firstUser?.userId);
+      flow = await start(provider, challenge, !directReturn);
+      const again = await completeNative(outcome(await callback(flow)).split('#')[1], verifier);
+      assert.deepEqual(await again.json(), { authenticated: true });
+      const returnCookie = cookieValue(again.headers.getSetCookie()[0]);
+      assert.deepEqual(await getSessionUser(request('/api/session', 'GET', undefined, { cookie: returnCookie }), socialEnv), firstUser);
     }
   } finally {
     globalThis.fetch = emailFetch;

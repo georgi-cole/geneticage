@@ -73,7 +73,8 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.equal($('#questions'),form);assert.equal(document.activeElement,health);assert.equal(health.checked,true);
  await submit('#questions');await click('[data-answer="smokingEver100"][value="No"]');await submit('#questions');
  await click('[data-answer="smoking"][value="Not at all"]');await submit('#questions');
- assert.match($('#main').textContent,/Answer separately from cigarettes/);assert.equal(document.querySelectorAll('[data-answer="nicotine"]').length,8);
+ assert.match($('#main').textContent,/Answer separately from cigarettes/);assert.equal(document.querySelectorAll('[data-answer="nicotine"]').length,7);
+ assert.equal($('[data-answer="nicotine"][value="Prefer not to say"]'),null);
  await click('[data-answer="nicotine"][value="Vape or e-cigarette"]');await click('[data-answer="nicotine"][value="None"]');
  assert.equal($('[data-answer="nicotine"][value="Vape or e-cigarette"]').checked,false);assert.equal($('[data-answer="nicotine"][value="None"]').checked,true);
  await click('.mobile-nav [data-route="history"]');await click('[data-action="start-labs"]');

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import {sections,sampleAnswers,profileMeasurementErrors,profileBmi} from './public/model.mjs';
+import {sections,sampleAnswers,profileMeasurementErrors,profileBmi,profileWaistRatio,validateQuestionnaire} from './public/model.mjs';
 import {accountEntry} from './public/account-entry.mjs';
-import {questionContext,questionChoices,questionDestination,labErrorStep,renderLabForm} from './public/flow-ui.mjs';
+import {questionContext,questionDestination,renderQuestionnaire,labErrorStep,renderLabForm} from './public/flow-ui.mjs';
 import {renderAssessments,renderReportLibrary,renderRecordLibrary,renderAccount,pageSlice,resultInstrument} from './public/ui-components.mjs';
-import {previousAssessment} from './public/assessment-flow.mjs';
+import {previousAssessment,profileProgress,profileSectionProgress} from './public/assessment-flow.mjs';
 
 // Every applicable question is visited once, including conditional follow-ups.
 for(const answers of [{age:'45'},sampleAnswers,{...sampleAnswers,smoking:'Used to smoke regularly',alcohol:'Yes'},{...sampleAnswers,smoking:'Smoke now',alcohol:'Yes'}]){
@@ -20,12 +20,17 @@ assert.equal(labErrorStep({glucose:'Missing'}),1);
 assert.equal(labErrorStep({crp:'Unit'}),2);
 assert.equal(labErrorStep({wbc:'Missing'}),3);
 assert.equal(labErrorStep({confirm:'Required'}),4);
-const choiceState={step:5,questionIndex:1,answers:{},optionPage:0,choiceCapacity:6};
-const first=questionChoices(choiceState),second=questionChoices({...choiceState,optionPage:1});
-assert.equal(first.pages,2);assert.equal(first.question.options.length,6);
-assert.deepEqual([...first.question.options,...second.question.options],sections[5].questions[1].options,'Paging must preserve every answer option, including exclusive responses.');
-assert.equal(questionChoices({...choiceState,optionPage:99}).page,1);
-assert.equal(questionChoices({...choiceState,choiceCapacity:undefined}).pages,1,'Show all choices when the viewport can hold them.');
+const choiceState={step:5,questionIndex:1,answers:{},errors:{}};
+const longQuestion=renderQuestionnaire(choiceState,question=>{
+ assert.deepEqual(question.options,sections[5].questions[1].options.filter(answer=>answer!=='Prefer not to say'));
+ assert.ok(question.options.includes('None'));
+ return '';
+});
+assert.doesNotMatch(longQuestion,/More choices|Prefer not to say/);
+assert.match(longQuestion,/data-action="skip"/);
+const progress=profileProgress({age:'45',sex:'Prefer not to say',height:'175',conditions:['None'],nicotine:[],country:' '});
+assert.equal(progress.answered,3);
+assert.equal(profileSectionProgress({nicotine:['None']})[1].answered,1);
 const entryState={answers:{},lab:{},errors:{},labAge:'45',labDate:'2026-11-01'};
 const labMarkup=[1,2,3].map(labStep=>renderLabForm({...entryState,labStep},{})).join('');
 assert.equal((labMarkup.match(/data-lab="/g)||[]).length,9,'All nine blood inputs appear exactly once across the entry steps.');
@@ -58,18 +63,26 @@ assert.equal(previousAssessment([kidneySample],'kidney'),kidneySample,'A saved s
 assert.equal(previousAssessment([kidneyPersonal,kidneySample],'kidney'),kidneyPersonal,'The personal assessment takes priority.');
 assert.match(renderAccount(guest),/Sign in \/ Create account/);
 assert.match(renderAccount({...guest,profile:{name:'Fictional user'}}),/Signed in/);
-assert.match(renderAccount({...guest,profile:{name:'Fictional user'},needsHealthProfile:true}),/Complete your health profile/);
+assert.match(renderAccount({...guest,profile:{name:'Fictional user'},needsHealthProfile:true,healthProfileProgress:34}),/Complete your health profile.*34%.*value="34"/s);
 assert.doesNotMatch(renderAccount({...guest,profile:{name:'Fictional user'},needsHealthProfile:false}),/Complete your health profile/);
 assert.doesNotMatch(accountEntry().body,/Continue with Apple|Continue with Google/);
 const signIn=accountEntry({providers:['apple','google'],keepDraft:true}).body;
 assert.match(signIn,/oauth\/apple\/start" target="_blank"/);
 assert.match(signIn,/oauth\/google\/start" target="_blank"/);
-assert.match(signIn,/Send sign-in code/);
+assert.match(signIn,/<button[^>]+disabled>Send sign-in code/);
 assert.match(accountEntry({stage:'social-register'}).body,/You’ll enter your health details separately/);
+assert.doesNotMatch(accountEntry({stage:'social-register'}).body,/Start sign-in again/);
 assert.deepEqual(Object.keys(profileMeasurementErrors({age:'45'})),['height','weight']);
 assert.deepEqual(Object.keys(profileMeasurementErrors({age:'45',height:'175',weight:'-1'})),['weight']);
 assert.equal(profileBmi({age:'45',height:'175',weight:'77'}).toFixed(1),'25.1');
 assert.equal(profileBmi({age:'45',height:'70',heightUnit:'in',weight:'175',weightUnit:'lb'}).toFixed(1),'25.1');
+const body={age:'45',height:'175',weight:'77',waist:'35',waistUnit:'in',compositionMethod:'Smart scale or bioimpedance',bodyFat:'23.5',skeletalMuscle:'40',bodyWater:'58'};
+assert.equal(profileWaistRatio(body,profileBmi(body)).toFixed(2),'0.51');
+assert.equal(profileWaistRatio({...body,context:['Pregnant']},profileBmi(body)),null);
+assert.equal(profileWaistRatio({...body,weight:'110'},profileBmi({...body,weight:'110'})),null);
+assert.deepEqual(validateQuestionnaire(body),{});
+assert.ok(validateQuestionnaire({...body,bodyFat:'101'}).bodyFat);
+assert.equal(profileProgress({...body,compositionMethod:undefined}).answered,4,'Unshown composition fields do not count.');
 assert.match(renderAccount({...guest,error:'Connection timed out'}),/data-action="refresh-account"/);
 assert.match(renderAccount({...guest,profile:{name:'<img onerror=alert(1)>'}}),/&lt;img/);
 console.log('Passed: forward/back conditional question traversal, lab error routing, record pagination, distinct report/account screens and safe profile rendering.');

@@ -1584,10 +1584,17 @@ details p {
   border-radius: 10px;
   box-shadow: var(--shadow);
 }
-.modal h2 {
-  font-size: 25px;
-  padding-right: 28px;
+.dialog-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 18px;
+}
+.modal h2 {
+  min-width: 0;
+  font-size: 25px;
+  margin: 0;
 }
 .modal p {
   font-size: 12px;
@@ -1603,13 +1610,14 @@ details p {
   margin-bottom: 12px;
 }
 .provider-sign-in {
-  position: relative;
   display: grid;
+  grid-template-columns: 40px minmax(0,1fr) 40px;
   place-items: center;
-  min-height: 44px;
-  padding: 0 44px;
+  min-height: 46px;
+  padding: 0 3px;
   border: 1px solid #747775;
-  border-radius: 6px;
+  border-radius: 8px;
+  overflow: hidden;
   background: #fff;
   color: #1f1f1f;
   font: 500 14px/1.25 Roboto, Arial, sans-serif;
@@ -1617,8 +1625,6 @@ details p {
   text-decoration: none;
 }
 .provider-sign-in img {
-  position: absolute;
-  left: 3px;
   width: 36px;
   height: 36px;
   clip-path: inset(8px);
@@ -1626,10 +1632,9 @@ details p {
 .provider-sign-in.apple {
   background: #000;
   color: #fff;
-  font: 500 19px/1.25 system-ui, sans-serif;
+  font: 500 16px/1.25 system-ui, sans-serif;
 }
 .provider-sign-in.apple img {
-  left: 0;
   width: auto;
   height: 44px;
   clip-path: none;
@@ -1637,17 +1642,16 @@ details p {
 .modal .close {
   display: grid;
   place-items: center;
-  float: right;
-  width: 27px;
-  height: 27px;
-  margin: -6px -8px 0 0;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 5px;
   background: none;
-  font-size: 21px;
-  line-height: 1;
   color: var(--muted);
 }
+.modal .close svg {width:20px;height:20px}
 footer {
   padding: 16px 32px 19px;
   border-top: 1px solid var(--line);

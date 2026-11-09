@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GeneticAge</string>
+    <string name="title_activity_main">GeneticAge</string>
+    <string name="package_name">xyz.kolequant.geneticage</string>
+    <string name="custom_url_scheme">xyz.kolequant.geneticage</string>
+</resources>

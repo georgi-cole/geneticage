@@ -28,7 +28,7 @@ YOUR RESULT	ВАШИЯТ РЕЗУЛТАТ
 Your age, in context.	Здравето ви отблизо
 Your health, in context.	Здравето ви отблизо
 A personal perspective, grounded in science.	Разберете по-добре резултатите си.
-Start an assessment. No profile needed.	Можете да започнете и без профил.
+Start your first assessment and build your health profile.	Започнете първия си анализ и попълнете здравния си профил.
 Your workspace is ready. Start your first assessment.	Всичко е готово за първия ви анализ.
 Your first assessment	Първият ви анализ
 A look at the result	Резултатът накратко
@@ -54,7 +54,7 @@ Sample data · Not a personal assessment	Примерни данни · Не с�
 ILLUSTRATIVE SAMPLE	ПРИМЕРНИ ДАННИ
 No assessment yet	Още нямате резултат
 No age calculated	Няма изчислена възраст
-No profile needed	Профилът е по желание
+No profile created	Няма създаден профил
 Begin with your health profile or blood results you already have.	Отговорете на няколко въпроса или добавете резултати от кръвни изследвания.
 Your questionnaire creates a health profile. It does not calculate an age.	Въпросникът създава здравен профил. Той не изчислява възраст.
 Open this assessment to review why an estimate is unavailable.	Отворете анализа, за да видите защо не е изчислена възраст.
@@ -150,9 +150,7 @@ Next	Следваща
 Close	Затворете
 Close dialog	Затворете прозореца
 Choose all that apply	Можете да изберете повече от един отговор
-Optional · You can leave this unanswered	По избор · Можете да пропуснете
 Required to continue	Попълнете, за да продължите
-More choices	Още отговори
 Question	Въпрос
 Section	Раздел
 Step	Стъпка
@@ -342,7 +340,7 @@ Enter your age in whole years.	Въведете възрастта си в на�
 This assessment is for adults aged 18 or over. Enter your age in whole years.	Анализът е за хора с навършени 18 години. Въведете възрастта си в навършени години.
 Check this number and the selected unit.	Проверете числото и избраната единица.
 The number of years smoked cannot be greater than your age.	Годините тютюнопушене не могат да надвишават възрастта ви.
-Choose either the applicable answers or one of “None”, “Not sure” and “Prefer not to say”.	Изберете отговорите, които се отнасят за вас, или само един от „Нито едно“, „Не мога да преценя“ и „Предпочитам да не отговарям“.
+Choose an exclusive answer on its own.	Изберете само „Нито едно“ или „Не мога да преценя“, когато този отговор се отнася за вас.
 Together, these activity totals exceed the number of minutes in a week. Check that you entered weekly minutes.	Сборът от активностите надвишава минутите в една седмица. Проверете дали сте въвели седмични минути.
 Check the serving count, size and alcohol percentage. Leave an amount blank if you do not know it.	Проверете броя порции, обема и алкохолния процент. Оставете количеството празно, ако не го знаете.
 Stopping smoking	Отказване от тютюнопушене

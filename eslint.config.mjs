@@ -8,6 +8,10 @@ const eslintConfig = defineConfig([
   globalIgnores([
     "dist/**",
     "dist-pages/**",
+    "dist-native/**",
+    "dist-native-worker/**",
+    "native/android/**",
+    "native/ios/**",
     ".vinext/**",
     ".wrangler/**",
     ".sites-runtime/**",

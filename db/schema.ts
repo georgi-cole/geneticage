@@ -19,6 +19,7 @@ export const oauthAccounts = sqliteTable("oauth_accounts", {
   userId: text("user_id").primaryKey().references(() => profiles.userId, { onDelete: "cascade" }),
   provider: text("provider").notNull(),
   subjectHash: text("subject_hash").notNull(),
+  appleGrant: text("apple_grant"),
 }, table => [uniqueIndex("oauth_accounts_identity").on(table.provider, table.subjectHash)]);
 
 export const oauthPending = sqliteTable("oauth_pending", {
@@ -26,6 +27,8 @@ export const oauthPending = sqliteTable("oauth_pending", {
   provider: text("provider").notNull(),
   expiresAt: integer("expires_at").notNull(),
   subjectHash: text("subject_hash"),
+  appleGrant: text("apple_grant"),
+  nativeChallenge: text("native_challenge"),
 }, table => [index("oauth_pending_expiry").on(table.expiresAt)]);
 
 export const emailAuthCodes = sqliteTable("email_auth_codes", {
