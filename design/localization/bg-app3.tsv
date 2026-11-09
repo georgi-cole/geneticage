@@ -28,6 +28,30 @@ This creates a dated snapshot. Later assessments are saved separately so your hi
 This form does not send a message or book an appointment. Use fictional contact details while reviewing it.	Този формуляр не изпраща запитвания и не запазва часове. За прегледа използвайте измислени данни за контакт.
 This assessment puts your information in context using published research. Discuss your results with a healthcare professional when making decisions about your care.	Анализът разглежда данните ви в контекста на публикувани научни изследвания. Обсъдете резултатите си с медицински специалист, когато вземате решения за здравето си.
 Edit any section before viewing your health profile.	Можете да редактирате всеки раздел, преди да разгледате здравния си профил.
+Complete	Попълнен
+Partially answered	Частично попълнен
+Unanswered	Без отговор
+Body measurements	Телесни измервания
+What is your waist circumference?	Каква е обиколката на талията ви?
+Unit for What is your waist circumference?	Мерна единица за обиколката на талията
+Measure midway between your lowest rib and the top of your hip after breathing out normally. Skip if you don’t have a measurement.	Измерете по средата между най-долното ребро и горната част на тазовата кост след нормално издишване. Пропуснете, ако нямате измерване.
+How was your body composition measured?	Как е измерен телесният ви състав?
+Use an existing scale or scan reading. Skip if you don’t have one.	Използвайте наличен резултат от везна или сканиране. Пропуснете, ако нямате резултат.
+Smart scale or bioimpedance	Интелигентна везна или биоимпеданс
+DXA scan	DXA сканиране
+Other measurement	Друго измерване
+What body fat percentage was reported?	Какъв процент телесни мазнини е отчетен?
+What skeletal muscle percentage was reported?	Какъв процент скелетна мускулатура е отчетен?
+Use the value labeled skeletal muscle percentage. Skip if your report lists only lean mass.	Използвайте стойността, обозначена като процент скелетна мускулатура. Пропуснете, ако е посочена само безмастната маса.
+What total body water percentage was reported?	Какъв процент обща телесна вода е отчетен?
+Use the reported percentage from the same reading if available.	Използвайте отчетения процент от същото измерване, ако е наличен.
+Waist circumference	Обиколка на талията
+Waist-to-height ratio	Съотношение талия към ръст
+Body fat	Телесни мазнини
+Skeletal muscle	Скелетна мускулатура
+Total body water	Обща телесна вода
+BMI compares weight with height. Waist size and measured body composition add separate context.	ИТМ съпоставя теглото с ръста. Обиколката на талията и измереният телесен състав дават допълнителна информация.
+Smart-scale estimates can vary with hydration and measurement conditions.	Оценките от интелигентна везна може да варират според хидратацията и условията на измерване.
 This removes the assessment and its report, including purchased access, from your live account on all devices. It does not request a refund. Downloaded copies remain on your device.	Анализът и докладът ще бъдат изтрити от профила ви на всички устройства. Ще загубите и закупения достъп до доклада. Изтриването не подава заявка за връщане на сумата. Вече изтеглените копия остават на устройството ви.
 This removes your profile, assessments and report snapshots from the live database across devices. It does not delete your ChatGPT account. This also removes purchased-report access. It does not request a refund. Provider backups, downloads and Stripe payment records have separate lifecycles.	Профилът, анализите и запазените доклади ще бъдат изтрити от активната база данни и няма да са достъпни от никое устройство. Профилът ви в ChatGPT няма да бъде изтрит. Ще загубите и достъпа до закупени доклади, без автоматично да се заявява връщане на сумите. За резервните копия на доставчика, изтеглените файлове и платежните записи в Stripe важат отделни срокове за съхранение.
 This simple difference is not the age-adjusted PhenoAgeAccel measure used in some studies.	Тази разлика не е коригираният спрямо възрастта показател PhenoAgeAccel, използван в някои проучвания.

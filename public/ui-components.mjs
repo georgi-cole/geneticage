@@ -24,8 +24,8 @@ export function unmeasuredMark(){
  return '<svg class="unmeasured-mark" viewBox="0 0 100 84" fill="none" aria-hidden="true" focusable="false"><defs><linearGradient id="signature-satin" x1="24" y1="10" x2="72" y2="73" gradientUnits="userSpaceOnUse"><stop stop-color="var(--result-accent)" stop-opacity=".3"/><stop offset=".32" stop-color="var(--result-ink)"/><stop offset=".48" stop-color="var(--result-accent)" stop-opacity=".5"/><stop offset=".7" stop-color="var(--result-ink)" stop-opacity=".9"/><stop offset="1" stop-color="var(--result-accent)" stop-opacity=".35"/></linearGradient></defs><g class="signature-surface"><path class="signature-rear" d="M33 6C70 17 73 28 52 42C30 56 33 68 67 80C42 61 41 57 60 45C87 28 70 13 33 6Z"/><path class="signature-front" d="M67 6C30 17 27 28 48 42C70 56 67 68 33 80C58 61 59 57 40 45C13 28 30 13 67 6Z"/><path class="signature-light" d="M67 6C35 18 30 28 48 42M60 51C65 61 54 71 33 80"/></g></svg>';
 }
 
-export function instrumentFooterNote(note,switchable=false){
- const caption=`<span class="instrument-footer-caption">${escapeHTML(note)}</span>`;
+export function instrumentFooterNote(note,switchable=false,personal=false){
+ const caption=`<span class="instrument-footer-caption"${personal?' data-no-translate':''}>${escapeHTML(note)}</span>`;
  if(!switchable)return caption;
  return `<button id="overview-switch" class="overview-switch" type="button" data-action="choose-overview-result" aria-label="Switch results" aria-haspopup="dialog">
    ${note?caption:''}<span class="overview-slide-hint">Slide to switch between results</span><span class="overview-desktop-hint">Switch results</span>
@@ -33,7 +33,7 @@ export function instrumentFooterNote(note,switchable=false){
 }
 
 // Calibration is decorative, not a health score, confidence interval or aging speed.
-export function resultInstrument({value,age=null,gap=null,sample=false,illustrative=false,empty=false,profileOnly=false,withheld=false,action='sample',actionLabel='',recordId='',title='A look at the result',date='',readoutLabel='CLINICAL PHENOAGE',caption='BLOOD-BASED ESTIMATE',ageLabel='Age at blood draw',comparison,boundary,direction,switchable=false}){
+export function resultInstrument({value,age=null,gap=null,sample=false,illustrative=false,empty=false,profileOnly=false,withheld=false,action='sample',actionLabel='',recordId='',title='A look at the result',date='',readoutLabel='CLINICAL PHENOAGE',caption='BLOOD-BASED ESTIMATE',ageLabel='Age at blood draw',comparison,boundary,direction,switchable=false,profileName=''}){
   const boundLabel={below:'Below',above:'Above','at-least':'At least','up-to':'Up to'}[direction];
   const bounded=typeof boundLabel==='string'&&Number.isInteger(boundary);
   if(!empty&&!profileOnly&&!withheld&&!isReportableAge(value)&&!bounded){withheld=true;profileOnly=true;}
@@ -43,7 +43,7 @@ export function resultInstrument({value,age=null,gap=null,sample=false,illustrat
   const secondary=comparison
     ? `<div><span>${escapeHTML(comparison.label)}</span><strong class="comparison-method">${escapeHTML(comparison.value)}${comparison.unit?`<small>${escapeHTML(comparison.unit)}</small>`:''}</strong></div>`
     : `<div><span>Simple difference</span><strong>${instrumentValue(gap,{signed:true})}<small>years</small></strong></div>`;
-  const note=empty?'No profile needed':sample||illustrative?'Illustrative data · Not your result':date;
+  const note=empty?(profileName||'No profile created'):sample||illustrative?'Illustrative data · Not your result':date;
   return `<section class="result-instrument result-surface ${sample?'sample-panel':'personal-result'} ${noAge?'welcome-instrument':''}" aria-labelledby="result-instrument-title" data-theme-part ${switchable?'data-overview-swipe':''} ${!noAge&&Number.isFinite(value)?'data-result-motion':''}>
     <img class="theme-orb" data-theme-asset="blood-moon" src="/assets/blood-moon-overview-v2.webp" srcset="/assets/blood-moon-overview-v2-small.webp 256w, /assets/blood-moon-overview-v2.webp 512w" sizes="260px" width="512" height="512" alt="" decoding="async">
     <div class="instrument-heading ${empty?'instrument-heading-empty':''}"><h2 id="result-instrument-title" ${empty?'class="sr-only"':''}>${empty?'Start here':escapeHTML(title)}</h2><span class="instrument-tag">${empty?'START HERE':withheld?'REVIEW NEEDED':profileOnly?'HEALTH PROFILE':sample||illustrative?'SAMPLE':'YOUR RESULT'}</span></div>
@@ -56,7 +56,7 @@ export function resultInstrument({value,age=null,gap=null,sample=false,illustrat
       </div>
     </div>
     ${noAge?`<p class="welcome-instrument-note">${empty?'Begin with your health profile or blood results you already have.':withheld?'Open this assessment to review why an estimate is unavailable.':'Your questionnaire creates a health profile. It does not calculate an age.'}</p>`:`<div class="instrument-comparison"><div><span>${escapeHTML(ageLabel)}</span><strong>${instrumentValue(age)}<small>years</small></strong></div><span class="comparison-line" aria-hidden="true"></span>${secondary}</div>`}
-    <div class="instrument-footer">${instrumentFooterNote(note,switchable)}<button class="text-btn" data-action="${action}" ${recordId?`data-id="${escapeHTML(recordId)}"`:''}>${actionLabel||(empty?'Explore a sample':sample?'Explore the result':'About the calculation')}<span aria-hidden="true">↗</span></button></div>
+    <div class="instrument-footer">${instrumentFooterNote(note,switchable,empty&&Boolean(profileName))}<button class="text-btn" data-action="${action}" ${recordId?`data-id="${escapeHTML(recordId)}"`:''}>${actionLabel||(empty?'Explore a sample':sample?'Explore the result':'About the calculation')}<span aria-hidden="true">↗</span></button></div>
   </section>`;
 }
 
@@ -121,11 +121,12 @@ export function renderReportLibrary({profile,history=[],loading=false,error='',d
  </div>`;
 }
 
-export function renderAccount({profile,loading,error,needsHealthProfile,purchases=true}){
+export function renderAccount({profile,loading,error,needsHealthProfile,healthProfileProgress=0,purchases=true}){
  const row=(name,sub,action,extra='',symbol='report')=>`<button class="account-setting" data-action="${action}" ${extra}><span class="setting-symbol">${uiIcon(symbol)}</span><span class="setting-copy"><strong>${name}</strong><small>${sub}</small></span>${uiIcon('external')}</button>`;
+ const progress=`<span data-no-translate>${healthProfileProgress}%</span> <span>complete</span><progress class="profile-progress" aria-hidden="true" value="${healthProfileProgress}" max="100"></progress>`;
  return `<div class="wrap app-screen account-screen">${screenHeading('YOUR WORKSPACE','Account')}
  <section class="profile-card" data-theme-part><span class="profile-avatar">${uiIcon('person')}</span><div><h2${profile?' data-no-translate':''}>${escapeHTML(profile?.name||'Your private workspace')}</h2><p>${profile?'Signed in':'Keep your assessments across devices'}</p></div>${!profile?'<button class="btn" data-action="signup">Sign in / Create account →</button>':''}</section>
- ${statusMessage({loading,error})}<section class="account-settings" data-theme-part>${needsHealthProfile?row('Complete your health profile','Enter your age, height and weight','complete-health-profile','','person'):''}${row('Privacy notice','How your information is used','privacy','','shield')}${row('Assessment methods','Evidence and interpretation','method','','science')}${purchases?row('Purchases','Report access and payments','account-tab','data-tab="purchases"'):''}${profile?row('Manage saved data','Export your data or delete your account','account-tab','data-tab="data"','history'):''}${row('About this app','Information and support','account-tab','data-tab="about"','spark')}</section>
+ ${statusMessage({loading,error})}<section class="account-settings" data-theme-part>${needsHealthProfile?row('Complete your health profile',progress,'complete-health-profile','','person'):''}${row('Privacy notice','How your information is used','privacy','','shield')}${row('Assessment methods','Evidence and interpretation','method','','science')}${purchases?row('Purchases','Report access and payments','account-tab','data-tab="purchases"'):''}${profile?row('Manage saved data','Export your data or delete your account','account-tab','data-tab="data"','history'):''}${row('About this app','Information and support','account-tab','data-tab="about"','spark')}</section>
  ${profile?'<button class="account-signout text-btn" type="button" data-action="sign-out">Sign out</button>':''}
  <p class="account-footnote">${uiIcon('shield')}<span>You choose what to save.</span></p></div>`;
 }

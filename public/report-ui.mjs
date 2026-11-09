@@ -1,6 +1,6 @@
 import {reviewLabSafety,clinicalForDisplay,LAB_SAFETY_VERSION} from './lab-safety.mjs';
 import {safetyMarkup,clinicalCheckSummary} from './lab-feedback.mjs';
-import {sections,legacySections,labs,insights,domainCards} from './model.mjs';
+import {sections,profileSectionsV1,legacySections,labs,insights,domainCards,ASSESSMENT_PROTOCOL} from './model.mjs';
 import {CONTENT_VERSION} from './evidence.mjs';
 import {assessmentProgress,provided} from './assessment-flow.mjs';
 import {compareLabReference,reviewLabReference,labDescriptions,LAB_REFERENCE_SOURCE} from './lab-review.mjs';
@@ -51,7 +51,14 @@ function bloodResults(state){
 
 export function renderAssessmentReport({state,clinical,full=false,reviewing=false,pagesPreview=false,sourceLinks=()=>'',ageComparison=()=>'',hasDraftBackup=false,consultations=true}){
  clinical=clinicalForDisplay(clinical,{stored:!!state.savedReport});
- const legacySnapshot=!!state.savedReport&&(state.contentVersion||state.savedReport.contentVersion)!==CONTENT_VERSION,displaySections=legacySnapshot?legacySections:sections,baseProgress=assessmentProgress(state),questions=displaySections.flatMap(section=>section.questions.filter(q=>!q.show||q.show(state.answers||{}))),progress={...baseProgress,answered:questions.filter(q=>provided(state.answers?.[q.id])).length,total:questions.length},valid=clinical&&!clinical.reason&&Number.isFinite(clinical.value),all=state.savedReport?state.savedReport.priorities:insights(state.answers),findings=full?all:all.slice(0,1),tab=tabs.some(([id])=>id===state.reportTab)?state.reportTab:'summary';
+ const legacySnapshot=!!state.savedReport&&(state.contentVersion||state.savedReport.contentVersion)!==CONTENT_VERSION;
+ const previousProfile=state.savedReport&&(state.assessmentProtocol||state.savedReport.assessmentProtocol)!==ASSESSMENT_PROTOCOL;
+ const displaySections=legacySnapshot?legacySections:previousProfile?profileSectionsV1:sections;
+ const baseProgress=assessmentProgress(state);
+ const questions=displaySections.flatMap(section=>section.questions.filter(q=>!q.show||q.show(state.answers||{})));
+ const progress={...baseProgress,answered:questions.filter(q=>provided(state.answers?.[q.id])).length,total:questions.length};
+ const valid=clinical&&!clinical.reason&&Number.isFinite(clinical.value);
+ const all=state.savedReport?state.savedReport.priorities:insights(state.answers),findings=full?all:all.slice(0,1),tab=tabs.some(([id])=>id===state.reportTab)?state.reportTab:'summary';
  const comparisons=labs.map(lab=>({lab,...reviewLabReference(lab.id,state.lab[lab.id],state)}));
  const profilePresent=progress.answered>0,hasPriorities=all.some(item=>item.key!=='context');
  const clinicalSummary=valid?`<section class="report-estimate result-surface" data-theme-part><span class="eyebrow">CLINICAL PHENOAGE</span><div class="report-age-line"><strong>${Math.round(clinical.value)}</strong><span>years</span></div><div class="report-age-comparison"><div><span>Age at blood draw</span><strong>${esc(state.labAge)} <small>years</small></strong></div><div><span>Simple difference</span><strong>${Math.round(clinical.gap)>0?'+':''}${Math.round(clinical.gap)} <small>years</small></strong></div></div><p>${esc(ageComparison(clinical,state.labAge))}</p></section>`:`<section class="report-estimate result-surface" data-theme-part><span class="eyebrow">${clinical?'ESTIMATE WITHHELD':'YOUR HEALTH PROFILE'}</span><h2>${clinical?'Why no age is shown':'Your profile is ready to review'}</h2>${clinical?'<div class="withheld-emblem">'+unmeasuredMark()+'</div>':''}<p>${clinical?esc(clinical.reason):'Your questionnaire describes health and lifestyle. It does not calculate an age in years; the blood-based estimate needs nine measurements.'}</p>${clinicalCheckSummary(clinical)}<button class="text-btn" data-action="labs">${progress.measurements?'Review blood entries':'Add blood results'} ${uiIcon('forward')}</button></section>`;

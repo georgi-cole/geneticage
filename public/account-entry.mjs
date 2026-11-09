@@ -33,7 +33,6 @@ export function accountEntry({email = '', stage = 'email', providers = [], keepD
         </details>
         <label class="checkline"><input name="consent" type="checkbox" required><span>I consent to storing health information when I choose to save an assessment.</span></label>
         ${error}<button class="btn" type="submit">Create my account →</button>
-        <button class="text-btn" type="button" data-action="auth-change-email">Start sign-in again</button>
       </form>`,
   };
   if (stage === 'code') return {
@@ -55,13 +54,13 @@ export function accountEntry({email = '', stage = 'email', providers = [], keepD
   return {
     title:'Sign in or create an account',
     body:`${social?`<div class="provider-sign-in-options">${social}</div><p>Use the same sign-in method to open an existing account.</p>${keepDraft&&!native?`<p>Provider sign-in opens in a new tab so your entries stay here. Return to this tab when you’re done.</p>`:''}`:''}
-      ${emailSignIn?`<p>${social?'Or sign in with a code sent to your email.':'We’ll email you a one-time code to open your private health journal.'}</p>
+      ${emailSignIn?`<div class="auth-email-section${social?' auth-email-alternative':''}"><p>${social?'Or sign in with a code sent to your email.':'We’ll email you a one-time code to open your private health journal.'}</p>
       <form id="auth-email-form" class="form-stack">
-        <label for="auth-email">Email address</label>
-        <input id="auth-email" name="email" type="email" autocomplete="email" required maxlength="254" value="${esc(email)}">
-        ${error}<button class="btn" type="submit">Send sign-in code →</button>
+        <div class="auth-field"><label for="auth-email">Email address</label>
+        <input id="auth-email" name="email" type="email" autocomplete="email" required maxlength="254" pattern="[^\\s@]+@[^\\s@]+\\.[^\\s@]+" value="${esc(email)}"></div>
+        ${error}<button class="btn secondary" type="submit" disabled>Send sign-in code →</button>
         ${social&&keepDraft&&!native?'<button class="text-btn" type="button" data-action="auth-resume">Continue here after signing in</button>':''}
-      </form>`:error}
+      </form></div>`:error}
       ${reviewAccess?'<button class="text-btn" type="button" data-action="store-review">Store review access</button>':''}`,
   };
 }

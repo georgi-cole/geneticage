@@ -22,8 +22,8 @@ export function overviewChoices(drafts,history){
 }
 
 // Display only a current assessment or an immutable saved result, never an inferred age.
-export function overviewPresentation(record,{hasProfile=false}={}){
- if(!record)return {empty:true,hasProfile,value:null,age:null,gap:null,sample:false,action:'sample'};
+export function overviewPresentation(record,{profileName='',hasProfile=Boolean(profileName)}={}){
+ if(!record)return {empty:true,hasProfile,profileName,value:null,age:null,gap:null,sample:false,action:'sample'};
  const heart=record.assessmentType===HEART_ASSESSMENT?record.heart:null,spec=systemAssessment(record.assessmentType);
  if(heart||spec){
   const result=heart?.result??record.system?.result;
@@ -60,7 +60,7 @@ export function renderThemeHome({age=45,sample=true,...presentation},{choices=[]
  const welcome=empty&&!loadStatus;
  const switchable=choices.length>1;
  const title=choices.find(choice=>choice.type===selected)?.title??loadingTitle??presentation.title??(empty?'Your first assessment':withheld?'Review your assessment':profileOnly?'Your health profile':'A look at the result');
- const subtitle=welcome?(hasProfile?'Your workspace is ready. Start your first assessment.':'Start an assessment. No profile needed.'):'';
+ const subtitle=welcome?(hasProfile?'Your workspace is ready. Start your first assessment.':'Start your first assessment and build your health profile.'):'';
  const instrument=loadStatus
   ? `<section class="result-instrument result-surface personal-result" aria-labelledby="result-instrument-title" data-theme-part ${switchable?'data-overview-swipe':''}>
       <div class="instrument-heading"><h2 id="result-instrument-title">${escapeHTML(title)}</h2><span class="instrument-tag">${loadingSample?'SAMPLE':'YOUR RESULT'}</span></div>

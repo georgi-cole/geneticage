@@ -5,6 +5,7 @@ const tokenHeaders = ['X-KQ-Session', 'X-KQ-Email-Proof', 'X-KQ-OAuth-Proof'];
 const tokens = new Map();
 const hex = bytes => Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
 let verifier;
+let openingProvider = false;
 
 export function forgetNativeAccount() {
   tokens.clear();
@@ -25,30 +26,55 @@ export async function accountFetch(path, options) {
 }
 
 export async function openProvider(provider) {
-  if (!['apple', 'google'].includes(provider)) return;
-  verifier = hex(crypto.getRandomValues(new Uint8Array(32)));
-  const challenge = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
-  // Load a page on the account origin first. Some system browsers mark the
-  // initial app navigation as cross-site, which the OAuth start route rejects.
-  const url = new URL('/sign-in-start/', accountOrigin);
-  url.searchParams.set('provider', provider);
-  url.hash = challenge;
-  await globalThis.Capacitor.Plugins.Browser.open({ url: url.href });
+  if (!['apple', 'google'].includes(provider) || openingProvider) return;
+  openingProvider = true;
+  const secret = hex(crypto.getRandomValues(new Uint8Array(32)));
+  verifier = secret;
+  const { Browser, GeneticAgeProviderSession } = globalThis.Capacitor.Plugins;
+  try {
+    const challenge = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret)));
+    // Start from the account origin so the OAuth start request is same-origin.
+    const url = new URL('/sign-in-start/', accountOrigin);
+    url.searchParams.set('provider', provider);
+    url.hash = challenge;
+    if (!GeneticAgeProviderSession) {
+      await Browser.open({ url: url.href });
+      return;
+    }
+    url.searchParams.set('return', 'app');
+    const result = await GeneticAgeProviderSession.open({ url: url.href });
+    if (result.cancelled) return { ticket: 'cancelled' };
+    const response = claimProviderReturn(result.url);
+    if (!response) throw new Error('Invalid provider return.');
+    return response;
+  } catch (error) {
+    if (verifier === secret) verifier = undefined;
+    throw error;
+  } finally {
+    if (GeneticAgeProviderSession && verifier === secret) verifier = undefined;
+    openingProvider = false;
+  }
+}
+
+function claimProviderReturn(url) {
+  let link;
+  try { link = new URL(url); } catch { return; }
+  if (!verifier || link.protocol !== 'xyz.kolequant.geneticage:' || link.hostname !== 'signin' || link.pathname !== '/complete') return;
+  const ticket = link.hash.slice(1);
+  if (!/^(?:[a-f0-9]{64}|cancelled|retry)$/.test(ticket)) return;
+  const response = { ticket, verifier };
+  verifier = undefined;
+  return response;
 }
 
 export function listenForProviderReturn(receive) {
   if (!NATIVE_APP) return;
   const { App, Browser } = globalThis.Capacitor.Plugins;
   void App.addListener('appUrlOpen', async ({ url }) => {
-    let link;
-    try { link = new URL(url); } catch { return; }
-    if (!verifier || link.protocol !== 'xyz.kolequant.geneticage:' || link.hostname !== 'signin' || link.pathname !== '/complete') return;
-    const ticket = link.hash.slice(1);
-    if (!/^(?:[a-f0-9]{64}|cancelled|retry)$/.test(ticket)) return;
-    const secret = verifier;
-    verifier = undefined;
+    const response = claimProviderReturn(url);
+    if (!response) return;
     try { await Browser.close(); } catch { /* Android focuses the existing activity on return. */ }
-    await receive(ticket, secret);
+    await receive(response);
   });
 }
 

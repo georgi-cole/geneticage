@@ -72,12 +72,13 @@ The **App checks** workflow builds both editions. A maintainer can run it manual
 
 ## Included features
 
-- A 31-question, six-section questionnaire with conditional questions, optional answers and validation.
+- A seven-section questionnaire with conditional questions, optional answers and validation.
 - A health profile, manual blood-entry route, and demo clinical PhenoAge calculation with unit conversions and explicit withholding states.
 - A separate Heart & Vascular assessment with regional SCORE2, SCORE2-OP and SCORE2-Diabetes, age comparisons, and optional ApoB and Lp(a) results.
 - Report preview, Stripe hosted Checkout integration, verified purchased-report access and browser print/save-PDF layout. Charging stays disabled until merchant configuration and webhook delivery are ready.
 - Consultation enquiry preview with selectable sharing categories. No enquiry is transmitted.
 - Sign in with Apple or Google when configured, or use a one-time email code. New accounts confirm adult eligibility and health-storage consent. The health profile then collects age, height and weight, and calculates BMI from those measurements. An explicitly saved personal assessment with these details completes the profile across devices.
+- Body measurements are optional. BMI describes weight relative to height. For adults with BMI below 35, waist-to-height ratio can add information about central body size. Body fat, skeletal muscle and total body water percentages are recorded only when a user has measured values. Smart-scale estimates vary with measurement conditions, including hydration. The measurements are separate from the blood-based age calculation. [CDC BMI guidance](https://www.cdc.gov/BMI/about/index.html) · [NICE waist measurement guidance](https://www.nice.org.uk/guidance/ng246/chapter/Recommendations#identifying-and-assessing-overweight-obesity-and-central-adiposity) · [Bioimpedance measurement study](https://pmc.ncbi.nlm.nih.gov/articles/PMC12678178/)
 - Explicit cloud saving, immutable assessment/report snapshots, cross-device history, a reports tab, same-method progress charts, JSON export and live-record deletion.
 - Sample and personal progress are separated. Optional explicit import of old browser-local demo history; original copies are retained.
 - Responsive layouts, labeled controls, keyboard focus, dialog focus containment and sample data.

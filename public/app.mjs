@@ -12,7 +12,7 @@ import {initializeLaunch} from './launch-screen.mjs';
 import {APP_NAME} from './brand.mjs';
 import {CONSENT_VERSION} from './account-consent.mjs';
 import {accountEntry} from './account-entry.mjs';
-import {freshAssessment,continueAssessment,assessmentProgress,previousAssessment} from './assessment-flow.mjs';
+import {freshAssessment,continueAssessment,assessmentProgress,previousAssessment,profileProgress,profileSectionProgress} from './assessment-flow.mjs';
 import {createNavigationHistory} from './navigation-history.mjs';
 import {labReferenceGroup,validateLabReferences,setLabEntryUnit} from './lab-review.mjs';
 import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
@@ -23,8 +23,8 @@ import {heartPrefill} from './heart-prefill.mjs';
 import {assessSystem, systemAssessment, systemAssessments, systemField, systemPrefill, systemSampleInputs} from './system-assessments.mjs';
 import {readSystemForm, refreshSystemFeedback, renderSystemForm, renderSystemReport, systemMethods, systemRoute, systemSampleButton, systemStepFor} from './system-assessment-ui.mjs';
 import {resultInstrument,screenHeading,uiIcon,backButton,renderAssessments,renderReportLibrary,renderAccount,renderPagesAccount,renderRecordLibrary,assessmentTitle,statusMessage,unmeasuredMark} from './ui-components.mjs';
-import {questionContext,questionChoices,questionDestination,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
-import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,profileMeasurementErrors,profileBmi,insights,sampleAnswers,sampleLabs} from './model.mjs';
+import {questionContext,questionDestination,questionNextLabel,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
+import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,profileMeasurementErrors,profileBmi,profileWaistRatio,EXCLUSIVE_ANSWERS,insights,sampleAnswers,sampleLabs} from './model.mjs';
 import {references,clockComparison} from './evidence.mjs';
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state={...freshAssessment(),view:'home'},draftBackup=null;
@@ -113,7 +113,7 @@ const accountLabels={history:'My assessments',saved:'Assessment history','report
 const screenLabels={home:'Overview',consent:'Before you begin',questionnaire:'Health profile',review:'Review answers',heart:'Heart & Vascular',labs:'Blood results',results:'Your result',report:'Assessment report',consult:'Consultation',enquiry:'Enquiry preview'};
 const returnFields={
  account:['accountTab','libraryPage','showSampleTrends'],report:['reportTab'],results:['resultTab','insightPage'],
- consent:['goal'],questionnaire:['goal','step','questionIndex','optionPage'],review:['goal'],
+ consent:['goal'],questionnaire:['goal','step','questionIndex'],review:['goal'],
  labs:['goal','labStep'],heart:['heartStep','heartReviewEdit','heartCompleteVascularAge','heartSpecialist'],
  system:['systemStep','systemMode','systemReviewField','systemReturnStep','systemBase'],
 };
@@ -161,7 +161,7 @@ function returnPoint(opener,{restore='',editStep=''}={}){
 function historyPoint(){
  const point=returnPoint(null);
  const keyParts={
-  account:[state.accountTab],consent:[state.goal],questionnaire:[state.step,state.questionIndex,state.optionPage],
+  account:[state.accountTab],consent:[state.goal],questionnaire:[state.step,state.questionIndex],
   labs:[state.labStep],heart:[state.heartStep,state.heartReviewEdit],
   system:[state.assessmentType,state.systemStep,state.systemMode],
  };
@@ -218,14 +218,17 @@ function beginReportEdit(opener,step){
  rememberReturn(opener,{restore:'edit',editStep:step});
  state=structuredClone(state);
 }
-function modal(title,body,{picker=false}={}){
- $('#modal-root').innerHTML=`<div class="overlay${picker?' overview-picker-overlay':''}"><section class="modal${picker?' overview-picker':''}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="close" data-action="close" aria-label="Close dialog">×</button><h2 id="modal-title">${title}</h2>${body}</section></div>`;
+function modal(title,body,{picker=false,authentication=false}={}){
+ const overlayClass=picker?' overview-picker-overlay':authentication?' auth-overlay':'';
+ const dialogClass=picker?' overview-picker':authentication?' auth-dialog':'';
+ $('#modal-root').innerHTML=`<div class="overlay${overlayClass}"><section class="modal${dialogClass}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><header class="dialog-heading"><h2 id="modal-title">${title}</h2><button class="close" type="button" data-action="close" aria-label="Close dialog">${uiIcon('close')}</button></header>${body}</section></div>`;
  const dialog=$('.modal');
  decorateDirectionalSymbols(dialog);
  setTimeout(()=>{if(dialog.isConnected)(dialog.querySelector('[aria-current="true"]')||dialog.querySelector('button'))?.focus();},0);
 }
 function close(){
  const picker=$('.overview-picker');
+ if($('.auth-dialog'))signIn={};
  $('#modal-root').innerHTML='';
  ((picker&&$('#overview-switch'))||$('#main')).focus({preventScroll:true});
 }
@@ -255,7 +258,7 @@ function home(){
  const snapshot=choice.saved?overviewSnapshot(choice.saved.id):null;
  const record=choice.draft?{...choice.draft,clinical:clinical(choice.draft)}:snapshot?.record;
  const loadStatus=choice.saved&&!record?(snapshot?.failed?'error':'loading'):'';
- const presentation=overviewPresentation(record,{hasProfile:!!auth.profile});
+ const presentation=overviewPresentation(record,{profileName:auth.profile?.name});
  if(choice.draft&&choice.draft!==state)presentation.action='open-overview-draft';
  return renderThemeHome(presentation,{choices,selected:choice.type,loadStatus,loadingTitle:choice.saved&&assessmentTitle(choice.saved),loadingSample:choice.saved?.sample===true});
 }
@@ -311,18 +314,67 @@ function pruneSmokingAnswers(){
  if(!current)delete a.cigarettes;
  if(a.smoking!=='Some days')delete a.smokingDays30;
 }
+function pruneDependentAnswers(id){
+ const answers=state.answers;
+ if(['smoking','smokingEver100','smokingRegular'].includes(id))pruneSmokingAnswers();
+ if(id==='alcohol'&&answers.alcohol!=='Yes'){
+  delete answers.alcoholDays;
+  delete answers.drinks;
+ }
+ if(id==='compositionMethod'&&!answers.compositionMethod){
+  for(const field of ['bodyFat','skeletalMuscle','bodyWater'])delete answers[field];
+ }
+}
 function editDrink(index=-1){const d=state.answers.drinks?.[index]||{type:'Wine',count:'',ml:'',abv:''};modal(index<0?'Add a drink':'Edit drink',`<form id="drink-form" class="form-stack" data-index="${index}"><label for="drink-type">Drink type</label><select id="drink-type">${['Wine','Beer','Spirits','Other'].map(x=>`<option ${d.type===x?'selected':''}>${x}</option>`).join('')}</select>${[['count','Servings'],['ml','mL per serving'],['abv','Alcohol %']].map(([k,label])=>`<label for="drink-${k}">${label}</label><input id="drink-${k}" type="number" inputmode="decimal" min="0.1" ${k==='abv'?'max="100"':''} step="any" value="${esc(d[k])}">`).join('')}<button class="btn" type="submit">Keep drink →</button></form>`);}
 function questionnaire(){
  const origin=returnTrail.at(-1);
  return renderQuestionnaire(state,inputField,returnLabel(),origin?.view==='review'?Number(origin.editStep):undefined);
 }
 function advanceQuestion(opener){
+ const origin=returnTrail.at(-1),{questions,index}=questionContext(state);
+ if(origin?.view==='review'&&Number(origin.editStep)===state.step&&index===questions.length-1){
+  goBack({commitEdit:true});
+  return;
+ }
  const next=questionDestination(state);
  if(next.view==='review'&&returnTrail.at(-1)?.view!=='review')rememberReturn(opener);
  Object.assign(state,next);
  finishAt(next.view);
 }
-function review(){const bmi=profileBmi(state.answers);return `<div class="wrap narrow"><div class="eyebrow">Questionnaire</div><h1>Review your answers</h1><p class="lead">Edit any section before viewing your health profile.</p>${bmi!==null?`<p><strong>BMI</strong> <span data-no-translate>${bmi.toFixed(1)} kg/m²</span></p>`:''}${sampleBadge()}<div class="card">${sections.map((s,i)=>{const qs=s.questions.filter(q=>!q.show||q.show(state.answers));const n=qs.filter(q=>state.answers[q.id]!==undefined&&state.answers[q.id]!==''&&(!Array.isArray(state.answers[q.id])||state.answers[q.id].length)).length;return `<div class="row" style="display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line)"><span>${s.name} <span class="small muted">${n} of ${qs.length} answered</span></span><button class="text-link" data-action="edit-section" data-index="${i}">Edit</button></div>`;}).join('')}</div><div class="actions" style="margin-top:25px"><button class="btn" data-action="results">View health profile ${arrow}</button><button class="btn secondary" data-action="labs">Add blood results</button></div></div>`;}
+function bodyMeasurements(answers){
+ const bmi=profileBmi(answers),waistRatio=profileWaistRatio(answers,bmi);
+ const errors=validateQuestionnaire(answers);
+ const measurements=[];
+ if(bmi!==null)measurements.push(['BMI',bmi.toFixed(1)+' kg/m²']);
+ if(answers.waist&&!errors.waist)measurements.push(['Waist circumference',answers.waist+' '+(answers.waistUnit||'cm')]);
+ if(waistRatio!==null)measurements.push(['Waist-to-height ratio',waistRatio.toFixed(2)]);
+ if(answers.compositionMethod){
+  for(const [field,label] of [['bodyFat','Body fat'],['skeletalMuscle','Skeletal muscle'],['bodyWater','Total body water']]){
+   if(answers[field]&&!errors[field])measurements.push([label,answers[field]+'%']);
+  }
+ }
+ if(!measurements.length)return '';
+ return `<section class="card body-measurements" data-theme-part><h2>Body measurements</h2>
+  <dl>${measurements.map(([label,value])=>`<div><dt>${label}</dt><dd data-no-translate>${esc(value)}</dd></div>`).join('')}</dl>
+  ${bmi!==null?'<p class="hint">BMI compares weight with height. Waist size and measured body composition add separate context.</p>':''}
+  ${answers.compositionMethod==='Smart scale or bioimpedance'?'<p class="hint">Smart-scale estimates can vary with hydration and measurement conditions.</p>':''}
+ </section>`;
+}
+function review(){
+ const summaries=profileSectionProgress(state.answers).map(({name,answered,total},index)=>{
+  const status=answered===total?'complete':answered?'partial':'incomplete';
+  const label={complete:'Complete',partial:'Partially answered',incomplete:'Unanswered'}[status];
+  return `<li class="review-section" data-status="${status}">${uiIcon('status-'+status)}
+   <span><strong>${name}</strong><small><span>${label}</span> · <span data-no-translate>${answered} / ${total}</span></small></span>
+   <button class="text-link" data-action="edit-section" data-index="${index}">Edit<span class="sr-only"> · ${name}</span></button>
+  </li>`;
+ });
+ return `<div class="wrap app-screen task-screen review-screen">${screenHeading('Questionnaire','Review your answers','Edit any section before viewing your health profile.')}
+  ${sampleBadge()}${bodyMeasurements(state.answers)}
+  <ul class="card review-sections">${summaries.join('')}</ul>
+  <div class="review-actions"><button class="btn" data-action="results">View health profile ${uiIcon('arrow')}</button><button class="text-btn" data-action="labs">${uiIcon('drop')} Add blood results</button></div>
+ </div>`;
+}
 function labForm(){
  const origin=returnTrail.at(-1);
  return renderLabForm(state,labHelp,returnLabel(),origin?.editStep===String(state.labStep)?origin.label:undefined);
@@ -376,9 +428,13 @@ function signup(){
  const drafts=[state,draftBackup,...parkedAssessments.values()];
  const keepDraft=drafts.some(draft=>draft&&!draft.sample&&assessmentProgress(draft).hasData);
  const {title,body}=accountEntry({...signIn,providers:auth.providers,keepDraft,native:NATIVE_APP,reviewAccess:NATIVE_APP&&auth.reviewAccess,emailSignIn:!NATIVE_APP||auth.emailSignIn});
- modal(title,body);
+ modal(title,body,{authentication:true});
+ syncEmailSubmit($('#auth-email-form'));
  language.refresh();
- requestAnimationFrame(()=>$('.modal .provider-sign-in, .modal input')?.focus({preventScroll:true}));
+}
+function syncEmailSubmit(form){
+ if(!form)return;
+ form.querySelector('[type="submit"]').disabled=form.getAttribute('aria-busy')==='true'||!form.elements.email.validity.valid;
 }
 async function emailAction(form,job,button=form.querySelector('[type="submit"]')){
  if(form.getAttribute('aria-busy')==='true')return;
@@ -386,7 +442,11 @@ async function emailAction(form,job,button=form.querySelector('[type="submit"]')
  form.setAttribute('aria-busy','true');button.disabled=true;error.hidden=true;
  try{await job();}
  catch(reason){error.textContent=reason.message;error.hidden=false;language.refresh();}
- finally{button.disabled=false;form.removeAttribute('aria-busy');}
+ finally{
+  form.removeAttribute('aria-busy');
+  button.disabled=false;
+  if(form.id==='auth-email-form')syncEmailSubmit(form);
+ }
 }
 async function sendEmailCode(form,email,button){
  await emailAction(form,async()=>{
@@ -456,7 +516,7 @@ function dashboard(){
   const latest=draft?null:auth.history.at(-1);
   return renderReportLibrary({...common,draft,latest});
  }
- if(state.accountTab==='settings')return PAGES_PREVIEW?renderPagesAccount():renderAccount({...common,needsHealthProfile:needsHealthProfile(),purchases:!NATIVE_APP});
+ if(state.accountTab==='settings')return PAGES_PREVIEW?renderPagesAccount():renderAccount({...common,needsHealthProfile:needsHealthProfile(),healthProfileProgress:healthProfileProgress(),purchases:!NATIVE_APP});
  const back=backButton('account-tab','Account','settings');
  if(state.accountTab==='about')return `<div class="wrap app-screen account-subscreen">${back}${screenHeading('INFORMATION & SUPPORT','About this app')}<section class="card" data-theme-part><h2>Understand the assessment</h2><p>Explore the assessment experience and its methods. Automated educational estimates do not diagnose disease or predict lifespan.</p><a class="text-link" href="https://kolequant.xyz/en/index.html" target="_blank" rel="noopener noreferrer">KoleQuant website ↗</a></section><section class="account-settings utility-actions" aria-label="Support and assessment controls">${NATIVE_APP?`<a class="account-setting" href="mailto:support@kolequant.xyz"><span class="setting-symbol">${uiIcon('consult')}</span><span class="setting-copy"><strong>Contact support</strong><small>Questions about your account and the app</small></span>${uiIcon('external')}</a>`:`<button class="account-setting" data-action="consult"><span class="setting-symbol">${uiIcon('consult')}</span><span class="setting-copy"><strong>Contact options</strong><small>Questions, interpretation and support</small></span>${uiIcon('external')}</button>`}<button class="account-setting quiet-setting" data-action="reset"><span class="setting-symbol">${uiIcon('reset')}</span><span class="setting-copy"><strong>Reset assessment</strong><small>Clear the current assessment</small></span>${uiIcon('forward')}</button></section></div>`;
  if(state.accountTab==='progress')return `<div class="wrap app-screen account-subscreen">${backButton('account-tab','My assessments','history')}${screenHeading('YOUR HISTORY','Progress over time')}<div class="actions"><button class="btn secondary" data-action="trend-personal">My results</button><button class="text-link" data-action="trend-sample">Sample history</button></div>${trend(auth.history)}</div>`;
@@ -473,29 +533,22 @@ function organizeConsultation(){
  let page=0;for(const node of nodes){if(node.matches('label[for="contact-name"]'))page=1;if(node.matches('.checkline'))page=2;pages[page].append(node);}
  form.append(...pages);const nav=document.createElement('div');nav.className='form-nav';nav.innerHTML='<button class="text-btn" type="button" data-action="consult-step" data-direction="-1" disabled>← Back</button><span class="consult-page-count small muted">1 / 3</span><button class="btn" type="button" data-action="consult-step" data-direction="1">Continue →</button>';form.append(nav);form.dataset.page='0';
 }
-function fitQuestionChoices(){
- const q=questionContext(state).question,options=$('#questions .options'),main=$('#main');
- if(q.type!=='multi'||!options)return;
- const bounds=options.getBoundingClientRect(),bottom=main.getBoundingClientRect().bottom;
- if(!bounds.height||!bottom)return;
- const available=bottom-bounds.top-($('#questions .form-nav')?.getBoundingClientRect().height||0)-($('.question-optional')?.getBoundingClientRect().height||0)-($('#questions .error')?.getBoundingClientRect().height||0)-34;
- if(bounds.height<=available)return;
- const labels=[...options.querySelectorAll('.option')],rows=[];
- for(const label of labels){const box=label.getBoundingClientRect();let row=rows.find(row=>Math.abs(row.top-box.top)<2);if(!row){row={top:box.top,bottom:box.bottom,count:0};rows.push(row);}row.bottom=Math.max(row.bottom,box.bottom);row.count++;}
- const fitting=rows.filter(row=>row.bottom-bounds.top<=available),capacity=Math.max(rows[0]?.count||2,fitting.reduce((sum,row)=>sum+row.count,0));
- if(capacity<q.options.length){state.choiceCapacity=capacity;$('#main').innerHTML=questionnaire();}
-}
 function syncChoiceInputs(id,target){
  for(const input of $('#questions')?.querySelectorAll('input[data-answer]')||[]){if(input.dataset.answer!==id)continue;input.checked=Array.isArray(state.answers[id])?state.answers[id].includes(input.value):state.answers[id]===input.value;}
  delete state.errors[id];target.closest('fieldset')?.querySelector('.error')?.remove();
- if($('#questions')){const context=questionContext(state);$('.task-caption>span:last-child').textContent='Question '+(context.index+1)+' / '+context.questions.length;language.refresh();}
+ if($('#questions')){
+  const context=questionContext(state),origin=returnTrail.at(-1);
+  $('.task-caption>span:last-child').textContent='Question '+(context.index+1)+' / '+context.questions.length;
+  $('#questions [data-question-next]').textContent=questionNextLabel(state,origin?.view==='review'?Number(origin.editStep):undefined);
+  language.refresh();
+ }
 }
 function captureQuestion(){
  const form=$('#questions');if(!form)return;
  for(const input of form.querySelectorAll('input[data-answer]:not([type=checkbox]):not([type=radio])'))state.answers[input.dataset.answer]=input.value;
  for(const input of form.querySelectorAll('input[data-answer][type=radio]:checked'))state.answers[input.dataset.answer]=input.value;
  const q=questionContext(state).question;
- if(q.type==='multi'){const inputs=[...form.querySelectorAll('input[data-answer][type=checkbox]')],visible=inputs.map(input=>input.value),other=(state.answers[q.id]||[]).filter(value=>!visible.includes(value));state.answers[q.id]=[...other,...inputs.filter(input=>input.checked).map(input=>input.value)];}
+ if(q.type==='multi')state.answers[q.id]=[...form.querySelectorAll('input[data-answer][type=checkbox]:checked')].map(input=>input.value);
  for(const input of form.querySelectorAll('select[data-unit]'))state.answers[input.dataset.unit+'Unit']=input.value;
 }
 function captureLabs(){
@@ -554,7 +607,6 @@ function reviewArterialField(target,editing){
  }
 }
 function render(){
- state.choiceCapacity=undefined;
  nav();
  const {view}=state,main=$('#main');
  document.body.dataset.view=view;
@@ -564,9 +616,7 @@ function render(){
  if(['consent','review','results'].includes(view)||view==='report'&&screen?.matches('.report-workspace')){
   screen?.insertAdjacentHTML('afterbegin',backButton('back-screen',returnLabel()));
  }
- if(view==='questionnaire'){language.refresh();fitQuestionChoices();}
  if(view==='consult')organizeConsultation();
- if(view==='review')screen?.classList.add('app-screen','task-screen','review-screen');
  if(view==='consent')screen?.classList.add('app-screen','task-screen','consent-screen');
  decorateDirectionalSymbols(main);
  document.title=({home:'Your health workspace',account:state.accountTab==='reports'?'Reports':state.accountTab==='history'?'My assessments':'Your account',results:'Your assessment',heart:'Heart & Vascular',system:systemAssessment(state.assessmentType)?.title,report:'Your report',consult:'Consultation'}[view]||'Your assessment')+' — '+APP_NAME;
@@ -795,6 +845,10 @@ function needsHealthProfile(){
  const completeHere=draft?.profileCompleted&&!Object.keys(profileMeasurementErrors(draft.answers)).length;
  return !completeHere&&!auth.history.some(record=>record.hasCompleteProfile&&!record.sample);
 }
+function healthProfileProgress(){
+ const {answered,total}=profileProgress(draftForGoal('profile')?.answers);
+ return Math.floor(100*answered/total);
+}
 function startHealthProfile(opener){
  rememberReturn(opener);
  beginAssessment('profile');
@@ -806,7 +860,6 @@ function checkProfileMeasurements(){
  state.profileCompleted=false;
  state.step=0;
  state.questionIndex=sections[0].questions.findIndex(question=>question.id===id);
- state.optionPage=0;
  goto('questionnaire');
  state.errors={[id]:errors[id]};
  render();
@@ -839,8 +892,8 @@ async function requestAssessment(goal,startOver=false,opener){
 function otherRouteFields(draft,goal){
  if(goal==='profile')return Object.fromEntries(Object.entries(draft).filter(([key])=>key.startsWith('lab')));
  if(goal==='labs'){
-  const {answers,profileCompleted,step,questionIndex,optionPage}=draft;
-  return {answers,profileCompleted,step,questionIndex,optionPage};
+  const {answers,profileCompleted,step,questionIndex}=draft;
+  return {answers,profileCompleted,step,questionIndex};
  }
  return {};
 }
@@ -983,7 +1036,10 @@ document.addEventListener('click',async e=>{
   return;
  }
  if(act==='native-provider'&&NATIVE_APP){
-  try{await openProvider(b.dataset.provider);}catch{signIn={message:'Sign-in could not be completed. Please try again.'};signup();}
+  try{
+   const response=await openProvider(b.dataset.provider);
+   if(response)await finishProviderSignIn(response);
+  }catch{signIn={message:'Sign-in could not be completed. Please try again.'};signup();}
   return;
  }
  if(act==='store-review'&&NATIVE_APP){signIn={stage:'store-review'};signup();return;}
@@ -1086,16 +1142,23 @@ document.addEventListener('click',async e=>{
  if(act==='close'){close();return;}
  if(act==='sample'){loadSample(b.dataset.type,b);return;}
  if(act==='question-back'){
-  if(questionChoices(state).page>0){state.optionPage--;goto('questionnaire',0,{backward:true});return;}
   const previous=questionDestination(state,-1),origin=returnTrail.at(-1);
   if(previous.view==='consent'||origin?.view==='review'&&origin.editStep===String(state.step)&&questionContext(state).index===0)goBack();
   else{Object.assign(state,previous);goto(previous.view,0,{backward:true});}
   return;
  }
- if(act==='skip'&&!questionContext(state).question.required){dirty();delete state.answers[b.dataset.id];advanceQuestion(b);return;}
+ if(act==='skip'&&!questionContext(state).question.required){
+  const id=b.dataset.id;
+  dirty();
+  delete state.answers[id];
+  delete state.answers[id+'Unit'];
+  pruneDependentAnswers(id);
+  advanceQuestion(b);
+  return;
+ }
  if(act==='edit-section'){
   rememberReturn(b,{editStep:b.dataset.index});
-  state.step=Number(b.dataset.index);state.questionIndex=0;state.optionPage=0;goto('questionnaire');return;
+  state.step=Number(b.dataset.index);state.questionIndex=0;goto('questionnaire');return;
  }
  if(act==='add-drink'){editDrink();return;}
  if(act==='edit-drink'){editDrink(Number(b.dataset.index));return;}
@@ -1193,8 +1256,24 @@ for(const event of ['input','change','focusout']){
  });
 }
 document.addEventListener('focusout',e=>{const t=e.target;if(t.form?.id==='heart-arterial-form')reviewArterialField(t,false);if(t.form?.id==='heart-form'&&(t.dataset.heartValue||t.dataset.heartReference&&t.type==='text'))reviewHeartField(t);});
-document.addEventListener('input',e=>{const t=e.target;clearContactFeedback(t);if(t.dataset.answer!==undefined||t.dataset.lab||t.dataset.drink!==undefined||['lab-age','lab-date'].includes(t.id))dirty();if(t.dataset.answer!==undefined&&!['radio','checkbox'].includes(t.type)){state.answers[t.dataset.answer]=t.value;if(['weight','weightYearAgo'].includes(t.dataset.answer))delete state.answers.weightChangeIntent;}if(t.dataset.lab){state.lab[t.dataset.lab]??={unit:labs.find(l=>l.id===t.dataset.lab).units[0]};state.lab[t.dataset.lab].value=t.value;}if(t.dataset.drink!==undefined)state.answers.drinks[Number(t.dataset.drink)][t.dataset.key]=t.value;if(t.id==='lab-age')state.labAge=t.value;if(t.id==='lab-date')state.labDate=t.value;});
-document.addEventListener('change',e=>{const t=e.target;clearContactFeedback(t);if(t.dataset.answer!==undefined||t.dataset.unit||t.dataset.labUnit||['lab-valid','lab-context'].includes(t.id))dirty();if(t.dataset.answer!==undefined&&['radio','checkbox'].includes(t.type)){const id=t.dataset.answer;if(t.type==='checkbox'){const exclusive=['None','Prefer not to say','Not sure'];let v=Array.isArray(state.answers[id])?[...state.answers[id]]:[];if(t.checked){v=exclusive.includes(t.value)?[t.value]:[...v.filter(x=>!exclusive.includes(x)),t.value];}else v=v.filter(x=>x!==t.value);state.answers[id]=v;}else{state.answers[id]=t.value;if(['smoking','smokingEver100','smokingRegular'].includes(id))pruneSmokingAnswers();if(id==='alcohol'&&t.value!=='Yes'){delete state.answers.alcoholDays;delete state.answers.drinks;}}syncChoiceInputs(id,t);}
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='auth-email')syncEmailSubmit(t.form);clearContactFeedback(t);if(t.dataset.answer!==undefined||t.dataset.lab||t.dataset.drink!==undefined||['lab-age','lab-date'].includes(t.id))dirty();if(t.dataset.answer!==undefined&&!['radio','checkbox'].includes(t.type)){state.answers[t.dataset.answer]=t.value;if(['weight','weightYearAgo'].includes(t.dataset.answer))delete state.answers.weightChangeIntent;}if(t.dataset.lab){state.lab[t.dataset.lab]??={unit:labs.find(l=>l.id===t.dataset.lab).units[0]};state.lab[t.dataset.lab].value=t.value;}if(t.dataset.drink!==undefined)state.answers.drinks[Number(t.dataset.drink)][t.dataset.key]=t.value;if(t.id==='lab-age')state.labAge=t.value;if(t.id==='lab-date')state.labDate=t.value;});
+document.addEventListener('change',e=>{
+ const t=e.target;
+ if(t.id==='auth-email')syncEmailSubmit(t.form);
+ clearContactFeedback(t);
+ if(t.dataset.answer!==undefined||t.dataset.unit||t.dataset.labUnit||['lab-valid','lab-context'].includes(t.id))dirty();
+ if(t.dataset.answer!==undefined&&['radio','checkbox'].includes(t.type)){
+  const id=t.dataset.answer;
+  if(t.type==='checkbox'){
+   const selected=Array.isArray(state.answers[id])?state.answers[id]:[];
+   const remaining=selected.filter(value=>value!==t.value&&!EXCLUSIVE_ANSWERS.includes(value));
+   state.answers[id]=t.checked?(EXCLUSIVE_ANSWERS.includes(t.value)?[t.value]:[...remaining,t.value]):selected.filter(value=>value!==t.value);
+  }else{
+   state.answers[id]=t.value;
+   pruneDependentAnswers(id);
+  }
+  syncChoiceInputs(id,t);
+ }
  if(t.dataset.unit){state.answers[t.dataset.unit+'Unit']=t.value;if(['weight','weightYearAgo'].includes(t.dataset.unit))delete state.answers.weightChangeIntent;}if(t.dataset.labUnit){const id=t.dataset.labUnit,previous=state.lab[id]||{value:''},changed=previous.unit!==t.value&&['referenceLow','referenceHigh'].some(key=>previous[key]!==undefined&&previous[key]!=='');state.lab[id]=setLabEntryUnit(id,previous,t.value);for(const input of t.closest('fieldset').querySelectorAll('[data-lab-reference]'))input.value=state.lab[id][input.dataset.referenceKey]??'';if(changed){let note=t.closest('fieldset').querySelector('.reference-unit-note');if(!note){note=document.createElement('p');note.className='hint reference-unit-note';note.setAttribute('role','status');t.closest('.input-row').after(note);}note.textContent='Reference limits were converted to the selected unit. Check them against your report.';language.refresh();}}if(t.id==='lab-valid')state.labValid=t.checked;if(t.name==='lab-fasting'){dirty();state.labFasting=t.value;}if(t.id==='lab-context')state.labContext=t.checked;if(t.id==='share-assessment')$('#share-options').hidden=!t.checked;});
 document.addEventListener('submit',async e=>{
  e.preventDefault();
@@ -1203,8 +1282,6 @@ document.addEventListener('submit',async e=>{
  if(f.id==='system-form'){captureSystem(f);submitSystem();return;}
  if(f.id==='questions'){
   captureQuestion();
-  const choices=questionChoices(state);
-  if(choices.page<choices.pages-1){state.optionPage=choices.page+1;goto('questionnaire');return;}
   const q=questionContext(state).question,errors=validateQuestionnaire(state.answers,{requireMeasurements:true});
   state.errors=errors[q.id]?{[q.id]:errors[q.id]}:{};
   if(Object.keys(state.errors).length){render();return;}
@@ -1345,7 +1422,7 @@ document.addEventListener('pointerup',e=>{
  switchOverviewTo(choices[(index+direction+choices.length)%choices.length],direction);
 });
 document.addEventListener('pointercancel',e=>{if(overviewSwipe?.id===e.pointerId)overviewSwipe=null;});
-listenForProviderReturn(async(ticket,verifier)=>{
+async function finishProviderSignIn({ticket,verifier}){
  try{
   if(ticket==='cancelled'){signIn={message:'Sign-in was cancelled. Choose a sign-in method to try again.'};signup();return;}
   if(ticket==='retry')throw new Error('Provider sign-in failed.');
@@ -1353,7 +1430,8 @@ listenForProviderReturn(async(ticket,verifier)=>{
   if(result.registrationRequired){signIn={stage:'social-register'};signup();}
   else await finishSignIn();
  }catch{signIn={message:'Sign-in could not be completed. Please try again.'};signup();}
-});
+}
+listenForProviderReturn(finishProviderSignIn);
 initializeAppearance();
 render();
 navigationHistory.visit({replace:true});

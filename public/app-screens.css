@@ -20,6 +20,7 @@ footer {display:none}
 .btn svg {width:22px;height:22px}
 .text-btn,.text-link {min-height:36px}
 .overview-footnote,.account-footnote {margin:0;font-size:10px;color:var(--muted);text-align:center}
+.instrument-footer-caption[data-no-translate] {min-width:0;overflow-wrap:anywhere}
 .home-workspace {max-width:780px;gap:16px}
 .home-workspace .screen-head {padding:0 2px}
 .home-workspace .result-instrument {flex:1;min-height:340px;max-height:620px}
@@ -258,8 +259,8 @@ footer {display:none}
 .task-screen input[type=number],.task-screen input[type=text],.task-screen input[type=date],.task-screen select {min-height:46px;font-size:15px;border-radius:9px}
 .task-screen .input-row {max-width:100%;margin:0}
 .task-screen .form-nav {margin:20px 0 0;padding:12px 0 0;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:12px;flex-shrink:0}
-.question-optional {font-size:10px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;margin-top:14px}
-.question-optional .text-link {font-size:10px}
+.question-screen .question-navigation {justify-content:space-between}
+.question-screen .question-navigation .text-link {min-height:44px}
 .task-screen .sample-badge {margin:0;font-size:9px;padding:7px 10px}
 .lab-fields {display:grid;gap:18px;flex:1;align-content:start}
 .lab-fields .question legend {font-size:13px;font-weight:500;margin-bottom:6px;line-height:1.3}
@@ -276,9 +277,27 @@ footer {display:none}
 .task-back {display:inline-flex;align-items:center;gap:6px;align-self:flex-start;min-height:36px;flex-shrink:0;font-size:12px;color:var(--muted);text-align:left}
 .app-screen>.task-back:first-child {margin-bottom:-6px}
 .task-back .kq-icon {flex-shrink:0}
-.review-screen .card {padding:6px 16px}
-.review-screen .row {padding:10px 0!important;font-size:12px}
-.review-screen .row .small {display:block;font-size:10px}
+.review-screen .lead {margin:0}
+.review-sections {list-style:none;margin:0;padding:4px 16px}
+.review-section {display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 0}
+.review-section+.review-section {border-top:1px solid var(--line)}
+.review-section strong,.review-section small {display:block}
+.review-section strong {font-size:13px;font-weight:500}
+.review-section small {font-size:11px;color:var(--muted)}
+.review-section .kq-icon {width:19px;height:19px;color:var(--muted)}
+.review-section[data-status=complete] .kq-icon {color:var(--accent)}
+.review-section .text-link {min-height:44px}
+.review-actions {display:grid;gap:6px}
+.review-actions .btn {justify-content:space-between;min-height:46px}
+.review-actions .text-btn {display:flex;justify-content:center;align-items:center;gap:7px;min-height:44px}
+.review-actions .text-btn svg {width:16px;height:16px}
+.body-measurements {padding:16px}
+.body-measurements h2 {margin:0 0 8px;font-size:15px}
+.body-measurements dl {margin:0}
+.body-measurements dl>div {display:flex;justify-content:space-between;gap:12px;padding:5px 0}
+.body-measurements dd {margin:0;font-variant-numeric:tabular-nums;white-space:nowrap}
+.body-measurements .hint {margin:8px 0 0}
+.profile-progress {display:block;width:min(100%,140px);height:4px;margin-top:6px;accent-color:var(--accent)}
 .consent-screen {justify-content:center;gap:16px}
 .consent-screen h1 {font-size:30px;line-height:1.15;margin:0}
 .consent-screen .lead {font-size:13px;line-height:1.6;margin:0}
@@ -339,6 +358,25 @@ footer {display:none}
 .account-subscreen .notice {font-size:11px;margin:0}
 .account-subscreen .purchase-row {gap:12px}
 .modal {border-radius:18px;max-height:calc(100dvh - 36px)}
+.overlay.auth-overlay {
+ padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+}
+.modal.auth-dialog {max-width:420px;max-height:100%;padding:20px;overscroll-behavior:contain;overflow-wrap:anywhere}
+.auth-dialog .dialog-heading {align-items:center;margin-bottom:14px}
+.auth-dialog h2 {font-size:clamp(20px,5.4vw,25px);line-height:1.2}
+.auth-dialog .form-stack,.auth-dialog .auth-field {display:grid;gap:10px;min-width:0}
+.auth-dialog .auth-field {gap:6px}
+.auth-dialog label {font-size:13px}
+.auth-dialog .form-stack>label {margin:0}
+.auth-dialog input:is([type=email],[type=text],[type=password]) {min-height:46px;font-size:16px}
+.auth-dialog .form-stack>.btn {min-height:46px;justify-content:center}
+.auth-dialog .auth-email-alternative {margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.auth-dialog .auth-email-section>p {margin:0 0 12px}
+.auth-dialog .checkline {align-items:flex-start}
+.auth-dialog .checkline input {margin-top:3px}
+.auth-dialog .reference-editor {padding:8px 0;border-block:1px solid var(--line)}
+.auth-dialog [data-action=store-review] {margin-top:8px}
+:root[data-hosting=native] :is(input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],select,textarea) {font-size:16px}
 .consult-screen {display:block;max-width:640px;height:100%;min-height:100%;padding-top:20px}
 .consult-screen>aside {display:none}
 .consult-screen>section {display:flex;flex-direction:column;gap:12px;min-height:100%;height:100%}

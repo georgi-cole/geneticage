@@ -75,8 +75,8 @@ async function verifySocialSignIn(emailOwner) {
     google: { issuer: 'https://accounts.google.com', clientId: socialEnv.GOOGLE_CLIENT_ID, token: 'https://oauth2.googleapis.com/token' },
     apple: { issuer: 'https://appleid.apple.com', clientId: socialEnv.APPLE_SERVICES_ID, token: 'https://appleid.apple.com/auth/token' },
   };
-  const start = async (provider, challenge = '') => {
-    const queryString = challenge ? '?native_challenge=' + challenge : '';
+  const start = async (provider, challenge = '', returnToApp = false) => {
+    const queryString = challenge ? '?native_challenge=' + challenge + (returnToApp ? '&native_return=app' : '') : '';
     const response = await handleAuthApi(request(`/api/auth/oauth/${provider}/start${queryString}`), socialEnv);
     assert.equal(response.status, 303);
     const authorize = new URL(response.headers.get('Location'));
@@ -218,11 +218,19 @@ async function verifySocialSignIn(emailOwner) {
     }
     const verifier = randomBytes(32).toString('hex');
     const challenge = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))).toString('hex');
+    flow = await start('apple', challenge, true);
+    assert.equal(outcome(await callback(flow, flow.cookie, {error:'user_cancelled_authorize'})), 'xyz.kolequant.geneticage://signin/complete#cancelled');
+    flow = await start('apple', challenge, true);
+    const changedMode = flow.cookie.replace('=app.', '=');
+    assert.equal(outcome(await callback(flow, changedMode)), '/?auth=retry#account', 'OAuth state is bound to the app-return mode.');
     for (const provider of ['apple', 'google']) {
-      flow = await start(provider, challenge);
+      const directReturn = provider === 'apple';
+      flow = await start(provider, challenge, directReturn);
       const redirected = await callback(flow);
       const ticket = outcome(redirected).split('#')[1];
-      assert.match(outcome(redirected), /^\/sign-in-return\/#\w{64}$/);
+      const location = directReturn ? 'xyz.kolequant.geneticage://signin/complete#' : '/sign-in-return/#';
+      assert.equal(outcome(redirected), location + ticket);
+      assert.match(ticket, /^[a-f0-9]{64}$/);
       assert.equal((await register('__Host-kq_oauth_proof=' + ticket)).status, 401);
       assert.equal((await completeNative(ticket, '0'.repeat(64))).status, 401);
       const native = await completeNative(ticket, verifier);
@@ -233,7 +241,7 @@ async function verifySocialSignIn(emailOwner) {
       const cookie = cookieValue(created.headers.getSetCookie()[0]);
       const firstUser = await getSessionUser(request('/api/session', 'GET', undefined, { cookie }), socialEnv);
       assert.ok(firstUser?.userId);
-      flow = await start(provider, challenge);
+      flow = await start(provider, challenge, !directReturn);
       const again = await completeNative(outcome(await callback(flow)).split('#')[1], verifier);
       assert.deepEqual(await again.json(), { authenticated: true });
       const returnCookie = cookieValue(again.headers.getSetCookie()[0]);
