@@ -125,3 +125,9 @@ The satin signature turns subtly over 18 seconds, with an occasional 14-second e
 Launch choreography runs at 1.3× its original speed. The full introduction remains 3,000 ms; the opening hold fills the remaining time (about 1,308 ms). Signature morph, codons and clock travel share the same time mapping; idle signature motion is unchanged.
 
 The logo handoff uses complementary spatial masks instead of opacity overlap. A single silhouette is replaced from bottom to top, then completes its geometric morph. The extra decorative ribbon trails are suppressed during this handoff. Transformation speed is 1.3 × 1.15 = 1.495× the original, while total duration stays 3,000 ms.
+
+## Educational editorial editions — 10 November 2026
+
+The app retains its three themes and navigation. Inside the full report, new `personal-science-v2` editions use a warm-paper editorial surface, serif feature headings, readable prose, restrained evidence callouts and the actual KoleQuant footer mark. Six signatures distinguish Clinical PhenoAge (burgundy/cells), Health & lifestyle (ochre/paths), Heart & Vascular (terracotta/branches), Metabolic (olive/bands), Kidney (teal/layers) and Fitness (cobalt/contours). These are decorative marks, not medical images or charts.
+
+The educational layer is not limited to the v1 three-priority summary. Related markers receive connected explanations; the data and evidence remain separate destinations. Boundaries and comparison bands must not become falsely exact organ ages. A native PDF engine renders the same frozen editorial content into two downloads; legacy editions keep their previous print behavior. Keep every PDF heading with its first substantive row, and inspect both languages and sparse/withheld variants. The knowledge bank is explicitly awaiting clinical review.

@@ -1,100 +1,67 @@
-# Personal report generation
+# Personal science reports — editorial v2
 
-The report layer turns an existing assessment into a selected, connected explanation. It does not replace the scientific calculators, eligibility rules or measurement reviews. The output is an automated educational report; `clinicalReview` remains `false`.
+The report now teaches from a person's recorded information rather than merely listing reference flags. This is implemented code, not the earlier manually assembled design prototype. The knowledge base still requires qualified clinical review before a public paid clinical service. It is educational content, not a diagnosis, treatment prescription or a validated new aging model.
 
-## Components
+## What the customer receives
 
-| File | Responsibility |
-| --- | --- |
-| `public/report-composer.mjs` | Deterministic selection, family adapters, facts, provenance and report-document construction. |
-| `public/report-content.mjs` | Curated English paragraph templates and required placeholder binding. |
-| `public/report-document-ui.mjs` | Escape and render supplied sections without recomposing saved prose. |
-| `public/report-ui.mjs` | Base assessment tabs, result panel, recorded inputs and methods. |
-| `public/heart-vascular-ui.mjs`, `public/system-assessment-ui.mjs` | The same reading structure around each family's existing result. |
-| `public/report-export.mjs`, `public/assessment-report.css` | Personal/technical browser-print scopes and restoration of the screen's disclosure state. |
-| `lib/account-api.mjs` | Validate inputs, calculate server results, compose new documents, encrypt snapshots and enforce access. |
-| `public/evidence.mjs` | Approved source identifiers and links. |
+A full-access assessment opens the personal report, the original data view and method/evidence view. New editorial editions have two actual downloadable PDFs: the personal science report and the complete data/methods companion. The same frozen document supplies the app and both PDF definitions. The downloadable sample HTML and assessment-signature design sheet used during design are not extra customer products.
 
-## Composer contract
+PDFs are generated locally from a lazy, repository-built pdfmake runtime. Export sends no measurements to a PDF service, CDN or LLM. English uses a standard serif feature face and a bundled sans-serif body face; Bulgarian uses embedded Cyrillic-capable text. Page numbers, the real KoleQuant mark, source links and distinct assessment signatures are part of the renderer. No fixed page quota is imposed.
 
-```js
-import {composeReportDocument} from './report-composer.mjs';
+Older saved reports without editorial v2 retain their original interpretation and legacy browser-print exports. They are not silently upgraded. Ctrl+P remains a separate browser-print fallback; the two export buttons create finished PDF files for v2.
 
-const document = composeReportDocument({
-  state,                // validated assessment state
-  clinical: null,       // supplied Clinical PhenoAge result when applicable
-  priorities,           // supplied approved base-model findings, if available
-  generatedAt: null,    // caller-provided ISO timestamp for a saved document
-});
-```
+## Architecture
 
-`REPORT_DOCUMENT_VERSION` is `personal-report-v1`. Identical supplied inputs and versions produce the same plain JSON document. The composer does not read the clock, call a network service or run an age/risk calculation. A missing timestamp remains `null` for an unsaved report.
+| Component | Responsibility |
+|---|---|
+| `public/report-composer.mjs` | Existing deterministic v1 result/fact adapter; attaches v2 only when composing a new edition. |
+| `public/report-editorial.mjs` | Selects substantial educational chapters, creates traceable derived context, gates interventions and builds the complete supporting record. |
+| `public/report-knowledge/modules.mjs` | Eighteen curated educational modules: physiology, wellbeing, companion information, evidence, interventions and timing. |
+| `public/report-knowledge/sources.mjs` | Versioned primary-source registry. Unknown source IDs and unsafe source URLs fail composition. |
+| `public/report-knowledge/copy.mjs` | Strictly bound personal narrative and presentation templates. |
+| `design/localization/editorial/*.tsv` | Authored English/Bulgarian pairs; generated `bg.mjs` is verified by the normal locale check. |
+| `public/report-editorial-ui.mjs`, `.css` | Escaped, responsive editorial surface and six decorative signatures. No medical data is invented by artwork. |
+| `public/report-pdf.mjs` | Pure PDF document definitions using the same frozen narrative, evidence and data. |
+| `public/report-export.mjs`, `report-download.mjs` | Access-gated export dispatch, visible errors, stale-document protection and web/native delivery. |
+| `public/report-native-share.mjs`, `native/report-sharing.mjs` | Private-cache PDF sharing through the official Capacitor APIs. |
+| `report-engine/`, `scripts/report-assets.mjs` | Isolated pinned PDF engine and generated local runtime; dependencies and generated binaries stay out of Git. |
+| `lib/account-api.mjs` | Existing server input validation, calculations, immutable encrypted snapshots and purchase/ownership boundaries. |
 
-The base adapter uses `state.answers`, laboratory entries and collection/reference metadata. It takes the supplied clinical result, then the result already present in state. Heart and system adapters use `state.assessmentType` and `state.heart` or `state.system`, each containing `{inputs, result, review}`.
+No new database service is required: the knowledge bank is version-controlled source, and the accepted editorial document is stored inside the existing encrypted report. There is no clinical content-editing admin UI or live literature-search service in this change.
 
-| Output | Meaning |
-| --- | --- |
-| `version`, `type`, `generatedAt` | Document contract, assessment family and creation time. |
-| `modelVersion`, `contentVersion`, `assessmentContentVersion`, `questionnaireVersion` | Calculation, report-editorial, assessment-content and questionnaire provenance. Report content uses the independent `REPORT_CONTENT_VERSION` from `report-content.mjs`. A family without the base questionnaire has no questionnaire version. |
-| `resultState` | `ready`, `withheld`, `missing` or the questionnaire-only `profile` state. |
-| `sections` | Ordered `{id, kind, title, paragraphs, sources, factIds}` objects. Kinds are `intro`, `priority`, `strength`, `context` and `plan`. |
-| `facts` | `{id, value, unit, provenance}` records identifying supplied answers, measurements, comparisons and results. |
-| `coverage` | Questionnaire totals/groups, measurement counts and, for families, missing inputs. |
-| `sourceIds` | Deduplicated identifiers used by the selected sections. |
-| `citations` | Frozen `{id, label, url}` source records, in the selected source-ID order. |
-| `clinicalReview` | Always `false`; composition is not clinician review. |
+## Selection and personalization
 
-Base reference facts retain comparison values/units, bounds and exclusivity, reference source/version, assay and reference-group provenance. Original assessment inputs remain in the separately encrypted assessment record. Facts are a traceability layer, not a new clinical model.
+The top-level `personal-report-v1` contract remains compatible with earlier consumers. Newly composed documents also carry `editorial.version = personal-science-v2`, independent knowledge/evidence/layout versions, clinical-review status, six-family signature, chapters, source snapshots, a complete input record, derived facts and frozen Bulgarian translations.
 
-Questionnaire group and overall counts come from the same applicable schema. Family reports use `0/0` for the unused base questionnaire; this is not a completion score. Their measurement requirement is derived where supported, and is `null` for Heart & Vascular rather than inventing a fixed denominator.
+The composer covers entered markers through connected features, not a three-priority cap. It distinguishes normal/maintenance information, missing context, confirmation needs and safety alerts. The original model's withholding and critical-result logic stays authoritative. Ordinary optimization modules are suppressed for critical alerts; an estimate is not fabricated for a sparse or withheld result.
 
-## Selection in v1
+Personal examples include explicit fasting-glucose context, known-diabetes/pregnancy exclusions for prevention discussions, separate conventional mmol/L and mg/dL boundaries, actual weekly activity, existing strength sessions, disrupted sleep and estimated absolute lymphocytes from the supplied same-panel WBC and percentage. A calculated value is labelled calculated and retains its input IDs and formula. No missing HbA1c, clinical history, laboratory result, personal treatment response or study eligibility is inferred.
 
-The base report uses the existing approved profile findings and applicable laboratory comparisons. Its ordering is an editorial policy, not a calculated risk or expected-benefit score. It selects at most three priority themes and two foundation paragraphs. Related activity and strength findings can be combined into one theme. For the supplied sample, the selected story connects glucose clarification, existing activity and sleep; a generic heavy-drinking paragraph does not displace those topics.
+The illustrative activity progression is an editorial implementation example, not a guideline prescription. Research duration, practical habit-review windows and laboratory follow-up remain distinct. A clinician-discussion treatment paragraph is not a claim that a medication is approved for age reversal or that the individual is eligible.
 
-Missing context and reference limitations stay explicit. A lymphocyte percentage does not become a diagnosis of low absolute lymphocytes. Unknown CRP context is not interpreted as hs-CRP. Dedicated hs-CRP cardiovascular thresholds remain in the measurement review rather than being recast as a generic laboratory-interval priority. Critical-result alerts suppress ordinary lifestyle priorities. Missing and withheld results do not receive a successful-age narrative.
+## Extending the databank
 
-Family adapters preserve their own meaning: cardiovascular risk/reference comparisons, modeled diabetes-risk comparison, kidney filtration/reference comparison, and estimated or measured fitness. They reuse supplied results and review states. They do not combine the outputs into an overall age.
+1. Add a stable module ID and reviewed physiology/context/evidence blocks to `modules.mjs`. Every substantive clinical block must reference an applicable primary source.
+2. Register sources with publication identity, evidence kind, exact URL and review status. Do not repurpose an existing source ID for a different claim.
+3. Add explicit eligibility and suppression rules in the composer. Missing prerequisites must result in a conditional explanation, not invented suitability.
+4. Add paired Bulgarian text with identical placeholder names. Run `npm run locale:build`; commit source and generated dictionaries.
+5. Test a relevant result, an established/normal pattern, missing information, conflicting/unsupported context, critical/withheld results and alternative units. Add a fictional fixture for material layout changes.
+6. Bump the relevant knowledge, evidence or layout version. Preserve stored editions and their frozen translations/citations.
 
-## Saving and access
+Each module currently carries `reviewStatus: clinical-review-required`. Source checking and editorial tests do not constitute clinician review. Review owners, clinical sign-off and evidence refresh governance remain operational release requirements, not properties the code falsely assigns to itself.
 
-Creation follows the existing server boundary:
+## Persistence, access and privacy
 
-1. `validateSnapshot()` keeps recognized input fields and recalculates the selected assessment. Client-supplied prose, model versions, results, priorities and unlock flags cannot determine the saved report.
-2. The server builds the existing report metadata and attaches `report.document`, using the clean state, server clinical result/priorities and server timestamp.
-3. Both assessment and report are encrypted with the existing AES-GCM owner/record/kind binding.
-4. The existing UUID insert remains idempotent. Retrying an ID cannot replace its ciphertext or interpretation.
+New server saves compose from validated server-calculated facts only. Client prose, claimed versions and unlock flags are not authoritative. The existing AES-GCM owner/record/kind binding and idempotent UUID insertion remain unchanged. Reads do not regenerate reports. The locked base-report allowlist excludes the full document, including in account exports. Existing included Heart & Vascular and system-assessment access remains unchanged; this work does not introduce new prices or activate payments.
 
-Reads do not regenerate a document or its citations. Earlier reports without `document` keep their stored result/findings and use the legacy presentation path. The document renderer uses frozen citation labels and safe HTTP(S) URLs; live-catalogue fallback is limited to older documents with no citation snapshot. There is no backfill or silent migration.
+Only an explicit export creates a plaintext downloadable PDF. In a native app the PDF is written to the private application cache and passed to the operating-system share sheet. A cancelled share removes that temporary file. Later exports remove owned cached PDFs older than 24 hours; the OS may purge them sooner. This is not a guarantee of immediate deletion after a successful share. User-selected exported copies are outside the application's encrypted record store. The iOS privacy manifest declares the file-timestamp reason used for cleanup.
 
-The locked base-report response uses an explicit field allowlist and the original one-insight preview. It never includes `document`, including in account exports. Purchased access and the existing private review mode expose the saved document. Review mode remains disabled when payments are enabled. Heart and system reports retain their existing included access. The report layer does not alter purchase, refund, ownership or encryption rules.
+The renderer accepts escaped text and safe HTTP(S) citations, not user HTML. The PDF runtime denies external resource loading. Navigating to a different report or a locked view while generation is running prevents delivery of the stale report.
 
-## Reading and PDF export
+## Build and verification
 
-All report families use **Your report**, **Your data** and **Method & evidence**. The selected narrative keeps its supporting values and relevant limitations. Full measurements, input answers and detailed methods remain separately inspectable.
+`npm ci` installs the isolated, lockfile-pinned PDF engine through the root postinstall hook. Environments intentionally skipping install scripts must run `npm run report:install`. Framework, Pages and native builds generate the lazy runtime before publication. Do not commit that generated runtime or dependency directories.
 
-**Report PDF** prints the personal narrative. **Data & methods PDF** prints the supporting record. These use browser print/save-PDF, not a separate document-generation service. Browser-menu printing and Ctrl+P default to the personal report, even when another tab is selected. Explicit technical export selects its own scope. The export controller opens relevant details for printing and restores the previous screen state afterward.
+Run `npm run check`, `npm run build`, `npm run build:pages`, and `npm run build:native` for applicable changes. Run `npm run report:qa` for 32 real PDFs from eight fictional profiles across English/Bulgarian and both export scopes. The `Editorial report review` workflow also exercises the actual Pages app in Chromium, checks 320/390/1280 layouts in all themes/languages, downloads four actual PDFs and publishes review artifacts. It does not deploy either hosting surface.
 
-Use `data-export-scope="report"` or `data-export-scope="technical"` for new blocks. Keep headings with paragraphs and measurement rows intact in print CSS. Verify actual generated PDFs; DOM tests cannot establish pagination or typography.
-
-## English and Bulgarian maintenance
-
-Stored paragraphs use canonical English. The language layer translates complete approved templates for display while preserving bound numbers, units and identifiers. Switching language does not change the saved document or rerun the calculation.
-
-Edit English templates in `public/report-content.mjs`; add matching Bulgarian entries to `design/localization/*.tsv` with the same placeholder names. Presentation labels also have TSV entries. Run `npm run locale:build` to regenerate `public/locales/bg.mjs`; do not hand-edit the generated dictionary. See `design/LOCALIZATION.md` for voice and preservation rules.
-
-## Extending the report
-
-For a new topic, define an approved template, its input/context requirements and sources, then add a deterministic selection rule. Bind values from traceable facts. Do not promote missing answers to healthy findings or add personal effect forecasts. Add cases that demonstrate both eligibility and suppression.
-
-For a new family, first provide its validated `{inputs, result, review}` contract and scientific meaning. Add an explicit family adapter and render it through the shared report-document view. Preserve the family's missing, review, bounded and ready states, and its entitlement policy. Do not fall back to Clinical PhenoAge language.
-
-Use fictional fixtures for a typical profile, sparse/uncertain answers, established habits, critical/withheld results, non-default units, reference-boundary cases and each family/method branch. Account tests must cover server-generated content, immutable old snapshots, preview/export leakage, owner isolation and included or purchased access. The payment suite uses a local mock provider.
-
-Run the applicable focused tests, then `npm run check` and `npm run build`. For layout changes, inspect a phone and wider viewport, English/Bulgarian, all active themes and both actual PDF exports. The test runner discovers `tests/*.test.mjs`; account-document coverage is in `tests/report-document-account.test.mjs`, and verified payment access is exercised in `test-payments.mjs`.
-
-## Current boundaries
-
-This release uses curated templates and fixed selection rules. It has no LLM writer, live research retrieval, clinical review, individualized treatment prediction or newly validated age model. Longitudinal interpretation and richer goal/constraint matching require separate contracts and evidence review.
-
-Version meaningful editorial changes with `REPORT_CONTENT_VERSION`; version document-contract changes with `REPORT_DOCUMENT_VERSION`. Preserve source-ID meanings and capture their labels/URLs when composing a new document. Older saved prose and citations remain unchanged. Keep earlier template translations available so historical prose remains readable in Bulgarian.
+Inspect rendered PDF pages for headings separated from their first content, clipped glyphs, footer collisions, unsupported numbers and incomplete records. Automated composition and DOM checks are not visual or clinical validation. Native share behavior has isolated tests; physical-device acceptance is still required before shipping the native experience.

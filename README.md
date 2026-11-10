@@ -180,3 +180,11 @@ The shared app canvas has four destinations: Overview, Assessments, Reports and 
 Black Metal is the default, with silver accents and a polished graphite action. Blood Moon has distinct cropped lunar portraits; Bionic uses porcelain, titanium and metallic blue. The three themes share geometry, controls and typography. Fine custom navigation/arrow symbols use the Paired icon family; the oversized decorative DNA spiral is retired.
 
 EN/БГ switches copy in place, preserving answers and the current screen, and persists only the language preference. The theme preference is also local. No health records are written to browser storage. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md), [design/ICON_SYSTEM.md](design/ICON_SYSTEM.md) and [design/LOCALIZATION.md](design/LOCALIZATION.md).
+
+## Editorial report integration: 10 November 2026
+
+New report editions include the educational `personal-science-v2` document: a versioned 18-module knowledge bank, assessment-specific chapters and visual signatures, evidence-linked clinical discussion, contextual derived values and a focused starting plan. English and Bulgarian narrative/source snapshots are frozen with the existing encrypted report. Older editions and payment entitlements remain unchanged.
+
+The two v2 export buttons generate actual locally rendered PDFs rather than opening a browser print dialog. The personal report and complete data/methods record come from the same saved content. Native exports use a private-cache file and the system share sheet; successful exports may leave an OS-managed temporary file, with owned files older than 24 hours cleaned on subsequent exports. No report data is sent to an external PDF or language-model service.
+
+`npm ci` installs the isolated pinned PDF engine. `npm run report:qa` generates fictional validation PDFs; the Editorial report review CI job also tests real browser downloads. See [report maintenance and privacy contract](docs/PREMIUM_REPORTS.md). Clinical-review status remains explicit and pending; source-backed automation is not clinical validation.

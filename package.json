@@ -20,7 +20,11 @@
     "locale:build": "node scripts/build-locale.mjs",
     "locale:check": "node scripts/build-locale.mjs --check",
     "check": "npm run locale:check && npm run lint && npm run typecheck && npm test",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "postinstall": "node scripts/report-install.mjs",
+    "report:install": "node scripts/report-install.mjs",
+    "report:qa": "node scripts/report-qa.mjs",
+    "report:assets": "node scripts/report-assets.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

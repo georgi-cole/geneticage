@@ -1,3 +1,4 @@
+@import url('./report-editorial.css');
 /* Ordered response controls, shared by every material theme. */
 .question-screen .question {display:block;min-inline-size:0}
 .question-screen .question>legend {float:none;display:block;width:100%;max-width:100%;margin:0 0 16px}

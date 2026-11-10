@@ -1,3 +1,4 @@
+import {renderEditorialDocument} from './report-editorial-ui.mjs';
 import {escapeHTML as esc} from './ui-components.mjs';
 
 const sectionKinds=new Set(['intro','priority','strength','context','plan']);
@@ -24,6 +25,7 @@ export function renderReportSources(document,ids,{sourceLinks=()=>''}={}){
 
 // Presentation only: saved prose is rendered verbatim, never recomposed here.
 export function renderReportDocument(document,{sourceLinks=()=>''}={}){
+ if(document?.editorial?.version==='personal-science-v2')return renderEditorialDocument(document);
  if(!Array.isArray(document?.sections))return '';
  let priorityNumber=0;
  const sections=document.sections.filter(section=>section&&typeof section==='object').map(section=>{

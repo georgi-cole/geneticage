@@ -1,3 +1,4 @@
+import {composeEditorialReport} from './report-editorial.mjs';
 import {sections, profileSectionsV1, legacySections, ASSESSMENT_PROTOCOL, insights} from './model.mjs';
 import {labs} from './lab-definitions.mjs';
 import {CONTENT_VERSION, references} from './evidence.mjs';
@@ -352,6 +353,7 @@ function composeFamily(state, generatedAt) {
 
 /** Compose explanations around supplied results. Never runs an age/risk model. */
 export function composeReportDocument({state = {}, clinical = null, priorities, generatedAt = null} = {}) {
-  if (state.assessmentType === HEART_ASSESSMENT || systemAssessment(state.assessmentType)) return composeFamily(state, generatedAt);
-  return composeBase(state, clinical, priorities, generatedAt);
+  const base = state.assessmentType === HEART_ASSESSMENT || systemAssessment(state.assessmentType)
+    ? composeFamily(state, generatedAt) : composeBase(state, clinical, priorities, generatedAt);
+  return composeEditorialReport(base, state);
 }

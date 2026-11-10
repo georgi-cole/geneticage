@@ -1,6 +1,6 @@
 # Dependencies
-/node_modules/
-/native/node_modules/
+/node_modules
+/native/node_modules
 /.pnp
 .pnp.*
 # Keep authored Yarn tooling if the project adopts Yarn.
@@ -53,3 +53,8 @@ yarn-error.log*
 
 # OS metadata
 .DS_Store
+
+# Pinned, generated editorial PDF runtime
+/report-engine/node_modules
+/public/assets/report-pdf-runtime.js
+/report-qa-output/

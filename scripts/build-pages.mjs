@@ -1,3 +1,4 @@
+import {buildReportAssets} from './report-assets.mjs';
 import {build} from 'esbuild';
 import {createHash} from 'node:crypto';
 import {cp,mkdir,readFile,readdir,realpath,rm,writeFile} from 'node:fs/promises';
@@ -18,6 +19,7 @@ export function buildPages({directory=path.join(root,'dist-pages'),basePath='/ge
 }
 
 async function buildClient({directory,basePath,native}){
+ await buildReportAssets();
  if(!/^\/(?:[A-Za-z0-9_-]+\/)*$/.test(basePath))throw Error('Use an absolute Pages directory path ending in /.');
  const outputName=native?'dist-native':'dist-pages';
  const project=native?'geneticage-native':'kolequant-age-pages';

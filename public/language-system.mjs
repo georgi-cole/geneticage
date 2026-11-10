@@ -1,4 +1,6 @@
-import {BG} from './locales/bg.mjs';
+import {BG as BASE_BG} from './locales/bg.mjs';
+import {REPORT_BG} from './report-knowledge/bg.mjs';
+const BG=Object.freeze({...BASE_BG,...REPORT_BG});
 
 export const LANGUAGE_KEY='kq-language-v1';
 export const languageBootstrap="(()=>{let v='en';try{v=localStorage.getItem('kq-language-v1')||'en'}catch{}v=v==='bg'?'bg':'en';document.documentElement.lang=v;document.documentElement.dataset.language=v})()";
@@ -53,7 +55,7 @@ export function translateText(text,language='en',{protectedPrefix=''}={}){
 export function initializeLanguage(){
  let language=document.documentElement.dataset.language==='bg'?'bg':'en',queued=false;
  const originals=new WeakMap(),attributes=new WeakMap(),nativeErrors=new Set();
- const ignored='script,style,svg,textarea,input,[data-no-translate]';
+ const ignored='script,style,svg,textarea,input,[data-no-translate],[data-kq-en]';
  function textNode(node){
   const parent=node.parentElement;
   if(!parent||parent.closest(ignored+',.brand,[data-count-to]')||!node.nodeValue?.trim())return;
@@ -65,6 +67,10 @@ export function initializeLanguage(){
   record.rendered=rendered;originals.set(node,record);
  }
  function refresh(){
+  document.querySelectorAll('[data-kq-en]').forEach(element=>{
+   const text=language==='bg'?element.dataset.kqBg||element.dataset.kqEn:element.dataset.kqEn;
+   if(element.textContent!==text)element.textContent=text;
+  });
   const walker=document.createTreeWalker(document.documentElement,NodeFilter.SHOW_TEXT);
   let node;while(node=walker.nextNode())textNode(node);
   document.querySelectorAll('[aria-label],[title],[placeholder]').forEach(element=>{

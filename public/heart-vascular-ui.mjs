@@ -1,3 +1,4 @@
+import {renderEditorialSources} from './report-editorial-ui.mjs';
 import {
   heartQuestions, heartRegionLabels, heartDiagnosisQuestion, heartDiagnosisActive, heartSmokingFields, heartLegacySmoking,
   heartStartIssue, heartLimitations, heartModelForReport, heartAgeReadout, heartSources, HEART_UNSPECIFIED_CVD, SCORE2_DIABETES, FRAMINGHAM,
@@ -633,7 +634,7 @@ export function renderHeartReport({heart, saved, savedReport, pagesPreview, sour
           : 'The percentage estimates the chance of a first heart attack, stroke, or cardiovascular death over 10 years. Vascular risk age expresses that risk as a comparison with a reference profile.'}</p>
       </section>`}${(isFramingham || isPday) && review?.pressureFollowUp ? `<section class="heart-reading"><dl>${pressureRow(inputs, review)}</dl></section>` : ''}${arterial}`,
     measurements: record + measurementsPanel(inputs, review) + heartAnswersPanel(inputs),
-    methods: methodsPanel(inputs, result, review, sourceLinks) + `<section class="report-provenance"><h3>About this report</h3><dl>${row('Model version',result.version || 'Not available')}${document ? row('Report edition',document.version) : ''}</dl></section>`,
+    methods: renderEditorialSources(document) + methodsPanel(inputs, result, review, sourceLinks) + `<section class="report-provenance"><h3>About this report</h3><dl>${row('Model version',result.version || 'Not available')}${document ? row('Report edition',document.version) : ''}</dl></section>`,
   };
   panels.summary += narrative;
   return `<div class="wrap app-screen report-workspace personal-report-workspace heart-report-screen">

@@ -121,17 +121,18 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.equal(document.querySelectorAll('[data-reference-source="lab"]').length,1);assert.equal(document.querySelectorAll('[data-reference-source="published"]').length,8);
  assert.ok([...$('[data-report-panel="data"]').querySelectorAll('a')].some(a=>a.href==='https://www.mayocliniclabs.com/test-catalog/Overview/800024'));
  let printed=0;const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(el=>el.open);
+ window.print=()=>{printed++;};
+ // Editorial exports download real PDFs rather than invoking the print dialog.
+ // JSDOM cannot load the browser ESM runtime: the user must receive a visible
+ // failure, never a false success or an implicit fallback to a different report.
  for(const scope of ['report','technical']){
-  window.print=()=>{
-   printed++;window.dispatchEvent(new window.Event('beforeprint'));
-   assert.equal(document.body.dataset.reportExport,scope);
-   details.forEach((el,index)=>assert.equal(el.open,el.closest('[data-export-scope]').dataset.exportScope===scope?true:previous[index]));
-  };
   await click(`[data-action="print"][data-export="${scope}"]`);
-  window.dispatchEvent(new window.Event('afterprint'));assert.deepEqual(details.map(el=>el.open),previous);
+  await flush();
+  assert.deepEqual(details.map(el=>el.open),previous);
   assert.equal(document.body.hasAttribute('data-report-export'),false);
+  assert.ok(document.querySelector('.kq-pdf-status[data-error]'));
  }
- assert.equal(printed,2);
+ assert.equal(printed,0);
  await click('#language-toggle');assert.match($('[data-report-panel="data"]').textContent,/Публикуван/);await click('#language-toggle');
  // The existing sample entry is an isolated detour and can restore the real draft.
  await click('[data-action="labs"]');await click('[data-action="sample-labs"]');

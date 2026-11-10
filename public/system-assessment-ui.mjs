@@ -1,3 +1,4 @@
+import {renderEditorialSources} from './report-editorial-ui.mjs';
 import {assessSystem, systemAssessment, systemExtras, systemField, systemSteps} from './system-assessments.mjs';
 import {measurementFeedbackMarkup} from './lab-feedback.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
@@ -305,7 +306,7 @@ export function renderSystemReport({type, system, saved, savedReport, sample, ha
       ${sample ? '' : saved ? '<button class="text-btn no-print" data-action="system-copy">Update from this report ↗</button>' : result.issue === 'fitness-age' ? '' : extraActions(type, inputs)}`,
     measurements:`${record}<section class="heart-reading"><h2>Your answers and measurements</h2><dl>${derived}${measurementRows(type, inputs, review)}</dl>
       ${saved || sample ? '' : '<button class="text-btn no-print" data-action="system-edit" data-part="age" data-review-all>Review answers ↗</button>'}</section>`,
-    methods:`<section class="report-explanation"><h2>How this comparison works</h2>${systemMethods(type)}${sourceLinks(spec.sources)}</section>
+    methods:`${renderEditorialSources(document)}<section class="report-explanation"><h2>How this comparison works</h2>${systemMethods(type)}${sourceLinks(spec.sources)}</section>
       <section class="report-provenance"><h3>About this report</h3><dl>${row('Model version',result.version || 'Not available')}${document ? row('Report edition',document.version) : ''}</dl></section>`,
   };
   const tabs = [['summary','Your report'], ['measurements','Your data'], ['methods','Method & evidence']];
