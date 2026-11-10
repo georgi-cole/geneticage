@@ -1,0 +1,80 @@
+name: Apply report validation corrections
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/fix-editorial-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fix:
+    if: github.repository == 'georgi-cole/geneticage' && github.event.number == 25 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/premium-personal-reports' && github.actor == 'georgi-cole'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+      - name: Apply exact reviewed changes
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = e7eb5ef742b3d4b22cf8f01be099f38845725400
+          python3 - <<'PY'
+          from pathlib import Path
+          def edit(file,old,new,count=1):
+              p=Path(file);s=p.read_text();assert s.count(old)==count,(file,s.count(old),count);p.write_text(s.replace(old,new))
+          edit('public/report-editorial.mjs',' const module=',' const addModule=')
+          edit('public/report-editorial.mjs',"module('","addModule('",20)
+          edit('scripts/report-browser-qa.mjs','data.error?p.reject(Error(JSON.stringify(data.error))):p.resolve(data.result);','if(data.error)p.reject(Error(JSON.stringify(data.error)));else p.resolve(data.result);')
+          edit('scripts/build-pages.mjs',"const relativeAssets=text=>text.replaceAll('/assets/','./assets/');",r"export const relativeAssets=text=>text.replace(/(?<![A-Za-z0-9_./:-])\/assets\//g,'./assets/');")
+          edit('public/report-pdf.mjs','p.low!==null||p.high!==null','p.low!=null||p.high!=null')
+          edit('public/report-pdf.mjs','p.low===null?','p.low==null?')
+          edit('public/report-pdf.mjs','p.high===null?','p.high==null?')
+          Path('tests/report-asset-paths.test.mjs').write_text('''import assert from 'node:assert/strict';
+          import {test} from 'node:test';
+          import {relativeAssets} from '../scripts/build-pages.mjs';
+          import {reportFixtures} from '../scripts/report-fixtures.mjs';
+          import {reportPdfDefinition} from '../public/report-pdf.mjs';
+
+          test('publication rewrites root assets without corrupting relative PDF imports',()=>{
+           assert.equal(relativeAssets('"/assets/mark.png"'), '"./assets/mark.png"');
+           assert.equal(relativeAssets('url(/assets/mark.png)'), 'url(./assets/mark.png)');
+           for(const value of ['./assets/report-pdf-runtime.js','../assets/mark.png','https://example.test/assets/mark.png','assets/mark.png'])assert.equal(relativeAssets(value),value);
+           assert.equal(relativeAssets('new URL("./assets/report-pdf-runtime.js", document.baseURI)'), 'new URL("./assets/report-pdf-runtime.js", document.baseURI)');
+          });
+
+          test('technical exports do not invent undefined reference bounds',()=>{
+           const fixture=reportFixtures()[0];
+           for(const fact of fixture.document.facts){if(fact.provenance){delete fact.provenance.low;delete fact.provenance.high;}}
+           const definition=reportPdfDefinition(fixture.document,{scope:'technical'});
+           assert.doesNotMatch(JSON.stringify(definition), /undefined/);
+          });
+          ''')
+          PY
+      - run: npm ci
+      - run: npm run check
+      - name: Commit only the reviewed source corrections
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          test "$(git ls-remote origin refs/heads/feat/premium-personal-reports | cut -f1)" = "$EXPECTED_HEAD"
+          git add public/report-editorial.mjs public/report-pdf.mjs scripts/build-pages.mjs scripts/report-browser-qa.mjs tests/report-asset-paths.test.mjs
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Fix relative PDF asset loading and add export regressions'
+          git push origin HEAD:refs/heads/feat/premium-personal-reports
