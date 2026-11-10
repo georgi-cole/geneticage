@@ -4,6 +4,7 @@ import {JSDOM} from 'jsdom';
 import {assessHeartVascular} from '../public/heart-vascular.mjs';
 import {renderHeartReport} from '../public/heart-vascular-ui.mjs';
 import {assessSystem,systemSampleInputs} from '../public/system-assessments.mjs';
+import {composeReportDocument} from '../public/report-composer.mjs';
 import {renderSystemReport} from '../public/system-assessment-ui.mjs';
 
 const sourceLinks=()=>'';
@@ -28,7 +29,7 @@ test('all independent report families compose from existing results and separate
   assert.ok(document.querySelector('[data-action="print"][data-export="report"]'));
   assert.ok(document.querySelector('[data-action="print"][data-export="technical"]'));
   assert.match(document.querySelector('[data-report-panel="measurements"]').textContent,/Recorded result/);
-  assert.match(document.querySelector('.print-only.report-footnote').textContent,/not clinically reviewed/);
+  assert.match(document.querySelector('.kq-brand-footer').textContent,/This report is not a diagnosis/);
   assert.deepEqual(assessment,before,'Composing and rendering must not alter the scientific result or original inputs.');
   dom.window.close();
  }
@@ -58,4 +59,20 @@ test('withheld system and cardiovascular results preserve their review reason wi
   assert.match(document.querySelector('[data-report-panel="measurements"] .report-record-summary').textContent,/Estimate withheld/);
   dom.window.close();
  }
+});
+
+test('the family folios change their lead and content when the available evidence changes',()=>{
+ const compose=(type,family)=>composeReportDocument({state:{assessmentType:type,[type==='heart-vascular'?'heart':'system']:family}}).editorial;
+ const text=e=>e.chapters.flatMap(chapter=>chapter.blocks.map(block=>block.text)).join(' ');
+ const heartBase=compose('heart-vascular',heart());
+ const heartQuiet=compose('heart-vascular',assessHeartVascular({...heart().inputs,smoking:'No',systolic:{value:'118',unit:'mmHg'}}));
+ assert.notEqual(heartBase.folio.pages[0].title,heartQuiet.folio.pages[0].title);
+ const metabolic=compose('metabolic',assessSystem('metabolic',{...systemSampleInputs('metabolic'),hba1c:{value:'5.4',unit:'%'}}));
+ assert.match(text(metabolic),/an HbA1c that this estimate can use/);
+ const kidney=compose('kidney',assessSystem('kidney',{...systemSampleInputs('kidney'),acr:{value:'8',unit:'mg/g'}}));
+ assert.match(kidney.folio.pages[0].title,/urine albumin together/);
+ const fitness=compose('fitness',assessSystem('fitness',{...systemSampleInputs('fitness'),testType:'Treadmill test',vo2peak:{value:'44',unit:'mL/kg/min'},rer:{value:'1.12',unit:'ratio'}}));
+ assert.match(fitness.folio.pages[0].title,/test you took/);
+ const profile=composeReportDocument({state:{answers:{age:'45',sleep:'6',rested:'Sometimes'}}}).editorial;
+ assert.match(profile.folio.pages[0].title,/how you feel after sleep/);
 });

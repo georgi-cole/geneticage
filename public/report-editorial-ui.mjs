@@ -1,5 +1,7 @@
+import {FAMILY_COPY as F} from './report-knowledge/family-copy.mjs';
 import {CLINICAL_COPY as L} from './report-knowledge/clinical-copy.mjs';
-import {hasClinicalFolio,clinicalCoverArt,clinicalPageContent,clinicalRecordGroups,clinicalComparison} from './report-clinical.mjs';
+import {clinicalRecordGroups,clinicalComparison} from './report-clinical.mjs';
+import {hasReportFolio,isFamilyFolio,reportFolioArt,reportFolioPage,reportFolioPalette,reportFolioRecord} from './report-folio.mjs';
 import {EDITORIAL_COPY as C} from './report-knowledge/copy.mjs';
 
 // Values are never HTML. This renderer accepts a saved, server-authored document,
@@ -51,7 +53,7 @@ export function renderEditorialSources(document){
 export function renderEditorialDocument(document){
  const e=document?.editorial;if(!e||!Array.isArray(e.chapters))return '';
  const key=register(document);
- if(hasClinicalFolio(e))return clinicalNarrative(document,key);
+ if(hasReportFolio(e))return folioNarrative(document,key);
  const accent=/^#[a-f0-9]{6}$/i.test(e.signature?.accent)?e.signature.accent:'#803E4B';
  const pale=/^#[a-f0-9]{6}$/i.test(e.signature?.pale)?e.signature.pale:'#F2E8E8';
  return `<article class="personal-report-document kq-editorial" data-editorial-document="${key}" data-report-document-version="${esc(document.version)}" data-export-scope="report" style="--kq-accent:${accent};--kq-pale:${pale}">
@@ -70,20 +72,23 @@ export function renderEditorialDocument(document){
 
 function clinicalReadings(e,readings){
  if(!readings.length)return '';
- return '<dl class="kq-reading-strip">'+readings.map(({label,value,unit})=>`<div><dt>${translated(e,label)}</dt><dd><strong data-no-translate>${esc(value)}</strong> ${translated(e,unit)}</dd></div>`).join('')+'</dl>';
+ return '<dl class="kq-reading-strip">'+readings.map(({label,value,unit})=>`<div><dt>${translated(e,label)}</dt><dd><strong>${translated(e,String(value))}</strong> ${translated(e,unit)}</dd></div>`).join('')+'</dl>';
 }
 
 function clinicalBlock(e,b){
  return `<section class="kq-block kq-${esc(b.kind)}">${b.title?translated(e,b.title,'h3'):''}<p>${translated(e,b.text)} ${b.sources?.length?`<sup class="kq-citations">${sourceLinks(e,b.sources)}</sup>`:''}</p></section>`;
 }
 
-function clinicalNarrative(document,key){
+function folioNarrative(document,key){
  const e=document.editorial,f=e.folio,m=e.metric;
- const result=m.age===null?translated(e,C.notcalculated,'p','kq-no-age'):`<div class="kq-cover-metric"><div><span>${translated(e,e.title)}</span><div class="report-age-line"><strong>${esc(m.age)}</strong> ${translated(e,C.years)}</div>${translated(e,C.ageComparison,'small')}</div><dl>${m.chronologicalAge===null?'':`<dt>${translated(e,C.labage)}</dt><dd>${esc(m.chronologicalAge)} ${translated(e,C.years)}</dd>`}${m.gap===null?'':`<dt>${translated(e,C.gap)}</dt><dd>${m.gap>0?'+':''}${esc(m.gap)} ${translated(e,C.years)}</dd>`}</dl></div>`;
+ const family=isFamilyFolio(e);
+ const {accent,cover,paper,soft}=reportFolioPalette(e);
+ const familyResult=!family?'':f.coverReadings?.length?clinicalReadings(e,f.coverReadings):translated(e,f.coverMessage,'p','kq-no-age');
+ const result=family?`<div class="kq-family-cover-result">${familyResult}${m.method?`<p class="kq-method-label" data-no-translate>${esc(m.method)}</p>`:''}</div>`:m.age===null?translated(e,C.notcalculated,'p','kq-no-age'):`<div class="kq-cover-metric"><div><span>${translated(e,e.title)}</span><div class="report-age-line"><strong>${esc(m.age)}</strong> ${translated(e,C.years)}</div>${translated(e,C.ageComparison,'small')}</div><dl>${m.chronologicalAge===null?'':`<dt>${translated(e,C.labage)}</dt><dd>${esc(m.chronologicalAge)} ${translated(e,C.years)}</dd>`}${m.gap===null?'':`<dt>${translated(e,C.gap)}</dt><dd>${m.gap>0?'+':''}${esc(m.gap)} ${translated(e,C.years)}</dd>`}</dl></div>`;
  const pages=f.pages.map(page=>{
-  const view=clinicalPageContent(e,page);
+  const view=reportFolioPage(e,page);
   const column=blocks=>blocks.map(b=>clinicalBlock(e,b)).join('');
-  const contents=page.id==='perspective'&&document.resultState==='ready'?`<aside class="kq-folio-toc">${translated(e,L.clinicalInside,'h3')}${f.pages.slice(1).map(item=>`<a href="#clinical-${esc(item.id)}">${translated(e,item.title)}</a>`).join('')}</aside>`:'';
+  const contents=page.id==='perspective'&&document.resultState==='ready'&&(!family||view.columns.some(col=>col.length))?`<aside class="kq-folio-toc">${translated(e,L.clinicalInside,'h3')}${f.pages.slice(1).map(item=>`<a href="#clinical-${esc(item.id)}">${translated(e,item.title)}</a>`).join('')}</aside>`:'';
   const agenda=view.agenda?.length?`<dl class="kq-followup">${view.agenda.map(row=>`<div><dt>${translated(e,row.when)}</dt><dd><p>${translated(e,row.review)} <sup class="kq-citations">${sourceLinks(e,row.sources)}</sup></p>${translated(e,row.question,'p','kq-follow-question')}</dd></div>`).join('')}</dl>`:'';
   return `<section id="clinical-${esc(page.id)}" class="report-narrative-section kq-folio-page" data-section-id="${esc(page.id)}">
    ${translated(e,page.eyebrow,'p','kq-kicker')}${translated(e,page.title,'h2')}
@@ -94,11 +99,11 @@ function clinicalNarrative(document,key){
    ${column(view.aside)}
   </section>`;
  }).join('');
- return `<article class="personal-report-document kq-editorial kq-clinical-folio" data-editorial-document="${key}" data-report-document-version="${esc(document.version)}" data-export-scope="report">
+ return `<article class="personal-report-document kq-editorial kq-clinical-folio" data-editorial-document="${key}" data-report-document-version="${esc(document.version)}" data-export-scope="report" data-report-family="${esc(e.type)}" style="--kq-folio-accent:${accent};--kq-folio-cover:${cover};--kq-folio-paper:${paper};--kq-folio-soft:${soft}">
   <header class="kq-folio-cover">
-   <div class="kq-folio-art">${clinicalCoverArt(f)}</div>
+   <div class="kq-folio-art">${reportFolioArt(e)}</div>
    <div class="kq-folio-mast"><span><img src="/assets/kolequant-report-mark.png" alt="" width="10" height="20"> KOLEQUANT</span>${translated(e,C.report)}</div>
-   ${translated(e,L.clinicalFamily,'p','kq-kicker')}${translated(e,f.headline,'h2','kq-folio-title')}${translated(e,f.deck,'p','kq-folio-deck')}
+   ${translated(e,family?e.title:L.clinicalFamily,'p','kq-kicker')}${translated(e,f.headline,'h2','kq-folio-title')}${translated(e,f.deck,'p','kq-folio-deck')}
    ${result}${f.urgent?clinicalBlock(e,{kind:'safety',text:C.critical}):''}
    <div class="kq-folio-meta">${translated(e,e.sample?C.sample:C.personal)}${e.drawDate?` · <time>${esc(e.drawDate)}</time>`:''}</div>
   </header>${pages}
@@ -146,8 +151,25 @@ export function renderClinicalRecord(document){
 export function renderClinicalMethods(document){
  const e=document.editorial;
  return `<section class="kq-clinical-support">${translated(e,L.clinicalMethodsLabel,'p','kq-kicker')}${translated(e,L.clinicalMethods,'h2')}
-  ${e.methods.map(text=>translated(e,text,'p')).join('')}${translated(e,L.clinicalBloodNote,'p')}${e.folio.footer?translated(e,L.clinicalReviewStatus,'p'):''}
+  ${e.methods.map(text=>translated(e,text,'p')).join('')} ${reportFolioRecord(e).blood.length?translated(e,L.clinicalBloodNote,'p'):''}${e.folio.footer?translated(e,L.clinicalReviewStatus,'p'):''}
   ${translated(e,C.version,'h3')}<p data-no-translate>${esc([document.modelVersion,document.questionnaireVersion,e.knowledgeVersion,e.evidenceVersion,e.layoutVersion].filter(Boolean).join(' · '))}</p>
   ${renderEditorialSources(document)}
  </section>`;
+}
+
+export function renderFamilyRecord(document){
+ const e=document.editorial,{blood,answers,outputs,alerts}=reportFolioRecord(e);
+ const lines=rows=>`<dl>${rows.map(row=>{
+  const detail=clinicalComparison(row);
+  const value=typeof row.value==='boolean'?(row.value?'Yes':'No'):String(row.value);
+  const url=safeUrl(detail.url);
+  return `<div class="answer-row"><dt>${translated(e,row.label)}</dt><dd>${translated(e,value)}${row.unit?' '+translated(e,row.unit):''}
+   ${row.comparison?`<small>${translated(e,detail.label)}${detail.range?' · '+esc(detail.range):''}${url?` · <a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(detail.source||'↗')}</a>`:''}</small>`:''}</dd></div>`;
+ }).join('')}</dl>`;
+ const section=(title,rows)=>rows.length?`<section>${translated(e,title,'h3')}${lines(rows)}</section>`:'';
+ const groups=[...new Set(answers.map(row=>row.group))];
+ return `<section class="kq-clinical-support">${translated(e,C.data,'p','kq-kicker')}${translated(e,L.clinicalRecord,'h2')}
+ ${translated(e,L.clinicalRecordDeck,'p')}<div class="report-record-summary"><span>Recorded result</span>${clinicalReadings(e,e.folio.coverReadings)||translated(e,e.type==='health-profile'?e.folio.coverMessage:'Estimate withheld','p')}</div>
+ ${section(F.familyMeasurements,blood)}${groups.map(group=>section(group,answers.filter(row=>row.group===group))).join('')}
+ ${section('Calculated model outputs',outputs)}${alerts.map(row=>clinicalBlock(e,{kind:'safety',text:String(row.value),sources:[]})).join('')}</section>`;
 }

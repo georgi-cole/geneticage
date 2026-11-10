@@ -273,7 +273,7 @@ function familyFacts(builder, type, inputs, result, review) {
     const entry = inputs[key], measurement = entry && typeof entry === 'object' && !Array.isArray(entry) && Object.hasOwn(entry, 'value');
     builder.fact(type + '.inputs.' + key, measurement ? entry.value : entry, measurement ? entry.unit || null : null, {kind:measurement ? 'entered-measurement' : 'self-reported'});
   }
-  for (const key of ['age', 'ageBand', 'ageRange', 'boundary', 'risk', 'method', 'version', 'issue', 'reason', 'missing']) {
+  for (const key of ['age', 'ageBand', 'ageRange', 'boundary', 'risk', 'region', 'method', 'version', 'issue', 'reason', 'missing']) {
     if (result[key] !== undefined) builder.fact(type + '.result.' + key, result[key], ['age', 'boundary'].includes(key) ? 'years' : key === 'risk' ? '%' : null, {kind:'supplied-result'});
   }
   for (const key of ['egfr', 'egfrCombined', 'estimatedVo2']) if (Number.isFinite(review[key])) builder.fact(type + '.review.' + key, review[key], key === 'estimatedVo2' ? 'mL/kg/min' : 'mL/min/1.73 m²', {kind:'supplied-result'});

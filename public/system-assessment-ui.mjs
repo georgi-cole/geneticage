@@ -1,4 +1,5 @@
-import {renderEditorialSources} from './report-editorial-ui.mjs';
+import {renderEditorialSources,renderFamilyRecord,renderClinicalMethods} from './report-editorial-ui.mjs';
+import {isFamilyFolio} from './report-folio.mjs';
 import {assessSystem, systemAssessment, systemExtras, systemField, systemSteps} from './system-assessments.mjs';
 import {measurementFeedbackMarkup} from './lab-feedback.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
@@ -289,13 +290,15 @@ export function renderSystemReport({type, system, saved, savedReport, sample, ha
   const spec = systemAssessment(type);
   const {inputs, result, review} = system;
   const ready = result.status === 'ready';
-  const document = savedReport?.document || (saved || savedReport ? null : composeReportDocument({state:{assessmentType:type,system}}));
+  const document = savedReport?.document || (saved || savedReport ? null : composeReportDocument({state:{assessmentType:type,system,sample}}));
   const narrative = renderReportDocument(document, {sourceLinks});
+  const folio=isFamilyFolio(document?.editorial);
   const boundLabel = {'at-least':'At least',below:'Below',above:'Above'}[result.ageRange];
   const recordedAge = boundLabel ? `<span>${boundLabel}</span> ${esc(result.boundary)}` : esc(result.age);
   const record = `<div class="report-opening print-only"><h2>Data & methods</h2></div><div class="report-record-summary"><span>Recorded result</span><strong>${ready ? `${recordedAge} <span>years</span>` : 'Estimate withheld'}</strong>${result.method ? `<p>${esc(result.method)}</p>` : ''}</div>`;
   const derived = derivedRows(type, inputs, result, review);
   const readings = derived+measurementRows(type, Object.fromEntries(Object.entries(inputs).filter(([id]) => systemField(type, id).lab || id === 'vo2peak')), review);
+  const actions=sample?'':saved?'<button class="text-btn no-print" data-action="system-copy">Update from this report ↗</button>':result.issue==='fitness-age'?'':extraActions(type,inputs);
   const panels = {
     summary:`${ready ? ageReadout(type, result) : followUp(type, result, saved)}
       ${ready ? `<section class="report-explanation">${narrative ? '' : `<h2>What this tells you</h2><p>${esc(resultCopy[result.version][1])}</p>`}${derived ? `<dl>${derived}</dl>` : ''}</section>` : ''}
@@ -303,12 +306,18 @@ export function renderSystemReport({type, system, saved, savedReport, sample, ha
       ${review.testIncomplete ? '<p class="heart-reading-context">For a measured comparison, check the test type and peak RER on your report.</p>' : ''}
       ${!ready && readings ? `<section class="heart-reading"><h2>Readings to review</h2><dl>${readings}</dl></section>` : ''}
       ${narrative}
-      ${sample ? '' : saved ? '<button class="text-btn no-print" data-action="system-copy">Update from this report ↗</button>' : result.issue === 'fitness-age' ? '' : extraActions(type, inputs)}`,
+      ${actions}`,
     measurements:`${record}<section class="heart-reading"><h2>Your answers and measurements</h2><dl>${derived}${measurementRows(type, inputs, review)}</dl>
       ${saved || sample ? '' : '<button class="text-btn no-print" data-action="system-edit" data-part="age" data-review-all>Review answers ↗</button>'}</section>`,
     methods:`${renderEditorialSources(document)}<section class="report-explanation"><h2>How this comparison works</h2>${systemMethods(type)}${sourceLinks(spec.sources)}</section>
       <section class="report-provenance"><h3>About this report</h3><dl>${row('Model version',result.version || 'Not available')}${document ? row('Report edition',document.version) : ''}</dl></section>`,
   };
+  if(folio){
+    const detail=ready?`<details class="report-answer-group"><summary>Calculation details</summary>${ageReadout(type,result)}${derived?`<dl>${derived}</dl>`:''}</details>`:followUp(type,result,saved);
+    panels.summary=narrative+(detail||actions?`<div class="kq-folio-extra">${detail}${actions}</div>`:'');
+    panels.measurements=renderFamilyRecord(document)+(!saved&&!sample?'<button class="text-btn no-print" data-action="system-edit" data-part="age" data-review-all>Review answers ↗</button>':'');
+    panels.methods=renderClinicalMethods(document);
+  }
   const tabs = [['summary','Your report'], ['measurements','Your data'], ['methods','Method & evidence']];
   const selected = Object.hasOwn(panels, tab) ? tab : 'summary';
   return `<div class="wrap app-screen report-workspace personal-report-workspace system-report">
@@ -316,9 +325,9 @@ export function renderSystemReport({type, system, saved, savedReport, sample, ha
     <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print" data-export="report">${uiIcon('report')}<span>Report PDF</span></button><button class="text-btn" data-action="print" data-export="technical">${uiIcon('report')}<span>Data & methods PDF</span></button></div></header>
     ${sample && hasDraftBackup ? '<button class="text-link no-print" data-action="restore-draft">Return to your assessment</button>' : ''}
     <nav class="report-tabs heart-report-tabs no-print" aria-label="Report sections">${tabs.map(([id, label]) => `<button type="button" data-action="report-tab" data-tab="${id}"${id === selected ? ' aria-current="page"' : ''}>${label}</button>`).join('')}</nav>
-    <article class="report-paper">${tabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" data-export-scope="${id === 'summary' ? 'report' : 'technical'}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}
-      <p class="print-only report-footnote">Educational report. Prepared automatically; not clinically reviewed.</p>
+    <article class="report-paper${folio?' has-clinical-folio':''}">${tabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" data-export-scope="${id === 'summary' ? 'report' : 'technical'}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}
+      ${folio?'':'<p class="print-only report-footnote">Educational report. Prepared automatically; not clinically reviewed.</p>'}
     </article>
-    <p class="report-footnote">Educational estimates · Not clinically reviewed.</p>
+    ${folio?'':'<p class="report-footnote">Educational estimates · Not clinically reviewed.</p>'}
   </div>`;
 }

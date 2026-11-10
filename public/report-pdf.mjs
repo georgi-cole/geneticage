@@ -1,5 +1,5 @@
-import {clinicalPdfDefinition} from './report-clinical-pdf.mjs';
-import {hasClinicalFolio} from './report-clinical.mjs';
+import {folioPdfDefinition} from './report-folio-pdf.mjs';
+import {hasReportFolio} from './report-folio.mjs';
 import {EDITORIAL_COPY as C} from './report-knowledge/copy.mjs';
 import {storedText,signatureSvg} from './report-editorial-ui.mjs';
 
@@ -10,7 +10,7 @@ export function reportPdfDefinition(document,{scope='report',language='en',logo=
  if(e?.version!=='personal-science-v2')throw Error('This edition uses the legacy print export.');
  if(!['report','technical'].includes(scope)||!['en','bg'].includes(language))throw Error('Unsupported export selection.');
  const t=text=>storedText(e,String(text??''),language);
- if(hasClinicalFolio(e))return clinicalPdfDefinition(document,{scope,logo,t,titleFont:'KQSourceSerif'});
+ if(hasReportFolio(e))return folioPdfDefinition(document,{scope,logo,t,titleFont:'KQSourceSerif'});
  const accent=/^#[a-f0-9]{6}$/i.test(e.signature?.accent)?e.signature.accent:'#803E4B';
  const pale=/^#[a-f0-9]{6}$/i.test(e.signature?.pale)?e.signature.pale:'#F2E8E8';
  const display=value=>Array.isArray(value)?value.join('; '):typeof value==='object'?JSON.stringify(value):String(value??'');

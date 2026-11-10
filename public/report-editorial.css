@@ -54,3 +54,15 @@
 .kq-clinical-support{--ink:#252526;--muted:#65645f;--accent:#843d3f;--line:#d7cdc3;--paper:#fbf8f2;--panel:#f4eee5;color:var(--ink)}
 .kq-clinical-support .blood-review-item,.kq-clinical-support .report-answer-group{background:#f4eee5;color:var(--ink)}
 .kq-clinical-support a{color:#843d3f}
+
+.report-paper .kq-clinical-folio[data-report-family]{
+ --kq-accent:var(--kq-folio-accent);--kq-pale:var(--kq-folio-soft);background:var(--kq-folio-paper)
+}
+.kq-clinical-folio[data-report-family] .kq-folio-cover{background:var(--kq-folio-cover)}
+.kq-clinical-folio[data-report-family] :is(.kq-aside,.kq-folio-toc){background:var(--kq-pale);border-left-color:var(--kq-accent)}
+.kq-clinical-folio[data-report-family] :is(.kq-followup dt,.kq-plan-steps li::before){color:var(--kq-accent)}
+.kq-family-cover-result{position:relative;max-width:420px;margin-bottom:28px;background:var(--kq-folio-cover)}
+.kq-family-cover-result .kq-reading-strip{margin-bottom:8px}
+.kq-clinical-folio .kq-method-label{font-size:11px;color:#504c46}
+.kq-clinical-support .answer-row dd small{display:block;margin-top:3px}
+.kq-folio-extra{padding:12px clamp(16px,4vw,42px)}

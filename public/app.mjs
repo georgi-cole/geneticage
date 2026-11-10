@@ -397,7 +397,7 @@ function hasContext(){return state.answers.illness==='Yes'||['conditions','medic
 
 function pagesInfo(){modal('This preview is offline for accounts',`<p>Account creation needs the hosted app. You can use assessments in this preview, and your entries stay on this page.</p><a class="btn" href="${HOSTED_APP_URL}" target="_blank" rel="noopener noreferrer">Open hosted app ↗</a>`);}
 function report(){
- if(isHeartAssessment(state))return state.heart.result?renderHeartReport({heart:state.heart,saved:!!state.saved,savedReport:state.savedReport,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):heartForm();
+ if(isHeartAssessment(state))return state.heart.result?renderHeartReport({heart:state.heart,sample:state.sample,saved:!!state.saved,savedReport:state.savedReport,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):heartForm();
  if(isSystemAssessment(state))return state.system.result?renderSystemReport({type:state.assessmentType,system:state.system,saved:!!state.saved,savedReport:state.savedReport,sample:state.sample,hasDraftBackup:!!draftBackup,pagesPreview:PAGES_PREVIEW,sourceLinks,tab:state.reportTab}):systemForm();
  const reviewing=NATIVE_APP||!!auth.reportReview||!!state.savedReport?.access?.review;state.unlocked=state.savedReport?.full===true||reviewing;
  return renderAssessmentReport({state,clinical:clinical(),full:state.unlocked,reviewing,pagesPreview:PAGES_PREVIEW,sourceLinks,ageComparison,hasDraftBackup:!!draftBackup,consultations:!NATIVE_APP});

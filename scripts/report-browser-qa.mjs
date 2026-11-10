@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createPagesServer} from './serve-pages.mjs';
+import {sampleAnswers} from '../public/model.mjs';
 
 // Real Chromium, the actual built app and synthetic samples only. No production
 // identity, access token, account, network API or health record is used.
@@ -146,10 +147,95 @@ try{
  for(const scope of ['report','technical'])await download(scope);
  const secondFiles=(await readdir(second)).filter(name=>name.endsWith('.pdf'));
  assert.equal(secondFiles.length,2);
+ const families={};
+ const openAssessments=()=>click('.sidebar-nav [data-route="history"]');
+ async function familyExports(type){
+  const selector=`[data-report-family="${type}"]`;
+  await until(`!!document.querySelector(${JSON.stringify(selector)})`,type+' report');
+  const folder=path.join(out,type);
+  await mkdir(folder,{recursive:true});
+  await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:folder,eventsEnabled:true});
+  for(const scope of ['report','technical'])await download(scope);
+  const exported=(await readdir(folder)).filter(file=>file.endsWith('.pdf'));
+  assert.equal(exported.length,2,type);
+  for(const file of exported){
+   const bytes=await readFile(path.join(folder,file));
+   assert.equal(bytes.subarray(0,4).toString(),'%PDF',file);
+   assert.ok(bytes.length>2000,file);
+  }
+  for(const width of [390,1280]){
+   await page('Emulation.setDeviceMetricsOverride',{width,height:width===390?844:1000,deviceScaleFactor:1,mobile:width===390});
+   for(const language of ['en','bg']){
+    if(await evaluate('document.documentElement.lang')!==language)await click('#language-toggle');
+    const layout=await evaluate(`(()=>{const report=document.querySelector(${JSON.stringify(selector)});return {client:report.clientWidth,scroll:report.scrollWidth,art:!!report.querySelector('.kq-folio-art svg'),body:report.innerText};})()`);
+    assert.ok(layout.scroll<=layout.client+2,type+' at '+width+' '+language);
+    assert.ok(layout.art,type+' artwork');
+    assert.match(layout.body,language==='bg'?/не поставя диагноза/:/This report is not a diagnosis/);
+    if(language==='en'){
+     const shot=await page('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+     await writeFile(path.join(folder,`report-${width}.png`),Buffer.from(shot.data,'base64'));
+    }
+   }
+  }
+  await click('#language-toggle');
+  families[type]=exported;
+ }
+
+ // A fictional cardiovascular assessment, entered through the normal forms.
+ await openAssessments();
+ await click('[data-action="start-heart"]');
+ await click('#consent');await click('[data-action="consent-next"]');
+ const heartInputs={age:'50',country:'Germany',sex:'Male',smoking:'Some days',smokingDays30:'8',cigarettes:'3',smokingYears:'12',
+  conditions:'No',treatment:'No',systolic:'140',diastolic:'85',total:'5.5',hdl:'1.3',apob:'0.95',lpa:'<12'};
+ for(let i=0;i<24&&!await evaluate("!!document.querySelector('[data-report-family=heart-vascular]')");i++){
+  await until("!!document.querySelector('#heart-form')",'heart intake');
+  for(const [key,value] of Object.entries(heartInputs)){
+   const input='#heart-'+key;
+   const option=`#heart-form input[name="${key}"][value="${value}"]`;
+   if(await evaluate(`!!document.querySelector(${JSON.stringify(input)})`))await fill(input,value);
+   else if(await evaluate(`!!document.querySelector(${JSON.stringify(option)})`))await click(option);
+  }
+  await click('#heart-form [type=submit]');
+ }
+ await familyExports('heart-vascular');
+
+ for(const type of ['metabolic','kidney','fitness']){
+  await openAssessments();
+  await click(`[data-action="start-system"][data-type="${type}"]`);
+  await click(`[data-action="sample"][data-type="${type}"]`);
+  await familyExports(type);
+ }
+
+ // A fictional lifestyle profile with unrestorative sleep, entered without labs.
+ await openAssessments();
+ await click('.assessment-routes [data-action="start"]');
+ if(await evaluate("!!document.querySelector('#consent')")){
+  await click('#consent');await click('[data-action="consent-next"]');
+ }
+ const profile={...sampleAnswers,moderate:'70',sleep:'6',rested:'Sometimes',alcohol:'No, I have never drunk alcohol regularly'};
+ for(let i=0;i<40&&!await evaluate("!!document.querySelector('.review-screen')");i++){
+  await until("!!document.querySelector('#questions')",'profile intake');
+  const field=await evaluate(`(()=>{const input=document.querySelector('#questions [data-answer]');return input?{id:input.dataset.answer,type:input.type}:null;})()`);
+  const value=field?profile[field.id]:undefined;
+  if(value===undefined){
+   await click('#questions [data-action="skip"]');
+   continue;
+  }
+  if(['checkbox','radio'].includes(field.type)){
+   for(const option of Array.isArray(value)?value:[value]){
+    await click(`#questions input[data-answer="${field.id}"][value="${option}"]`);
+   }
+  }else await fill(`#questions input[data-answer="${field.id}"]`,value);
+  await click('#questions [type=submit]');
+ }
+ await click('.review-screen [data-action="results"]');
+ await click('#main [data-action="report"]');
+ await familyExports('health-profile');
+
  assert.deepEqual(exceptions,[],'The browser must have no uncaught application errors.');
- const summary={browser:(await send('Browser.getVersion')).product,checks,pdfs:files,comparisonCase:secondFiles,uncaughtExceptions:exceptions};
+ const summary={browser:(await send('Browser.getVersion')).product,checks,pdfs:files,comparisonCase:secondFiles,families,uncaughtExceptions:exceptions};
  await writeFile(path.join(out,'checks.json'),JSON.stringify(summary,null,2));
- console.log('Real-browser report review passed: 18 layouts and six downloads across two fictional cases.');
+ console.log('Real-browser report review passed: English/Bulgarian layouts and 16 downloads across six assessments.');
 }finally{
  for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Browser review closed.'));}
  socket?.close();chrome.kill();server.close();

@@ -1,3 +1,5 @@
+import {composeFamilyFolio} from './report-family-folio.mjs';
+import {FAMILY_COPY} from './report-knowledge/family-copy.mjs';
 import {composeClinicalFolio} from './report-clinical.mjs';
 import {CLINICAL_COPY} from './report-knowledge/clinical-copy.mjs';
 import {KNOWLEDGE_MODULES,KNOWLEDGE_VERSION} from './report-knowledge/modules.mjs';
@@ -41,7 +43,7 @@ export function composeEditorialReport(document,state={}){
   if(!Object.hasOwn(translations,text))translations[text]=translateText(text,'bg');return text;
  };
  const phrase=(key,values={})=>{
-  const template=C[key]||CLINICAL_COPY[key];
+  const template=C[key]||CLINICAL_COPY[key]||FAMILY_COPY[key];
   if(!template)throw Error('Unknown editorial copy: '+key);
   const bind=(text,language='en')=>text.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g,(_,key)=>{
    if(values[key]===undefined||values[key]===null)throw Error('Missing editorial fact: '+key);
@@ -234,7 +236,7 @@ export function composeEditorialReport(document,state={}){
    const labels={age:'Age',sex:'Sex used by the model',country:'Country',systolic:'Systolic blood pressure',diastolic:'Diastolic blood pressure',total:'Total cholesterol',hdl:'HDL cholesterol',apob:'ApoB',lpa:'Lp(a)',smoking:'Current smoking',smokingDays30:'Days you smoked in the past 30 days',cigarettes:'Cigarettes on a smoking day',smokingYears:'Years you smoked cigarettes',diagnoses:'Recorded diagnoses',diabetesType:'Type of diabetes',diabetesMedicine:'Diabetes medicine',diabetesDamage:'Reported diabetes complications',bpTreatment:'Blood pressure medicine',diagnosisAge:'Age at diabetes diagnosis',hba1c:'HbA1c',egfr:'eGFR',glucose:'Fasting glucose',height:'Height',weight:'Weight',conditions:'Known conditions',treatment:'Current treatment',cfpwv:'Carotid–femoral pulse-wave velocity',cfpwvMethod:'Pulse-wave measurement method'};
    const object=value&&typeof value==='object'&&!Array.isArray(value)&&'value' in value;
    const comparison=review.fields?.[key]?.comparison;
-   addRow(C.questions,field?.label||labels[key]||key,object?value.value:valueLabel(value),object?value.unit||'':'',{id:`${type}.inputs.${key}`,reference:object?referenceRecord(value):null,comparison:comparison?{value:comparison.status,unit:comparison.unit||'',provenance:copy(comparison)}:null});
+   addRow(object?phrase('familyMeasurements'):phrase('familyInputs'),field?.label||labels[key]||key,object?value.value:valueLabel(value),object?value.unit||'':'',{measurement:!!object,id:`${type}.inputs.${key}`,reference:object?referenceRecord(value):null,comparison:comparison?{value:comparison.status,unit:comparison.unit||'',provenance:copy(comparison)}:null});
   }
  }else{
   for(const s of sections)for(const q of s.questions){
@@ -249,7 +251,7 @@ export function composeEditorialReport(document,state={}){
   for(const [key,label] of [['labAge',C.labage],['labDate',C.draw],['labFasting','Fasted for at least eight hours?'],['labContext','Collection history'],['labReferenceGroup','Reference group'],['labReferenceMode','Reference comparison mode']])if(present(state[key]))addRow('Collection details',label,state[key],key==='labAge'?'years':'',{id:key});
  }
  for(const warning of safety)for(const [index,text] of warning.paragraphs.entries())addRow('Clinical review','Safety alert',text,'',{id:warning.id+'-'+index});
- const outputLabels={age:'Reference age',ageBand:'Study comparison band',ageRange:'Comparison boundary direction',boundary:'Comparison boundary',risk:'Modelled risk',method:'Method',egfr:'eGFR from creatinine',egfrCombined:'eGFR from creatinine and cystatin C',estimatedVo2:'Estimated VO₂peak',value:'Clinical PhenoAge',gap:'Simple difference'};
+ const outputLabels={age:'Reference age',ageBand:'Study comparison band',ageRange:'Comparison boundary direction',boundary:'Comparison boundary',risk:'Modelled risk',region:'Risk region',method:'Method',egfr:'eGFR from creatinine',egfrCombined:'eGFR from creatinine and cystatin C',estimatedVo2:'Estimated VO₂peak',reason:phrase('familyStatus'),missing:phrase('familyMissing'),value:'Clinical PhenoAge',gap:'Simple difference'};
  for(const fact of document.facts){
   if(fact.provenance.kind!=='supplied-result'||!/(?:\.result\.|\.review\.|^clinical\.)/.test(fact.id))continue;
   const key=fact.id.split('.').at(-1);
@@ -266,7 +268,8 @@ export function composeEditorialReport(document,state={}){
  const methods=[phrase(type==='clinical-phenoage'?'methodClinical':type==='health-profile'?'introProfile':'methodFamily'),phrase('snapshot')];
  source(document.sourceIds);
  if(type==='clinical-phenoage')source(['phenoage','validation']);
- const folio=type==='clinical-phenoage'?composeClinicalFolio({chapters,record,derivedFacts,resultState:document.resultState},{phrase,paragraph,freezeText,prevention,glucoseQuiet,highDiagnostic,knownDiabetes,critical,sleepConcern,established,limited,moderate,vigorous,strength,sleepHours,rested:answers.rested,portions:answers.diet,fasting,assay:['standard-crp','hs-crp'].includes(blood.crp?.assay)?blood.crp.assay:null}):null;
+ const folio=type==='clinical-phenoage'?composeClinicalFolio({chapters,record,derivedFacts,resultState:document.resultState},{phrase,paragraph,freezeText,prevention,glucoseQuiet,highDiagnostic,knownDiabetes,critical,sleepConcern,established,limited,moderate,vigorous,strength,sleepHours,rested:answers.rested,portions:answers.diet,fasting,assay:['standard-crp','hs-crp'].includes(blood.crp?.assay)?blood.crp.assay:null}):
+  composeFamilyFolio(document,{state,chapters,record,metric,methods,critical,established,limited,sleepConcern},{phrase,paragraph,freezeText,source});
  const citations=evidenceSnapshot([...used]);
  for(const s of citations){freezeText(s.label);freezeText(s.kind);}
  for(const text of Object.values(C))freezeText(text);
