@@ -27,17 +27,29 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Prepare the pinned PDF engine for integration review
-        run: npm install --ignore-scripts --save-exact pdfmake@0.3.14
+      - name: Prepare isolated validation dependencies
+        run: |
+          mkdir -p /tmp/report-validation
+          cd /tmp/report-validation
+          npm init -y
+          npm install --ignore-scripts --save-exact pdfmake@0.3.14 jsdom@31.0.0 esbuild@0.28.2
+          cp "$(command -v node)" ./node
+      - name: Resolve native PDF sharing dependency without changing the repository
+        run: |
+          mkdir -p /tmp/report-native
+          cp native/package.json native/package-lock.json /tmp/report-native/
+          npm install --prefix /tmp/report-native --ignore-scripts --save-exact @capacitor/filesystem@8.1.5
       - name: Package review inputs (no runtime secrets)
         run: |
           git archive --format=tar --output=/tmp/report-review-source.tar HEAD
-          tar -cf /tmp/report-pdf-dependency.tar package.json package-lock.json node_modules/pdfmake/build node_modules/pdfmake/LICENSE
+          tar -C /tmp -cf /tmp/report-validation.tar report-validation
+          tar -C /tmp -cf /tmp/report-native.tar report-native
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: report-review-source
           path: |
             /tmp/report-review-source.tar
-            /tmp/report-pdf-dependency.tar
+            /tmp/report-validation.tar
+            /tmp/report-native.tar
           retention-days: 1
           if-no-files-found: error
