@@ -18,7 +18,8 @@ test('the narrative, original data and methods have separate destinations and ex
  assert.equal(doc.querySelector('#report-chapter'),null);assert.equal(doc.querySelectorAll('.report-panel:not([hidden])').length,1);
  assert.equal(report.dataset.exportScope,'report');assert.equal(data.dataset.exportScope,'technical');assert.equal(methods.dataset.exportScope,'technical');
  assert.equal(report.querySelector('.report-age-line strong').textContent,String(Math.round(clinical.value)));
- assert.ok(report.querySelector('.personal-report-document'));
+ assert.ok(report.querySelector('.kq-clinical-folio'));
+ assert.equal(report.querySelector('.report-estimate'),null,'The legacy age card must not precede the editorial cover.');
  assert.ok(report.querySelectorAll('.report-narrative-section').length>1);
  assert.equal(report.querySelectorAll('.answer-row,.blood-review-item').length,0,'The interpretation must not contain the input transcript.');
  assert.equal(methods.querySelectorAll('.blood-review-item').length,0);
@@ -32,7 +33,7 @@ test('the narrative, original data and methods have separate destinations and ex
  assert.deepEqual([...doc.querySelectorAll('[data-action="print"]')].map(el=>el.dataset.export),['report','technical']);
  assert.match(data.textContent,/Your value in the reference unit:/);assert.match(data.textContent,/111\.7 mg\/dL/);
  assert.ok(data.querySelector('a[href$="#page=5"]'));
- assert.match(methods.textContent,/Laboratory reference intervals provide separate context; they do not change the formula/);
+ assert.match(methods.textContent,/laboratory reference limits do not add or subtract years from the equation/);
  const counts=profileProgress(state.answers);
  assert.match(data.querySelector('.report-data-status').textContent,new RegExp(`${counts.answered} / ${counts.total}`));
 });

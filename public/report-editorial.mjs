@@ -1,3 +1,5 @@
+import {composeClinicalFolio} from './report-clinical.mjs';
+import {CLINICAL_COPY} from './report-knowledge/clinical-copy.mjs';
 import {KNOWLEDGE_MODULES,KNOWLEDGE_VERSION} from './report-knowledge/modules.mjs';
 import {EDITORIAL_COPY as C} from './report-knowledge/copy.mjs';
 import {EVIDENCE_VERSION,evidenceSnapshot} from './report-knowledge/sources.mjs';
@@ -39,12 +41,13 @@ export function composeEditorialReport(document,state={}){
   if(!Object.hasOwn(translations,text))translations[text]=translateText(text,'bg');return text;
  };
  const phrase=(key,values={})=>{
-  if(!C[key])throw Error('Unknown editorial copy: '+key);
+  const template=C[key]||CLINICAL_COPY[key];
+  if(!template)throw Error('Unknown editorial copy: '+key);
   const bind=(text,language='en')=>text.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g,(_,key)=>{
    if(values[key]===undefined||values[key]===null)throw Error('Missing editorial fact: '+key);
    return language==='bg'&&['label','fasting','rested','assay','portions'].includes(key)?translateText(String(values[key]),'bg'):String(values[key]);
   });
-  const en=bind(C[key]);translations[en]=bind(translateText(C[key],'bg'),'bg');return en;
+  const en=bind(template);translations[en]=bind(translateText(template,'bg'),'bg');return en;
  };
  const source=ids=>{for(const id of ids||[])used.add(id);return ids||[];};
  const paragraph=(id,text,sources=[],kind='context',title='')=>({id,title:freezeText(title),text:freezeText(text),sources:source(sources),kind});
@@ -246,7 +249,10 @@ export function composeEditorialReport(document,state={}){
   const key=fact.id.split('.').at(-1);
   if(outputLabels[key])addRow('Calculated model outputs',outputLabels[key],fact.value,fact.unit||'',{id:fact.id});
  }
- for(const row of record){freezeText(typeof row.value==='boolean'?(row.value?'Yes':'No'):valueLabel(row.value));if(row.assay)freezeText(row.assay);}
+ for(const row of record){
+  freezeText(typeof row.value==='boolean'?(row.value?'Yes':'No'):valueLabel(row.value));
+  for(const text of [row.assay,row.comparison?.provenance?.label,row.comparison?.provenance?.reason])if(text)freezeText(text);
+ }
  for(const fact of derivedFacts){freezeText(fact.label);freezeText(fact.formula);}
  const facts=new Map(document.facts.map(f=>[f.id,f.value]));
  const age=ready?(type==='clinical-phenoage'?facts.get('clinical.value'):result.age):null;
@@ -254,12 +260,13 @@ export function composeEditorialReport(document,state={}){
  const methods=[phrase(type==='clinical-phenoage'?'methodClinical':type==='health-profile'?'introProfile':'methodFamily'),phrase('snapshot')];
  source(document.sourceIds);
  if(type==='clinical-phenoage')source(['phenoage','validation']);
+ const folio=type==='clinical-phenoage'?composeClinicalFolio({chapters,record,metric,resultState:document.resultState},{phrase,paragraph,freezeText,prevention,highDiagnostic,knownDiabetes,critical,sleepConcern,established,limited,moderate,vigorous,strength,sleepHours,fasting,assay:['standard-crp','hs-crp'].includes(blood.crp?.assay)?blood.crp.assay:null}):null;
  const citations=evidenceSnapshot([...used]);
  for(const s of citations){freezeText(s.label);freezeText(s.kind);}
  for(const text of Object.values(C))freezeText(text);
  const order=['perspective','glucose','metabolic','prevention','pressure','lipids','fitness','starting-plan','movement','sleep','immune','crp','albumin','kidney','redcells','alp','nutrition','foundations','tobacco','alcohol','stress','follow-up'];
  chapters.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
- const editorial={version:EDITORIAL_VERSION,knowledgeVersion:KNOWLEDGE_VERSION,evidenceVersion:EVIDENCE_VERSION,layoutVersion:REPORT_LAYOUT_VERSION,reviewStatus:'clinical-review-required',type,signature:copy(signature),title:phrase(signature.key+'-title'),deck:phrase(signature.key+'-deck'),date:document.generatedAt||state.savedReport?.generatedAt||state.labDate||null,drawDate:state.labDate||null,sample:state.sample===true,resultState:document.resultState,metric,chapters,record,derivedFacts,methods,citations,decisions,translations};
+ const editorial={version:EDITORIAL_VERSION,knowledgeVersion:KNOWLEDGE_VERSION,evidenceVersion:EVIDENCE_VERSION,layoutVersion:folio?.version||REPORT_LAYOUT_VERSION,reviewStatus:'clinical-review-required',type,signature:copy(signature),title:phrase(signature.key+'-title'),deck:phrase(signature.key+'-deck'),date:document.generatedAt||state.savedReport?.generatedAt||state.labDate||null,drawDate:state.labDate||null,sample:state.sample===true,resultState:document.resultState,metric,chapters,record,derivedFacts,methods,citations,decisions,translations,...(folio?{folio}:{})};
  // Never retain implementation-only normalized glucose as a personal lab result.
  if(glucoseMg!==null&&!Number.isFinite(glucoseMg))throw Error('Non-finite normalized glucose.');
  return {...document,editorial};

@@ -77,7 +77,7 @@ function baseFacts(builder, state, clinical) {
     const comparison = reviewLabReference(lab.id, entry, state);
     comparisons[lab.id] = comparison;
     builder.fact(id + '.reference', comparison.status, comparison.unit || null, {
-      kind:'reference-comparison', inputFactId:id, sourceKind:comparison.sourceKind || null,
+      kind:'reference-comparison', inputFactId:id, label:comparison.label, reason:comparison.reason || null, threshold:comparison.threshold===true, sourceKind:comparison.sourceKind || null,
       sourceVersion:comparison.sourceVersion || null, sourceUrl:comparison.sourceUrl || null,
       comparisonValue:Number.isFinite(comparison.comparisonValue) ? comparison.comparisonValue : null,
       low:comparison.low ?? null, high:comparison.high ?? null,

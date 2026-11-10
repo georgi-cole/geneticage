@@ -5,3 +5,52 @@
 .kq-chapters{padding:0 38px}.kq-editorial .kq-chapter{margin:0;padding:40px 0;border-top:1px solid #dadbd4}.kq-chapter-heading{display:flex;gap:18px;align-items:flex-start;margin-bottom:24px}.kq-folio{color:var(--kq-accent);font-size:12px;letter-spacing:.08em;padding-top:9px;min-width:22px}.kq-editorial .kq-deck{font-family:Georgia,serif;font-size:18px;line-height:1.5;color:#656563!important}.kq-article-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:27px;row-gap:12px}.kq-block{break-inside:avoid;min-width:0}.kq-block p{margin-bottom:8px}.kq-context,.kq-recorded,.kq-derived,.kq-safety{grid-column:1/-1}.kq-derived,.kq-trial,.kq-treatment{background:var(--kq-pale);padding:18px;border-left:2px solid var(--kq-accent);margin:4px 0 14px}.kq-safety{background:#fff0e4;padding:22px;border:2px solid #893c1f}.kq-safety p{color:#5c2717!important}.kq-citations{font-size:10px;line-height:1.5;margin:8px 0 18px}.kq-citations a{margin-right:4px;text-decoration:none}.kq-editorial .kq-context p{font-size:16px}.kq-editorial .kq-brand-footer{display:flex;align-items:center;gap:10px;border-top:1px solid #d5d7d2;padding:22px 38px;background:#f4f3ee;font-size:12px}.kq-brand-footer img{object-fit:contain}.kq-brand-footer>span{margin-left:auto;color:#686b69;font-size:10px}.kq-evidence h2{font-size:24px}.kq-evidence ol{padding-left:25px}.kq-evidence li{margin:16px 0;line-height:1.6}.kq-evidence small{display:block;color:var(--muted)}.kq-pdf-status{display:block;max-width:100%;margin:8px 0;font-size:13px;line-height:1.5}.kq-pdf-status[data-error]{color:#b55b3f}
 @media(max-width:640px){.kq-editorial{margin:20px -12px 0}.kq-editorial-cover{grid-template-columns:1fr;padding:30px 23px 20px;gap:10px}.kq-editorial-cover h2{font-size:40px;max-width:95%}.kq-signature{position:absolute;width:150px;right:-30px;top:0;opacity:.16;pointer-events:none}.kq-cover-copy{position:relative;z-index:1}.kq-chapters{padding:0 23px}.kq-article-grid{display:block}.kq-editorial h2{font-size:27px}.kq-editorial-cover h2{font-size:40px}.kq-editorial .kq-chapter{padding:30px 0}.kq-chapter-heading{gap:10px}.kq-editorial p{font-size:15px!important;line-height:1.8}.kq-editorial .kq-cover-note{font-size:10px!important}.kq-editorial .kq-brand-footer{padding:18px 23px;flex-wrap:wrap}.kq-brand-footer>span{width:100%;margin-left:30px}}
 @media print{.kq-editorial{margin:0;border-radius:0}.kq-editorial-cover{break-inside:avoid}.kq-chapter-heading{break-after:avoid}.kq-editorial .kq-chapter{break-inside:auto}.kq-article-grid{display:block;columns:2;column-gap:7mm}.kq-context,.kq-recorded,.kq-derived,.kq-safety{column-span:all}.kq-editorial p{font-size:10pt!important}.kq-brand-footer{break-inside:avoid}.kq-pdf-status{display:none!important}}
+
+/* Clinical folio uses the publisher's document palette in every app theme. */
+.report-workspace .report-paper.has-clinical-folio:has(.report-panel[data-report-panel="summary"]:not([hidden])){padding:0;border-radius:4px;background:#fbf8f2}
+.report-paper .kq-clinical-folio{--kq-accent:#843d3f;--kq-pale:#eee7df;--folio-line:#d7cdc3;display:block;margin:0;background:#fbf8f2}
+.kq-folio-cover{position:relative;isolation:isolate;overflow:hidden;background:#f4eee5;padding:32px 44px 42px;color:#252526}
+.kq-folio-cover .kq-folio-mast{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:9px;margin-bottom:37px;border-top:3px solid var(--kq-accent);font-size:10px;letter-spacing:.13em;color:#65544d}
+.kq-folio-mast>span:first-child{display:flex;align-items:center;gap:6px;font-weight:700;color:#252526}
+.kq-clinical-folio .kq-folio-title{position:relative;max-width:78%;font-size:clamp(36px,6vw,59px);font-weight:400;letter-spacing:-.04em;line-height:1.01;margin:12px 0 18px}
+.kq-clinical-folio .kq-folio-deck{position:relative;max-width:64%;font-size:17px;line-height:1.42;margin-bottom:32px}
+.kq-folio-art{position:absolute;z-index:-1;width:min(55%,380px);right:0;top:27%;pointer-events:none}.kq-folio-art svg{width:100%;display:block}
+.kq-cover-metric{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;max-width:370px;background:#f4eee5e8;border-block:1px solid #bfa99c;padding:15px 0;margin:0 0 38px}
+.kq-cover-metric .report-age-line{display:block;font-size:12px;margin:3px 0 6px;color:#843d3f}
+.kq-cover-metric .report-age-line strong{font-family:Georgia,serif;font-size:54px;font-weight:400;line-height:1;letter-spacing:-.04em}
+.kq-cover-metric span,.kq-cover-metric dt,.kq-cover-metric small{font-size:11px;color:#665650}
+.kq-cover-metric dl{margin:0}.kq-cover-metric dd{font-family:Georgia,serif;font-size:18px;margin:0 0 6px}
+.kq-folio-meta{font-size:10px;color:#665650}.kq-folio-page{margin:0;padding:30px 44px;border-top:1px solid var(--folio-line);scroll-margin:10px}
+.kq-clinical-folio .kq-folio-page h2{font-size:clamp(28px,4vw,40px);line-height:1.08;margin:0 0 16px}
+.kq-reading-strip{display:flex;margin:12px 0 20px;padding:11px 0;border-block:1px solid var(--folio-line);gap:12px}
+.kq-reading-strip>div{flex:1;border-right:1px solid var(--folio-line);padding-right:8px;min-width:0}.kq-reading-strip>div:last-child{border:0;padding:0}
+.kq-reading-strip dt{font-size:11px;color:#65544d}.kq-reading-strip dd{margin:3px 0 0;font-size:11px;color:#65544d}.kq-reading-strip strong{display:block;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#252526;overflow-wrap:anywhere}
+.kq-folio-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:12px}.kq-folio-columns>div:only-child{grid-column:1/-1}
+.kq-clinical-folio .kq-block h3{font-size:15px;line-height:1.3;margin:0 0 5px}
+.kq-clinical-folio .kq-block p{font-size:14px;line-height:1.58;margin:0 0 13px}
+.kq-clinical-folio .kq-citations{line-height:0;white-space:normal}
+.kq-clinical-folio .kq-aside,.kq-folio-toc{background:#eee7df;border-left:2px solid #843d3f;padding:15px 16px;margin:10px 0}
+.kq-folio-toc a{display:block;font-size:13px;line-height:1.4;padding:5px 0}
+.kq-plan-steps{margin:0;padding:0;list-style:none;counter-reset:plan-step}.kq-plan-steps li{display:grid;grid-template-columns:26px 1fr;gap:12px;border-top:1px solid var(--folio-line);padding:10px 0;counter-increment:plan-step}.kq-plan-steps li::before{content:counter(plan-step,decimal-leading-zero);font:24px Georgia,serif;color:#843d3f}
+.kq-followup{margin:0}.kq-followup>div{display:grid;grid-template-columns:135px 1fr;gap:16px;padding:12px 0;border-top:1px solid var(--folio-line)}.kq-followup dt{font-weight:700;color:#843d3f}.kq-followup dd{margin:0}.kq-followup .kq-follow-question{font-weight:600;margin:4px 0 0}
+.kq-clinical-support{display:grid;gap:12px;min-width:0}.kq-clinical-support h2{font-family:Georgia,serif}.kq-clinical-support .blood-marker-value{overflow-wrap:anywhere}.kq-clinical-support .blood-marker-value>span{display:inline}
+@media(max-width:640px){
+ .kq-folio-cover,.kq-folio-page{padding:23px 20px}.kq-folio-cover .kq-folio-mast{margin-bottom:24px;font-size:9px}
+ .kq-clinical-folio .kq-folio-title{max-width:100%}.kq-clinical-folio .kq-folio-deck{max-width:86%;font-size:15px!important;margin-bottom:21px}
+ .kq-folio-art{width:60%;right:-12%;top:33%;opacity:.65}.kq-cover-metric{margin-bottom:25px}.kq-cover-metric .report-age-line strong{font-size:44px}
+ .kq-folio-columns{grid-template-columns:1fr;gap:0}.kq-followup>div{grid-template-columns:1fr;gap:5px}.kq-reading-strip{gap:7px}.kq-reading-strip dt,.kq-reading-strip dd{font-size:10px}
+}
+
+@font-face{font-family:KQ Source Serif;src:url('./assets/fonts/source-serif-4-regular.ttf') format('truetype');font-display:swap}
+.kq-clinical-folio :is(h2,.report-age-line strong,.kq-cover-metric dd,.kq-reading-strip strong),.kq-clinical-support h2{font-family:KQ Source Serif,Georgia,serif}
+.report-paper .kq-clinical-folio .report-age-line strong,.report-paper .kq-clinical-folio .report-age-line span{color:#843d3f}
+.kq-clinical-folio .kq-kicker{font-size:10px!important}
+.clinical-report-workspace .report-heading .eyebrow{display:none}
+@media(max-width:640px){
+ .clinical-report-workspace .report-heading h1{font-size:19px}
+ .clinical-report-workspace .report-heading .report-tools{margin:0}
+}
+.report-workspace .report-paper.has-clinical-folio{background:#fbf8f2;color:#252526}
+.kq-clinical-support{--ink:#252526;--muted:#65645f;--accent:#843d3f;--line:#d7cdc3;--paper:#fbf8f2;--panel:#f4eee5;color:var(--ink)}
+.kq-clinical-support .blood-review-item,.kq-clinical-support .report-answer-group{background:#f4eee5;color:var(--ink)}
+.kq-clinical-support a{color:#843d3f}

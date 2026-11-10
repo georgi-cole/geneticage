@@ -37,6 +37,10 @@ test('large bilingual reports retain the exact authenticated encryption format',
 test('the final evidence entry cannot create a blank trailing PDF page',()=>{
  for(const fixture of reportFixtures())for(const scope of ['report','technical']){
   const definition=reportPdfDefinition(fixture.document,{scope});
-  assert.equal(definition.content.at(-1).margin[3],0);
+  if(fixture.document.editorial.folio){
+   const last=definition.content.at(-1);
+   assert.ok(last.columns.some(column=>column.stack.length));
+   assert.equal(last.pageBreak,undefined);
+  }else assert.equal(definition.content.at(-1).margin[3],0);
  }
 });

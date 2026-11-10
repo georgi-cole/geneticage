@@ -9,7 +9,7 @@ import {createPagesServer} from './serve-pages.mjs';
 // Real Chromium, the actual built app and synthetic samples only. No production
 // identity, access token, account, network API or health record is used.
 const root=fileURLToPath(new URL('../',import.meta.url));
-const out=path.join(root,'report-qa-output','browser');
+const out=process.env.REPORT_BROWSER_OUTPUT||path.join(root,'report-qa-output','browser');
 await mkdir(out,{recursive:true});
 let binary;
 for(const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chromium-browser'].filter(Boolean)){
@@ -58,6 +58,20 @@ try{
   await until(`!!document.querySelector(${JSON.stringify(selector)})`,selector);
   await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);await pause(150);
  };
+ const fill=async(selector,value)=>{
+  await until(`!!document.querySelector(${JSON.stringify(selector)})`,selector);
+  await evaluate(`(()=>{const input=document.querySelector(${JSON.stringify(selector)});input.value=${JSON.stringify(value)};input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+ };
+ async function download(scope){
+  const before=downloads.length;
+  await click(`[data-action="print"][data-export="${scope}"]`);
+  const end=Date.now()+60000;
+  while(downloads.length===before&&Date.now()<end){
+   const failed=await evaluate("document.querySelector('.kq-pdf-status')?.hasAttribute('data-error')");
+   assert.ok(!failed,'The real PDF export reported an error.');await pause(150);
+  }
+  assert.equal(downloads.length,before+1,'A finished PDF must actually reach the download directory.');
+ }
  await page('Page.navigate',{url});
  await until("document.querySelector('[data-route=reports]') && document.documentElement.dataset.launch !== 'pending'",'App launch');
  await pause(4500);
@@ -85,16 +99,7 @@ try{
  }
  for(const language of ['en','bg']){
   if(await evaluate('document.documentElement.lang')!==language)await click('#language-toggle');
-  for(const scope of ['report','technical']){
-   const before=downloads.length;
-   await click(`[data-action="print"][data-export="${scope}"]`);
-   const end=Date.now()+60000;
-   while(downloads.length===before&&Date.now()<end){
-    const failed=await evaluate("document.querySelector('.kq-pdf-status')?.hasAttribute('data-error')");
-    assert.ok(!failed,'The real PDF export reported an error.');await pause(150);
-   }
-   assert.equal(downloads.length,before+1,'A finished PDF must actually reach the download directory.');
-  }
+  for(const scope of ['report','technical'])await download(scope);
  }
  const files=(await readdir(out)).filter(name=>name.endsWith('.pdf'));
  assert.equal(files.length,4);
@@ -103,10 +108,48 @@ try{
   await click(`[data-action="report-tab"][data-tab="${tab}"]`);
   assert.equal(await evaluate(`document.querySelector('.report-panel:not([hidden])').dataset.reportPanel`),tab);
  }
+ // Edit the fictional sample through the same forms a reader uses.
+ if(await evaluate('document.documentElement.lang')!=='en')await click('#language-toggle');
+ await click('[data-action="report-tab"][data-tab="data"]');
+ await click('.kq-clinical-support [data-action="review"]');
+ await click('[data-action="edit-section"][data-index="3"]');
+ await fill('#moderate','180');await click('#questions [type=submit]');
+ await until("!!document.querySelector('#vigorous')",'vigorous activity');await click('#questions [type=submit]');
+ await click('[data-answer="strength"][value="2"]');await click('#questions [type=submit]');
+ await until("!!document.querySelector('[data-answer=limitations]')",'activity limits');await click('#questions [type=submit]');
+ await click('[data-action="edit-section"][data-index="4"]');
+ await fill('#sleep','8');await click('#questions [type=submit]');
+ await click('[data-answer="rested"][value="Usually"]');await click('#questions [type=submit]');
+ await until("!!document.querySelector('[data-answer=disrupted]')",'sleep disruption');await click('#questions [type=submit]');
+ await until("!!document.querySelector('[data-answer=stress]')",'stress');await click('#questions [type=submit]');
+ await until("!!document.querySelector('.review-screen')",'return to questionnaire review');
+ await click('[data-action="back-screen"]');
+ await click('[data-action="report-tab"][data-tab="data"]');
+ await click('.kq-clinical-support [data-action="labs"]');
+ await click('#labs-form [type=submit]');
+ await fill('[data-lab="glucose"]','4.9');
+ for(const marker of ['glucose','crp','wbc']){
+  await until(`!!document.querySelector('[data-lab="${marker}"]')`,marker);
+  await click('#labs-form [type=submit]');
+ }
+ await until("!!document.querySelector('#lab-valid')",'collection confirmation');
+ await click('#labs-form [type=submit]');
+ await click('[data-action="report-tab"][data-tab="summary"]');
+ const changed=await evaluate("document.querySelector('.kq-clinical-folio').innerText");
+ assert.match(changed,/Build on the routine you already have/);
+ assert.match(changed,/4\.9/);
+ assert.match(changed,/180 moderate minutes/);
+ assert.doesNotMatch(changed,/Diabetes Prevention Program|Weeks 1–2/);
+ const second=path.join(out,'established-routine');
+ await mkdir(second,{recursive:true});
+ await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:second,eventsEnabled:true});
+ for(const scope of ['report','technical'])await download(scope);
+ const secondFiles=(await readdir(second)).filter(name=>name.endsWith('.pdf'));
+ assert.equal(secondFiles.length,2);
  assert.deepEqual(exceptions,[],'The browser must have no uncaught application errors.');
- const summary={browser:(await send('Browser.getVersion')).product,checks,pdfs:files,uncaughtExceptions:exceptions};
+ const summary={browser:(await send('Browser.getVersion')).product,checks,pdfs:files,comparisonCase:secondFiles,uncaughtExceptions:exceptions};
  await writeFile(path.join(out,'checks.json'),JSON.stringify(summary,null,2));
- console.log('Real-browser report review passed: 18 layouts and four downloaded PDFs.');
+ console.log('Real-browser report review passed: 18 layouts and six downloads across two fictional cases.');
 }finally{
  for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Browser review closed.'));}
  socket?.close();chrome.kill();server.close();

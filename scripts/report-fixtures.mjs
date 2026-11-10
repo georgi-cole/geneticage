@@ -4,7 +4,7 @@ import {sampleAnswers,sampleLabs,assessClinical} from '../public/model.mjs';
 import {assessSystem,systemSampleInputs} from '../public/system-assessments.mjs';
 import {assessHeartVascular} from '../public/heart-vascular.mjs';
 export function reportFixtures(){
- const clinicalState={...freshAssessment(),answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labDate:'2026-11-01',labFasting:'Yes',labContext:true,labSubmitted:true,sample:true};
+ const clinicalState={...freshAssessment(),answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labReferenceGroup:'male',labDate:'2026-11-01',labFasting:'Yes',labContext:true,labSubmitted:true,sample:true};
  const clinical=state=>assessClinical({age:Number(state.labAge),lab:state.lab,contextConfirmed:state.labContext,fasting:state.labFasting});
  const critical=structuredClone(clinicalState);critical.lab.glucose={value:'400',unit:'mg/dL'};
  const sparse={...freshAssessment(),answers:{age:'45'},sample:true};

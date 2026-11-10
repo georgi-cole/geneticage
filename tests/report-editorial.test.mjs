@@ -156,3 +156,23 @@ test('native PDF delivery uses a private cache, cleans old owned files and handl
  await assert.rejects(()=>deliver(new Blob(['invalid']),'GeneticAge-report-en.pdf'),/Invalid PDF/);
  await assert.rejects(()=>deliver(new Blob(['%PDF-fixture']),'../../private.pdf'),/filename/);
 });
+
+test('clinical editions change the lead, sections and agenda with the recorded inputs',()=>{
+ const reference=sample.document;
+ const second=structuredClone(sample.state);
+ second.lab.glucose.value='4.9';
+ Object.assign(second.answers,{moderate:'180',strength:'2',sleep:'8',rested:'Usually'});
+ const changed=recompose(second);
+ assert.match(reference.editorial.folio.pages[0].title,/clarifying your glucose/);
+ assert.equal(reference.editorial.record.find(row=>row.id==='lab.crp').assay,null);
+ assert.equal(reference.editorial.folio.pages.find(page=>page.id==='follow-up').agenda[0].when,'Initial discussion');
+ assert.match(changed.editorial.folio.pages[0].title,/routine you already have/);
+ assert.equal(changed.editorial.folio.pages.some(page=>page.id==='prevention'),false);
+ assert.equal(chapter(changed,'starting-plan').blocks.some(block=>block.id==='baseline-step'),false);
+ assert.equal(changed.editorial.folio.pages.find(page=>page.id==='follow-up').agenda.some(row=>row.when==='About two weeks'),false);
+ const legacy=structuredClone(reference);
+ delete legacy.editorial.folio;
+ legacy.editorial.layoutVersion='editorial-2026-11-10';
+ assert.doesNotMatch(renderEditorialDocument(legacy),/kq-clinical-folio/);
+ assert.doesNotMatch(JSON.stringify(reportPdfDefinition(legacy)),/Your blood results, in perspective/);
+});

@@ -962,7 +962,6 @@ function loadSample(type,opener,view='results'){
   return;
  }
  state={...freshAssessment(),resultTab:'summary',answers:structuredClone(sampleAnswers),lab:sampleLabs(),labAge:'45',labReferenceGroup:'male',labFasting:'Yes',labDate:'2026-11-01',labValid:true,labContext:true,sample:true,labSubmitted:true,consent:true,assessment:true,profileCompleted:true};
- state.lab.crp.assay='standard-crp';
  goto(view);
 }
 document.addEventListener('click',async e=>{
@@ -1170,8 +1169,12 @@ document.addEventListener('click',async e=>{
   rememberReturn(b);state.profileCompleted=true;dirty();state.labSubmitted=false;state.assessment=true;goto('results');return;
  }
  if(act==='labs'){
-  if(state.view==='report')beginReportEdit(b,'0');
-  else rememberReturn(b);
+  if(state.view==='report'){
+   beginReportEdit(b,'0');
+   resumeAssessment('labs');
+   return;
+  }
+  rememberReturn(b);
   beginAssessment('labs');return;
  }
  if(act==='sample-labs'){loadSample(undefined,b,'labs');return;}
