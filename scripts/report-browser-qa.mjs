@@ -138,7 +138,7 @@ try{
  const changed=await evaluate("document.querySelector('.kq-clinical-folio').innerText");
  assert.match(changed,/Build on the routine you already have/);
  assert.match(changed,/4\.9/);
- assert.match(changed,/180 moderate minutes/);
+ assert.match(changed,/Moderate activity\s+180\s+minutes \/ week/);
  assert.doesNotMatch(changed,/Diabetes Prevention Program|Weeks 1–2/);
  const second=path.join(out,'established-routine');
  await mkdir(second,{recursive:true});

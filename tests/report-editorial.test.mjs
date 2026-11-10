@@ -29,10 +29,10 @@ test('all nine blood markers receive connected education, not a three-priority c
  const d=sample.document;
  for(const id of ['glucose','prevention','immune','crp','albumin','kidney','redcells','alp','sleep','movement','starting-plan','follow-up'])assert.ok(chapter(d,id),id);
  assert.match(prose(d),/0.32 mmol\/L after six months/);
- assert.match(prose(d),/58% relative to placebo/);
+ assert.match(prose(d),/58% lower/);
  assert.match(prose(d),/3–6 months/);
  assert.equal(d.editorial.derivedFacts.find(f=>f.id==='derived.absolute-lymphocytes').value,1.9);
- assert.match(prose(d),/not a separately measured laboratory result/);
+ assert.match(prose(d),/If the lab printed an absolute count/);
  assert.match(prose(d),/90 moderate minutes/);
  assert.match(prose(d),/about 120 minutes/);
  assert.match(prose(d),/6.5 hours/);
@@ -103,7 +103,7 @@ test('frozen translations, sources and original values survive JSON roundtrip',(
 test('PDF scopes are definitions of the same snapshot without copying raw answers into the narrative',()=>{
  const doc=sample.document;
  const full=JSON.stringify(reportPdfDefinition(doc));const technical=JSON.stringify(reportPdfDefinition(doc,{scope:'technical'}));
- assert.match(full,/A signal worth understanding/);assert.match(full,/estimated absolute lymphocyte count of 1.9/);
+ assert.match(full,/What a fasting glucose reading can tell you/);assert.match(full,/estimated absolute lymphocyte count of 1.9/);
  assert.doesNotMatch(full,/Which country do you live in\?/);
  assert.match(technical,/Which country do you live in\?/);assert.match(technical,/Bulgaria/);
  assert.match(technical,/normalized WBC/);assert.match(technical,/lab.lymphocytes/);
@@ -175,4 +175,22 @@ test('clinical editions change the lead, sections and agenda with the recorded i
  legacy.editorial.layoutVersion='editorial-2026-11-10';
  assert.doesNotMatch(renderEditorialDocument(legacy),/kq-clinical-folio/);
  assert.doesNotMatch(JSON.stringify(reportPdfDefinition(legacy)),/Your blood results, in perspective/);
+});
+
+test('the current clinical folio uses one moon and the clinician note in both exports',()=>{
+ const doc=sample.document;
+ const html=renderEditorialDocument(doc);
+ assert.match(html,/<circle cx="204" cy="207" r="149"/);
+ assert.doesNotMatch(html,/kq-cell-b|Automatically prepared/);
+ for(const scope of ['report','technical']){
+  const definition=reportPdfDefinition(doc,{scope});
+  const footer=JSON.stringify(definition.footer(1));
+  assert.match(footer,/This report is not a diagnosis. Please always discuss any health-related matters with your clinician/);
+  assert.doesNotMatch(footer,/Automatically prepared/);
+ }
+ const old=structuredClone(doc);
+ old.editorial.folio.version='clinical-folio-v1';
+ delete old.editorial.folio.footer;
+ assert.match(renderEditorialDocument(old),/kq-cell-b/);
+ assert.match(JSON.stringify(reportPdfDefinition(old).footer(1)),/Automatically prepared/);
 });

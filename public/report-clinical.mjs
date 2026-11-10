@@ -1,41 +1,40 @@
+import {refineClinicalChapters} from './report-clinical-voice.mjs';
 import {compareLabReference} from './lab-review.mjs';
 import {CLINICAL_COPY as L} from './report-knowledge/clinical-copy.mjs';
 import {EDITORIAL_COPY as C} from './report-knowledge/copy.mjs';
 
-export const CLINICAL_FOLIO_VERSION='clinical-folio-v1';
+export const CLINICAL_FOLIO_VERSION='clinical-folio-v2';
 
-export function composeClinicalFolio({chapters,record,resultState},{phrase,paragraph,freezeText,prevention,highDiagnostic,knownDiabetes,critical,sleepConcern,established,limited,moderate,vigorous,strength,sleepHours,fasting,assay}){
+export function hasClinicalFolio(editorial){
+ return [CLINICAL_FOLIO_VERSION,'clinical-folio-v1'].includes(editorial?.folio?.version);
+}
+
+export function composeClinicalFolio({chapters,record,derivedFacts,resultState},{phrase,paragraph,freezeText,prevention,glucoseQuiet,highDiagnostic,knownDiabetes,critical,sleepConcern,established,limited,moderate,vigorous,strength,sleepHours,rested,portions,fasting,assay}){
  const chapter=id=>chapters.find(item=>item.id===id);
  const opening=chapter('perspective');
  const glucose=chapter('glucose');
  const interpretation=glucose?.blocks.find(block=>block.id==='glucose-interpretation');
  const plan=chapter('starting-plan');
- const routine=chapter('movement');
  const scheduled=plan?.blocks.some(block=>block.id==='baseline-step');
- const studyBoundary=chapter('prevention')?.blocks.find(block=>block.id==='purpose');
- if(studyBoundary)studyBoundary.text=phrase('clinicalStudyBoundary');
+ refineClinicalChapters(chapter,{phrase,paragraph,record,derivedFacts,fasting,assay,glucoseQuiet,sleepConcern,rested,moderate,vigorous,strength,portions,limited});
  const ready=resultState==='ready';
+ const fastingWithin=fasting==='Yes'&&record.find(row=>row.id==='lab.glucose')?.comparison?.value==='within';
  const glucoseFirst=ready&&(prevention||highDiagnostic||knownDiabetes&&!!interpretation);
- const lead=critical?'clinicalLeadSafety':!ready?'clinicalLeadReview':prevention?'clinicalLeadGlucose':highDiagnostic?'clinicalLeadConfirmation':glucoseFirst?'clinicalLeadCare':sleepConcern?'clinicalLeadSleep':established?'clinicalLeadMaintain':'clinicalLeadContext';
+ const lead=critical?'clinicalLeadSafety':!ready?'clinicalLeadReview':prevention?'clinicalLeadGlucose':highDiagnostic?'clinicalLeadConfirmation':glucoseFirst?'clinicalLeadCare':sleepConcern?'clinicalLeadSleep':established&&!limited&&fastingWithin&&glucoseQuiet?'clinicalLeadMaintain':'clinicalLeadContext';
  opening.title=phrase(lead);
  if(ready&&!critical){
-  const reading=record.find(row=>row.id==='lab.glucose');
   const meaning=opening.blocks[0];
-  const leadBlock=prevention?paragraph('lead',phrase('clinicalLeadGlucoseText',{value:reading.value,unit:reading.unit}),interpretation.sources):
-   glucoseFirst?interpretation:paragraph('lead',phrase(sleepConcern?'clinicalLeadSleepText':established?'clinicalLeadMaintainText':'clinicalLeadContextText'));
+  const leadBlock=prevention?paragraph('lead',phrase('clinicalLeadGlucoseText'),interpretation.sources):
+   glucoseFirst?interpretation:paragraph('lead',phrase(sleepConcern?'clinicalLeadSleepText':established&&!limited&&fastingWithin&&glucoseQuiet?'clinicalLeadMaintainText':'clinicalLeadContextText'));
   opening.blocks=[leadBlock];
-  const activity=moderate!==null&&vigorous!==null&&strength!==null?[paragraph('routine-baseline',phrase('clinicalRoutineBaseline',{moderate,vigorous,days:strength}),[],'recorded')]:
-   routine?.blocks.filter(block=>['baseline','strength'].includes(block.id))||[];
-  const foundations=[...activity,...(chapter('foundations')?.blocks||[])];
-  if(foundations.length)opening.blocks.push({...foundations[0],title:phrase('clinicalFoundation')},...foundations.slice(1));
-  opening.blocks.push(paragraph('unknowns',phrase('clinicalMissingContext'),[],'boundary',phrase('clinicalUnknowns')));
-  if(!assay&&record.some(row=>row.id==='lab.crp'))opening.blocks.push(paragraph('unknown-assay',phrase('clinicalUnknownAssay'),['crp-explained'],'boundary'));
-  if(meaning)opening.blocks.push({...meaning,title:phrase('clinicalPerspectiveAge'),kind:'aside'});
+  if((moderate>0||vigorous>0)&&!established&&!limited)opening.blocks.push(paragraph(
+   'routine-baseline',phrase(strength>0?'clinicalRoutineFoundation':'clinicalAerobicFoundation'),[],'context',phrase('clinicalFoundation'),
+  ));
+  if(prevention)opening.blocks.push(paragraph('unknowns',phrase('clinicalMissingContext'),['a1c'],'context',phrase('clinicalUnknowns')));
+  if(meaning)opening.blocks.push({...meaning,text:phrase('clinicalAgeMeaning'),title:phrase('clinicalPerspectiveAge'),kind:'aside'});
  }
  if(plan){
   plan.title=phrase(!ready||highDiagnostic?'clinicalPlanClarify':limited?'clinicalPlanAdapt':established?'clinicalPlanMaintain':'clinicalPlan');
-  const example=plan.blocks.find(block=>block.id==='example-not-prescription');
-  if(example)example.text=phrase('clinicalPlanExample');
   if(resultState==='missing'&&plan.blocks.every(block=>block.id==='context-first')){
    plan.blocks=[paragraph('complete-record',phrase('clinicalMissingAgeText'),[],'plan',phrase('clinicalMissingAge'))];
   }
@@ -51,14 +50,15 @@ export function composeClinicalFolio({chapters,record,resultState},{phrase,parag
  if(ready&&sleepHours!==null)glance.push({label:phrase('clinicalSleep'),value:sleepHours,unit:phrase('clinicalSleepUnit')});
 
  const agenda=[];
- const row=(when,block,question)=>{if(block)agenda.push({when:phrase(when),review:block.text,question:phrase(question),sources:block.sources});};
+ const row=(when,review,question,sources=[])=>agenda.push({when:phrase(when),review:phrase(review),question:phrase(question),sources});
  if(ready&&!critical){
-  if(prevention||highDiagnostic)row('clinicalInitial',plan?.blocks.find(block=>block.id==='clarify-glucose'),'clinicalQuestionGlucose');
-  if(!assay&&chapter('crp'))row('clinicalInitial',paragraph('assay-check',phrase('clinicalCheckAssay'),['crp-explained']),'clinicalQuestionAssay');
-  row('clinicalTwoWeeks',plan?.blocks.find(block=>block.id==='sleep-review'),'clinicalQuestionSleep');
-  if(scheduled||established)row(scheduled?'clinicalPlanReview':'clinicalNextCheck',plan?.blocks.find(block=>block.id===(scheduled?'review-step':'maintain-activity')),'clinicalQuestionRoutine');
-  if(prevention)row('clinicalWhenRelevant',chapter('follow-up')?.blocks.find(block=>block.id==='glucose-timing'),'clinicalQuestionGlucose');
-  row('clinicalWhenRelevant',chapter('follow-up')?.blocks.find(block=>block.id==='purposeful-repeat'),'clinicalQuestionRepeat');
+  if(prevention||highDiagnostic)row('clinicalInitial','clinicalAgendaGlucose','clinicalQuestionGlucose',['glucose-diagnosis']);
+  if(!assay&&chapter('crp'))row('clinicalInitial','clinicalCheckAssay','clinicalQuestionAssay',['crp-explained']);
+  if(plan?.blocks.some(block=>block.id==='sleep-review'))row('clinicalTwoWeeks','clinicalAgendaSleep','clinicalQuestionSleep',['sleep']);
+  if(scheduled)row('clinicalPlanReview','clinicalAgendaBuild','clinicalQuestionRoutine');
+  else if(plan?.blocks.some(block=>block.id==='maintain-activity'))row('clinicalNextCheck','clinicalAgendaMaintain','clinicalQuestionRoutine',['activity']);
+  if(prevention)row('clinicalWhenRelevant','clinicalAgendaRetest','clinicalQuestionRepeat',['glucose-followup']);
+  else row('clinicalWhenRelevant','clinicalAgendaRepeat','clinicalQuestionRepeat',['lab-intervals']);
  }
 
  const pages=[];
@@ -70,27 +70,51 @@ export function composeClinicalFolio({chapters,record,resultState},{phrase,parag
   pages.push({id,chapters:selected,title,eyebrow:phrase(label),...(highlights?{highlights}:{}),...(agenda?{agenda}:{})});
  };
  feature('perspective',['perspective'],{label:'clinicalPerspective',highlights:glance});
- const glucoseFeature=()=>feature('glucose',['glucose'],{highlights:highlights(['glucose'])});
- const sleepFeature=()=>feature('sleep',['sleep'],{label:'clinicalRoutine'});
+ const glucoseFeature=()=>feature('glucose',['glucose'],{...(fasting==='Yes'?{title:'clinicalGlucoseFeature'}:{}),highlights:highlights(['glucose'])});
+ const sleepFeature=()=>feature('sleep',['sleep'],{label:'clinicalRoutine',title:'clinicalSleepFeature'});
  if(glucoseFirst)glucoseFeature();
  feature('prevention',['prevention'],{label:'clinicalEvidence'});
  if(!glucoseFirst&&sleepConcern)sleepFeature();
- feature('starting-plan',['starting-plan','movement','nutrition'],{label:'clinicalPlanLabel'});
- if(glucoseFirst||!sleepConcern)sleepFeature();
+ feature('starting-plan',['starting-plan','movement','nutrition',...(!sleepConcern?['sleep']:[])],{label:'clinicalPlanLabel'});
+ if(glucoseFirst&&sleepConcern)sleepFeature();
  if(!glucoseFirst)glucoseFeature();
- feature('immune',['immune'],{highlights:highlights(['wbc','lymphocytes'])});
- feature('crp',['crp'],{highlights:highlights(['crp'])});
+ feature('immune',['immune'],{title:'clinicalImmuneFeature',highlights:highlights(['wbc','lymphocytes'])});
+ feature('crp',['crp'],{title:assay?'clinicalCrpKnownFeature':'clinicalCrpFeature',highlights:highlights(['crp'])});
  feature('proteins',['albumin','kidney'],{title:'clinicalProteins',highlights:highlights(['albumin','creatinine'])});
  feature('blood-count',['redcells','alp'],{title:'clinicalCells',highlights:highlights(['mcv','rdw','alp'])});
- feature('routine',['tobacco','alcohol','stress'],{label:'clinicalRoutine'});
+ feature('routine',['tobacco','stress'],{label:'clinicalRoutine'});
  feature('follow-up',['follow-up'],{label:'clinicalFollowupLabel',title:'clinicalFollowup',agenda});
  for(const text of Object.values(L))freezeText(text);
  for(const text of ['Within your lab interval','Within published guide','Above published guide','Below published guide','CRP test type needed','Reference group needed','No reference comparison'])freezeText(text);
  const overview=pages.filter(page=>['perspective','starting-plan','follow-up'].includes(page.id)).map(({id,title})=>({id,title}));
- return {version:CLINICAL_FOLIO_VERSION,headline:phrase('clinicalCover'),deck:phrase('clinicalDeck'),overview,pages,urgent:critical};
+ return {version:CLINICAL_FOLIO_VERSION,footer:phrase('clinicalClinicianNote'),headline:phrase('clinicalCover'),deck:phrase('clinicalDeck'),overview,pages,urgent:critical};
 }
 
-export function clinicalCoverArt(){
+export function clinicalCoverArt(folio){
+ if(folio.version===CLINICAL_FOLIO_VERSION)return `<svg viewBox="0 0 320 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <defs>
+   <radialGradient id="kq-lunar-light" cx="32%" cy="26%" r="77%">
+    <stop offset="0" stop-color="#e1aa91"/><stop offset=".36" stop-color="#bd8274"/><stop offset=".66" stop-color="#93565b"/><stop offset=".88" stop-color="#693641"/><stop offset="1" stop-color="#482733"/>
+   </radialGradient>
+   <radialGradient id="kq-lunar-crater" cx="64%" cy="70%" r="69%">
+    <stop offset=".47" stop-color="#552b38" stop-opacity=".18"/><stop offset=".78" stop-color="#6b3e45" stop-opacity=".33"/><stop offset=".91" stop-color="#e9b299" stop-opacity=".31"/><stop offset="1" stop-color="#e9b299" stop-opacity="0"/>
+   </radialGradient>
+   <clipPath id="kq-lunar-disc"><circle cx="204" cy="207" r="149"/></clipPath>
+  </defs>
+  <path d="M8 316C-8 270 77 191 189 139c58-27 106-37 140-34M19 337c22 15 73 12 132-11" fill="none" stroke="#b79887" stroke-width=".8" opacity=".52"/>
+  <circle cx="204" cy="207" r="149" fill="url(#kq-lunar-light)"/>
+  <g clip-path="url(#kq-lunar-disc)">
+   <path d="M113 99c29-15 63 1 79 27 12 20 4 37-15 48-20 12-15 39-40 41-21 2-44-21-49-44-8-30 4-55 25-72ZM211 222c23-17 46-7 62 8 12 11 28 8 43 15 19 10 19 35 4 52-17 17-44 20-63 12-18-7-19-29-35-39-19-11-28-36-11-48Z" fill="#553045" opacity=".14"/>
+   <path d="M72 208c34 1 28 35 53 47 24 12 31-2 49 19 12 15 5 32-8 43-16 14-43 9-60-6-29-25-42-64-34-103Z" fill="#efb7a0" opacity=".08"/>
+   <g fill="url(#kq-lunar-crater)">
+    <circle cx="128" cy="144" r="22"/><circle cx="158" cy="204" r="10"/><circle cx="228" cy="153" r="16"/>
+    <circle cx="102" cy="230" r="13"/><circle cx="186" cy="272" r="24"/><circle cx="245" cy="292" r="11"/>
+    <circle cx="275" cy="192" r="26"/><circle cx="250" cy="117" r="9"/><circle cx="131" cy="290" r="8"/>
+    <circle cx="212" cy="317" r="13"/><circle cx="204" cy="109" r="6"/><circle cx="232" cy="231" r="7"/>
+   </g>
+  </g>
+ </svg>`;
+
  return `<svg viewBox="0 0 320 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
  <defs>
   <radialGradient id="kq-cell-a" cx="35%" cy="30%" r="68%"><stop offset="0" stop-color="#d69b87"/><stop offset=".38" stop-color="#ab6a61"/><stop offset=".72" stop-color="#70404a"/><stop offset=".92" stop-color="#a16b62"/><stop offset="1" stop-color="#cba18c"/></radialGradient>
@@ -108,17 +132,19 @@ export function clinicalPageContent(editorial,page){
  const all=chapters.flatMap(chapter=>chapter.blocks);
  const aside=all.filter(block=>block.kind==='aside');
  const heading=chapters[0];
+ const current=editorial.folio.version===CLINICAL_FOLIO_VERSION;
  if(page.id==='perspective')return {lead:all.slice(0,1),columns:[all.slice(1).filter(block=>block.kind!=='aside'),[]],aside};
  if(page.id==='follow-up'&&page.agenda?.length)return {lead:[],columns:[[],[]],aside,agenda:page.agenda};
  if(page.id==='starting-plan'){
-  const [plan,movement,nutrition]=['starting-plan','movement','nutrition'].map(id=>chapters.find(chapter=>chapter.id===id));
+  const [plan,movement,nutrition,sleep]=['starting-plan','movement','nutrition','sleep'].map(id=>chapters.find(chapter=>chapter.id===id));
   const steps=plan.blocks.filter(block=>['baseline-step','build-step','review-step'].includes(block.id));
   const lead=plan.blocks.filter(block=>!steps.includes(block)&&block.id!=='sleep-review');
   const food=nutrition?.blocks.filter(block=>['diet-baseline','weight'].includes(block.id))||[];
-  const move=movement?.blocks.filter(block=>block.id==='strength')||[];
-  return {lead,steps,columns:[[...move,...food.slice(0,1)],food.slice(1)],aside};
+  const move=current?[]:movement?.blocks.filter(block=>block.id==='strength')||[];
+  return {lead,steps,columns:[[...move,...food.slice(0,1)],[...(sleep?.blocks||[]),...food.slice(1)]],aside};
  }
  const readings=new Set(page.highlights?.map(item=>'reading-'+item.id?.slice(4)));
+ if(current&&page.id==='glucose')readings.add('your-glucose');
  if(page.id==='prevention'){
   const blocks=Object.fromEntries(all.map(block=>[block.id,block]));
   return {lead:[blocks['study-fit']].filter(Boolean),

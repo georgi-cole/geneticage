@@ -100,13 +100,19 @@ export function composeEditorialReport(document,state={}){
  const glucoseAt=(mmol,mg)=>glucoseEntry?.unit==='mg/dL'?number(glucoseEntry.value)>=mg:glucose>=mmol;
  const hasGlucose=glucose!==null&&glucose>=0;
  const highDiagnostic=hasGlucose&&fasting==='Yes'&&glucoseAt(7,126);
- const prevention=hasGlucose&&fasting==='Yes'&&glucoseAt(5.6,100)&&!highDiagnostic&&!knownDiabetes&&!specialContext&&!critical&&ready;
+ const impairedFasting=hasGlucose&&fasting==='Yes'&&glucoseAt(5.6,100);
+ const glucoseQuiet=hasGlucose&&fasting==='Yes'&&!impairedFasting&&!knownDiabetes&&!specialContext&&ready;
+ const prevention=impairedFasting&&!highDiagnostic&&!knownDiabetes&&!specialContext&&!critical&&ready;
  const safeRoutine=!critical&&!highDiagnostic&&document.resultState!=='withheld';
 
  if(!critical){
   if(hasGlucose){
    const context=[paragraph('your-glucose',phrase('glucoseEntered',{value:glucoseEntry.value,unit:glucoseEntry.unit||'mmol/L',fasting:freezeText(fasting||C.unknown)}),[],'recorded')];
-   const stateKey=knownDiabetes?'diabetesKnown':fasting!=='Yes'?'glucoseNoFast':highDiagnostic?'glucoseDiabetes':prevention?'glucoseIFG':'glucoseLower';
+   let stateKey=knownDiabetes?'diabetesKnown':fasting!=='Yes'?'glucoseNoFast':highDiagnostic?'glucoseDiabetes':prevention?'glucoseIFG':'glucoseLower';
+   if(type==='clinical-phenoage'){
+    if(stateKey==='glucoseIFG')stateKey='clinicalGlucoseRaised';
+    if(stateKey==='glucoseLower')stateKey=glucoseQuiet?'clinicalGlucoseQuiet':'clinicalGlucoseUnclear';
+   }
    context.push(paragraph('glucose-interpretation',phrase(stateKey),['glucose-diagnosis','glucose-followup'],'context'));
    addModule('glucose',{context});
   }
@@ -260,7 +266,7 @@ export function composeEditorialReport(document,state={}){
  const methods=[phrase(type==='clinical-phenoage'?'methodClinical':type==='health-profile'?'introProfile':'methodFamily'),phrase('snapshot')];
  source(document.sourceIds);
  if(type==='clinical-phenoage')source(['phenoage','validation']);
- const folio=type==='clinical-phenoage'?composeClinicalFolio({chapters,record,metric,resultState:document.resultState},{phrase,paragraph,freezeText,prevention,highDiagnostic,knownDiabetes,critical,sleepConcern,established,limited,moderate,vigorous,strength,sleepHours,fasting,assay:['standard-crp','hs-crp'].includes(blood.crp?.assay)?blood.crp.assay:null}):null;
+ const folio=type==='clinical-phenoage'?composeClinicalFolio({chapters,record,derivedFacts,resultState:document.resultState},{phrase,paragraph,freezeText,prevention,glucoseQuiet,highDiagnostic,knownDiabetes,critical,sleepConcern,established,limited,moderate,vigorous,strength,sleepHours,rested:answers.rested,portions:answers.diet,fasting,assay:['standard-crp','hs-crp'].includes(blood.crp?.assay)?blood.crp.assay:null}):null;
  const citations=evidenceSnapshot([...used]);
  for(const s of citations){freezeText(s.label);freezeText(s.kind);}
  for(const text of Object.values(C))freezeText(text);

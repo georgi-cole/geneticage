@@ -119,7 +119,7 @@ export function clinicalPdfDefinition(document,{scope,logo,t,titleFont}){
    text(t(fact.label)+' · '+fact.value+' '+fact.unit,'subhead'),
    text(C.calculation,'small'),text(fact.formula,'small'),text(fact.inputIds.join(' + '),'small'),
   ])));
-  content.push(text(L.clinicalBloodNote,'small'),text(C.version,'subhead'),
+  content.push(text(L.clinicalBloodNote,'small'),...(f.footer?[text(L.clinicalReviewStatus,'small')]:[]),text(C.version,'subhead'),
    text([document.modelVersion,document.questionnaireVersion,e.knowledgeVersion,e.evidenceVersion,e.layoutVersion].filter(Boolean).join(' · '),'small'));
  }
  if(e.citations.length){
@@ -142,7 +142,7 @@ export function clinicalPdfDefinition(document,{scope,logo,t,titleFont}){
    layout:{hLineWidth:i=>i>0?.6:0,vLineWidth:()=>0,hLineColor:()=>lineColor,fillColor:i=>i===0?soft:null,paddingTop:()=>padding,paddingBottom:()=>padding,paddingLeft:()=>8,paddingRight:()=>8},margin:[0,0,0,11]};
  }
  return {
-  info:{title:'KoleQuant · '+t(scope==='report'?f.headline:C.data),author:'KoleQuant',creator:'KoleQuant '+e.layoutVersion,subject:t(L.clinicalSourcesNotice)},
+  info:{title:'KoleQuant · '+t(scope==='report'?f.headline:C.data),author:'KoleQuant',creator:'KoleQuant '+e.layoutVersion,subject:t(f.footer||L.clinicalSourcesNotice)},
   pageSize:'A4',pageMargins:[45,71,45,62],
   defaultStyle:{font:'Roboto',fontSize:10.4,color:ink,lineHeight:1.23},
   styles:{
@@ -160,10 +160,10 @@ export function clinicalPdfDefinition(document,{scope,logo,t,titleFont}){
   },
   background:(page,size)=>{
    const fill={canvas:[{type:'rect',x:0,y:0,w:size.width,h:size.height,color:showCover&&page===1?coverPaper:paper}]};
-   return showCover&&page===1?[fill,{svg:clinicalCoverArt().replace(' aria-hidden="true" focusable="false"',''),width:272,absolutePosition:{x:323,y:235}}]:fill;
+   return showCover&&page===1?[fill,{svg:clinicalCoverArt(f).replace(' aria-hidden="true" focusable="false"',''),width:272,absolutePosition:{x:323,y:235}}]:fill;
   },
   header:page=>({margin:[45,39,45,0],stack:[rule(505,burgundy,2),...(page===1&&showCover?[]:[{columns:[text(L.clinicalFamily,'micro'),text(e.sample?C.sample:C.personal,'micro',{alignment:'right'})],margin:[0,7,0,0]}])]}),
-  footer:page=>({margin:[45,16,45,0],stack:[rule(),{columns:[{width:108,stack:[brand()]},text(L.clinicalSourcesNotice,'micro',{alignment:'center',margin:[0,5,0,0]}),{text:(scope==='technical'?'D':'')+String(page).padStart(2,'0'),width:30,bold:true,fontSize:9,color:burgundy,alignment:'right',margin:[0,4,0,0]}],margin:[0,5,0,0]}]}),
+  footer:page=>({margin:[45,16,45,0],stack:[rule(),{columns:[{width:108,stack:[brand()]},text(f.footer||L.clinicalSourcesNotice,'micro',{alignment:'center',margin:[0,5,0,0]}),{text:(scope==='technical'?'D':'')+String(page).padStart(2,'0'),width:30,bold:true,fontSize:9,color:burgundy,alignment:'right',margin:[0,4,0,0]}],margin:[0,5,0,0]}]}),
   content,
  };
 }

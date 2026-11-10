@@ -62,14 +62,14 @@ The renderer accepts escaped text and safe HTTP(S) citations, not user HTML. The
 
 `npm ci` installs the isolated, lockfile-pinned PDF engine through the root postinstall hook. Environments intentionally skipping install scripts must run `npm run report:install`. Framework, Pages and native builds generate the lazy runtime before publication. Do not commit that generated runtime or dependency directories.
 
-Run `npm run check`, `npm run build`, `npm run build:pages`, and `npm run build:native` for applicable changes. Run `npm run report:qa` for 32 real PDFs from eight fictional profiles across English/Bulgarian and both export scopes. The `Editorial report review` workflow also exercises the actual Pages app in Chromium, checks 320/390/1280 layouts in all themes/languages, downloads four actual PDFs and publishes review artifacts. It does not deploy either hosting surface.
+Run `npm run check`, `npm run build`, `npm run build:pages`, and `npm run build:native` for applicable changes. Run `npm run report:qa` for 32 real PDFs from eight fictional profiles across English/Bulgarian and both export scopes. The `Editorial report review` workflow also exercises the actual Pages app in Chromium, checks 320/390/1280 layouts in all themes/languages, downloads six actual PDFs and publishes review artifacts. It does not deploy either hosting surface.
 
 Inspect rendered PDF pages for headings separated from their first content, clipped glyphs, footer collisions, unsupported numbers and incomplete records. Automated composition and DOM checks are not visual or clinical validation. Native share behavior has isolated tests; physical-device acceptance is still required before shipping the native experience.
 
 ## Clinical PhenoAge folio
 
-New Clinical PhenoAge reports freeze a `clinical-folio-v1` layout with the accepted narrative. The report groups related measurements, promotes the case-specific decision to the first page of the narrative, and separates habit review from clinical follow-up. The app and both PDF exports read the frozen facts and reference comparisons. Editions without a folio keep their existing rendering path.
+New Clinical PhenoAge reports freeze a `clinical-folio-v2` layout with the accepted narrative. The report groups related measurements, promotes the case-specific decision to the first page of the narrative, and separates habit review from clinical follow-up. The app and both PDF exports read the frozen facts and reference comparisons. Earlier folios and editions keep their stored prose and original rendering path.
 
-The Clinical cover and PDF use locally bundled [Source Serif 4](https://github.com/adobe-fonts/source-serif/releases/tag/4.005R) under the SIL Open Font License. The cellular artwork is decorative. The underlying calculation, safety policy and access checks run through the existing assessment path.
+The Clinical cover and PDF use locally bundled [Source Serif 4](https://github.com/adobe-fonts/source-serif/releases/tag/4.005R) under the SIL Open Font License. The moon artwork is decorative. The clinical note appears on both PDFs and in the app reader. The underlying calculation, safety policy and access checks run through the existing assessment path.
 
 The browser QA downloads both PDFs in English and Bulgarian from the fictional reference case. It then edits the questionnaire and blood measurements through the app, verifies that the report leads with the established routine, and downloads both English PDFs for that comparison case.

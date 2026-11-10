@@ -1,5 +1,5 @@
 import {CLINICAL_COPY as L} from './report-knowledge/clinical-copy.mjs';
-import {CLINICAL_FOLIO_VERSION,clinicalCoverArt,clinicalPageContent,clinicalRecordGroups,clinicalComparison} from './report-clinical.mjs';
+import {hasClinicalFolio,clinicalCoverArt,clinicalPageContent,clinicalRecordGroups,clinicalComparison} from './report-clinical.mjs';
 import {EDITORIAL_COPY as C} from './report-knowledge/copy.mjs';
 
 // Values are never HTML. This renderer accepts a saved, server-authored document,
@@ -46,12 +46,12 @@ function sourceLinks(editorial,ids){
 }
 export function renderEditorialSources(document){
  const e=document?.editorial;if(!e)return '';
- return `<section class="kq-evidence"><h2>${translated(e,C.evidence)}</h2><p>${translated(e,C.notice)}</p><ol>${e.citations.filter(s=>safeUrl(s.url)).map(s=>`<li><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${translated(e,s.label)}</a><small>${translated(e,s.kind)}</small></li>`).join('')}</ol></section>`;
+ return `<section class="kq-evidence"><h2>${translated(e,C.evidence)}</h2><p>${translated(e,e.folio?.footer?L.clinicalSourcesLead:C.notice)}</p><ol>${e.citations.filter(s=>safeUrl(s.url)).map(s=>`<li><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${translated(e,s.label)}</a><small>${translated(e,s.kind)}</small></li>`).join('')}</ol></section>`;
 }
 export function renderEditorialDocument(document){
  const e=document?.editorial;if(!e||!Array.isArray(e.chapters))return '';
  const key=register(document);
- if(e.folio?.version===CLINICAL_FOLIO_VERSION)return clinicalNarrative(document,key);
+ if(hasClinicalFolio(e))return clinicalNarrative(document,key);
  const accent=/^#[a-f0-9]{6}$/i.test(e.signature?.accent)?e.signature.accent:'#803E4B';
  const pale=/^#[a-f0-9]{6}$/i.test(e.signature?.pale)?e.signature.pale:'#F2E8E8';
  return `<article class="personal-report-document kq-editorial" data-editorial-document="${key}" data-report-document-version="${esc(document.version)}" data-export-scope="report" style="--kq-accent:${accent};--kq-pale:${pale}">
@@ -96,13 +96,13 @@ function clinicalNarrative(document,key){
  }).join('');
  return `<article class="personal-report-document kq-editorial kq-clinical-folio" data-editorial-document="${key}" data-report-document-version="${esc(document.version)}" data-export-scope="report">
   <header class="kq-folio-cover">
-   <div class="kq-folio-art">${clinicalCoverArt()}</div>
+   <div class="kq-folio-art">${clinicalCoverArt(f)}</div>
    <div class="kq-folio-mast"><span><img src="/assets/kolequant-report-mark.png" alt="" width="10" height="20"> KOLEQUANT</span>${translated(e,C.report)}</div>
    ${translated(e,L.clinicalFamily,'p','kq-kicker')}${translated(e,f.headline,'h2','kq-folio-title')}${translated(e,f.deck,'p','kq-folio-deck')}
    ${result}${f.urgent?clinicalBlock(e,{kind:'safety',text:C.critical}):''}
    <div class="kq-folio-meta">${translated(e,e.sample?C.sample:C.personal)}${e.drawDate?` · <time>${esc(e.drawDate)}</time>`:''}</div>
   </header>${pages}
-  <footer class="kq-brand-footer"><img src="/assets/kolequant-report-mark.png" width="10" height="20" alt=""><strong>KoleQuant</strong><span>${translated(e,L.clinicalSourcesNotice)}</span></footer>
+  <footer class="kq-brand-footer"><img src="/assets/kolequant-report-mark.png" width="10" height="20" alt=""><strong>KoleQuant</strong><span>${translated(e,f.footer||L.clinicalSourcesNotice)}</span></footer>
  </article>`;
 }
 
@@ -146,7 +146,7 @@ export function renderClinicalRecord(document){
 export function renderClinicalMethods(document){
  const e=document.editorial;
  return `<section class="kq-clinical-support">${translated(e,L.clinicalMethodsLabel,'p','kq-kicker')}${translated(e,L.clinicalMethods,'h2')}
-  ${e.methods.map(text=>translated(e,text,'p')).join('')}${translated(e,L.clinicalBloodNote,'p')}
+  ${e.methods.map(text=>translated(e,text,'p')).join('')}${translated(e,L.clinicalBloodNote,'p')}${e.folio.footer?translated(e,L.clinicalReviewStatus,'p'):''}
   ${translated(e,C.version,'h3')}<p data-no-translate>${esc([document.modelVersion,document.questionnaireVersion,e.knowledgeVersion,e.evidenceVersion,e.layoutVersion].filter(Boolean).join(' · '))}</p>
   ${renderEditorialSources(document)}
  </section>`;
