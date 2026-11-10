@@ -11,7 +11,7 @@ import {launchGateStyles} from '../public/launch-screen.mjs';
 import {APP_NAME,PUBLISHER_NAME} from '../public/brand.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const relativeAssets=text=>text.replaceAll('/assets/','./assets/');
+export const relativeAssets=text=>text.replace(/(?<![A-Za-z0-9_./:-])\/assets\//g,'./assets/');
 const hash=text=>"'sha256-"+createHash('sha256').update(text).digest('base64')+"'";
 
 export function buildPages({directory=path.join(root,'dist-pages'),basePath='/geneticage/'}={}){

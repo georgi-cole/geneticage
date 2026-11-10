@@ -93,7 +93,7 @@ export function reportPdfDefinition(document,{scope='report',language='en',logo=
      const p=c.provenance||{};
      details.push({text:t(c.value)+(p.sourceKind?' · '+t(p.sourceKind):''),style:'small'});
      if(p.comparisonValue!==null&&p.comparisonValue!==undefined)details.push({text:`${p.comparisonValue} ${c.unit||''}`,style:'small'});
-     if(p.low!==null||p.high!==null)details.push({text:[p.low===null?'':`${p.lowExclusive?'>':'≥'} ${p.low}`,p.high===null?'':`${p.highExclusive?'<':'≤'} ${p.high}`].filter(Boolean).join(' · ')+' '+(c.unit||''),style:'small'});
+     if(p.low!=null||p.high!=null)details.push({text:[p.low==null?'':`${p.lowExclusive?'>':'≥'} ${p.low}`,p.high==null?'':`${p.highExclusive?'<':'≤'} ${p.high}`].filter(Boolean).join(' · ')+' '+(c.unit||''),style:'small'});
      if(p.sourceUrl&&safe(p.sourceUrl))details.push({text:p.sourceVersion||t(C.evidence),link:p.sourceUrl,style:'small',color:accent});
     }
     if(row.assay)details.push({text:t(row.assay),style:'small'});
@@ -110,13 +110,13 @@ export function reportPdfDefinition(document,{scope='report',language='en',logo=
   const coverage=document.coverage?.questions;
   if(coverage?.total)content.push({text:t(C.coverageText).replace('{answered}',coverage.answered).replace('{total}',coverage.total),style:'body'});
   content.push(line(C.version,'heading',{margin:[0,25,0,12]}));
-  content.push({text:[document.modelVersion,e.version,e.knowledgeVersion,e.evidenceVersion,e.layoutVersion].filter(Boolean).join('\n'),style:'small'});
+  content.push({text:[document.modelVersion,e.version,e.knowledgeVersion,e.evidenceVersion,e.layoutVersion].filter(Boolean).join(' · '),style:'small'});
  }
  content.push({text:t(C.evidence),style:'heading',pageBreak:'before'});
  content.push(line(C.notice,'small',{margin:[0,0,0,20]}));
  for(const [i,source] of e.citations.entries()){
   const stack=[{text:`${i+1}. ${t(source.label)}`,bold:true,fontSize:10,color:accent,...(safe(source.url)?{link:source.url}:{}),margin:[0,0,0,4]},line(source.kind,'small')];
-  content.push({stack,unbreakable:true,margin:[0,0,0,13]});
+  content.push({stack,unbreakable:true,margin:[0,0,0,i===e.citations.length-1?0:13]});
  }
  return {
   info:{title:`GeneticAge · ${t(e.title)} · ${scope==='report'?t(C.report):t(C.data)}`,author:'KoleQuant',subject:'Automatically prepared educational assessment; not clinically reviewed',creator:'KoleQuant '+e.layoutVersion},

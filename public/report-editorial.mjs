@@ -48,7 +48,7 @@ export function composeEditorialReport(document,state={}){
  };
  const source=ids=>{for(const id of ids||[])used.add(id);return ids||[];};
  const paragraph=(id,text,sources=[],kind='context',title='')=>({id,title:freezeText(title),text:freezeText(text),sources:source(sources),kind});
- const module=(id,{context=[],omit=[]}={})=>{
+ const addModule=(id,{context=[],omit=[]}={})=>{
   const item=KNOWLEDGE_MODULES[id];if(!item)throw Error('Unknown knowledge module: '+id);
   const blocks=item.blocks.filter(b=>!omit.includes(b.id)).map(b=>paragraph(b.id,b.text,b.sources,b.kind,b.title));
   chapters.push({id,title:freezeText(item.title),deck:freezeText(item.deck),kind:'feature',blocks:[...context,...blocks]});
@@ -105,7 +105,7 @@ export function composeEditorialReport(document,state={}){
    const context=[paragraph('your-glucose',phrase('glucoseEntered',{value:glucoseEntry.value,unit:glucoseEntry.unit||'mmol/L',fasting:freezeText(fasting||C.unknown)}),[],'recorded')];
    const stateKey=knownDiabetes?'diabetesKnown':fasting!=='Yes'?'glucoseNoFast':highDiagnostic?'glucoseDiabetes':prevention?'glucoseIFG':'glucoseLower';
    context.push(paragraph('glucose-interpretation',phrase(stateKey),['glucose-diagnosis','glucose-followup'],'context'));
-   module('glucose',{context});
+   addModule('glucose',{context});
   }
   if(prevention){
    const context=[paragraph('study-fit',phrase('studyFit'),['dpp','strride'])];
@@ -117,15 +117,15 @@ export function composeEditorialReport(document,state={}){
     derivedFacts.push({id:'derived.bmi',label:'BMI',value:Number(bmi.toFixed(1)),unit:'kg/m²',formula:'weight in kg / (height in m)²',inputIds:['answers.height','answers.weight'],kind:'calculated'});
     context.push(paragraph('body-context',phrase('bmi',{bmi:round(bmi)}),['bmi'],'derived'));
    }
-   module('prevention',{context});
+   addModule('prevention',{context});
   }
   if(type==='heart-vascular'){
-   if(inputs.systolic||inputs.diastolic)module('pressure',{context:['systolic','diastolic'].filter(id=>inputs[id]).map(id=>paragraph(id,reading(id==='systolic'?'Systolic blood pressure':'Diastolic blood pressure',inputs[id]),[],'recorded'))});
-   if(['total','hdl','apob','lpa'].some(id=>inputs[id]))module('lipids',{context:[['total','Total cholesterol'],['hdl','HDL cholesterol'],['apob','ApoB'],['lpa','Lp(a)']].filter(([id])=>inputs[id]).map(([id,label])=>paragraph(id,reading(label,inputs[id]),[],'recorded'))});
+   if(inputs.systolic||inputs.diastolic)addModule('pressure',{context:['systolic','diastolic'].filter(id=>inputs[id]).map(id=>paragraph(id,reading(id==='systolic'?'Systolic blood pressure':'Diastolic blood pressure',inputs[id]),[],'recorded'))});
+   if(['total','hdl','apob','lpa'].some(id=>inputs[id]))addModule('lipids',{context:[['total','Total cholesterol'],['hdl','HDL cholesterol'],['apob','ApoB'],['lpa','Lp(a)']].filter(([id])=>inputs[id]).map(([id,label])=>paragraph(id,reading(label,inputs[id]),[],'recorded'))});
   }
   if(type==='metabolic'){
-   module('metabolic',{context:inputs.hba1c?[paragraph('a1c',phrase('a1cValue',{value:inputs.hba1c.value,unit:inputs.hba1c.unit}),['a1c'],'recorded')]:[]});
-   if(inputs.hba1c&&!hasGlucose)module('glucose',{context:[paragraph('a1c-only',phrase('a1cValue',{value:inputs.hba1c.value,unit:inputs.hba1c.unit}),['a1c'],'recorded')],omit:['companions']});
+   addModule('metabolic',{context:inputs.hba1c?[paragraph('a1c',phrase('a1cValue',{value:inputs.hba1c.value,unit:inputs.hba1c.unit}),['a1c'],'recorded')]:[]});
+   if(inputs.hba1c&&!hasGlucose)addModule('glucose',{context:[paragraph('a1c-only',phrase('a1cValue',{value:inputs.hba1c.value,unit:inputs.hba1c.unit}),['a1c'],'recorded')],omit:['companions']});
   }
   if(type==='kidney'){
    const context=familyReadings(['creatinine','cystatin','acr']);
@@ -133,13 +133,13 @@ export function composeEditorialReport(document,state={}){
    if(Number.isFinite(review.egfrCombined))context.push(paragraph('egfr-combined',phrase('kidneyCombined',{value:round(review.egfrCombined)}),['kidney-context'],'recorded'));
    if(!present(inputs.acr?.value))context.push(paragraph('acr-missing',phrase('kidneyNoAcr'),['kdigo-ckd']));
    const kidneyTreatment=inputs.kidneyHistory&&inputs.kidneyHistory!=='No known kidney disease'&&!uncertainty(inputs.kidneyHistory);
-   module('kidney',{context,omit:kidneyTreatment?[]:['treatment']});
+   addModule('kidney',{context,omit:kidneyTreatment?[]:['treatment']});
   }
   if(type==='fitness'){
    const context=[];
    if(result.method==='FRIEND'&&present(inputs.vo2peak?.value))context.push(paragraph('measured',phrase('fitMeasured',{value:inputs.vo2peak.value}),['friend-2022'],'recorded'));
    else if(Number.isFinite(review.estimatedVo2))context.push(paragraph('estimated',phrase('fitEstimated',{value:round(review.estimatedVo2)}),document.sourceIds,'recorded'));
-   module('fitness',{context});
+   addModule('fitness',{context});
   }
   // Full coverage of the entered clinical panel. No fixed three-insight quota.
   if(type==='clinical-phenoage'){
@@ -153,13 +153,13 @@ export function composeEditorialReport(document,state={}){
      // NHLBI's broad adult range is educational, not a replacement lab interval.
      context.push(paragraph('absolute-context',phrase(count>=1&&count<=4.8?'immuneWithin':'immuneOutside'),['lymphocytes']));
     }else context.push(paragraph('absolute-missing',phrase('immuneMissing')));
-    module('immune',{context});
+    addModule('immune',{context});
    }
-   if(present(blood.crp?.value))module('crp',{context:[paragraph('assay',phrase(['standard-crp','hs-crp'].includes(blood.crp.assay)?'crpKnown':'crpUnknown',{value:blood.crp.value,unit:blood.crp.unit||'mg/L',assay:blood.crp.assay||C.unknown}),['crp-explained','hscrp'])]});
-   if(present(blood.albumin?.value))module('albumin',{context:labReadings(['albumin'])});
-   if(present(blood.creatinine?.value))module('kidney',{context:labReadings(['creatinine']),omit:['treatment']});
-   if(present(blood.mcv?.value)||present(blood.rdw?.value))module('redcells',{context:labReadings(['mcv','rdw'])});
-   if(present(blood.alp?.value))module('alp',{context:labReadings(['alp'])});
+   if(present(blood.crp?.value))addModule('crp',{context:[paragraph('assay',phrase(['standard-crp','hs-crp'].includes(blood.crp.assay)?'crpKnown':'crpUnknown',{value:blood.crp.value,unit:blood.crp.unit||'mg/L',assay:blood.crp.assay||C.unknown}),['crp-explained','hscrp'])]});
+   if(present(blood.albumin?.value))addModule('albumin',{context:labReadings(['albumin'])});
+   if(present(blood.creatinine?.value))addModule('kidney',{context:labReadings(['creatinine']),omit:['treatment']});
+   if(present(blood.mcv?.value)||present(blood.rdw?.value))addModule('redcells',{context:labReadings(['mcv','rdw'])});
+   if(present(blood.alp?.value))addModule('alp',{context:labReadings(['alp'])});
   }
  }
 
@@ -174,20 +174,20 @@ export function composeEditorialReport(document,state={}){
    if(moderate!==null&&vigorous!==null)context.push(paragraph('baseline',phrase('activityBaseline',{moderate,vigorous}),[],'recorded'));
    if(strength!==null)context.push(paragraph('strength',phrase(strength===1?'strengthOne':'strengthBaseline',{days:strength}),[],'recorded'));
    context.push(paragraph('suitability',phrase(limited?'movementLimited':!routineKnown?'movementUnknown':established?'movementMaintain':'planExample'),['activity']));
-   module('movement',{context,omit:limited||!routineKnown?['progress']:[]});
+   addModule('movement',{context,omit:limited||!routineKnown?['progress']:[]});
   }
-  if(present(answers.diet)||type==='metabolic')module('nutrition',{context:present(answers.diet)&&!uncertainty(answers.diet)?[paragraph('diet-baseline',phrase('planDiet',{portions:answers.diet}),['diet'],'recorded')]:[]});
+  if(present(answers.diet)||type==='metabolic')addModule('nutrition',{context:present(answers.diet)&&!uncertainty(answers.diet)?[paragraph('diet-baseline',phrase('planDiet',{portions:answers.diet}),['diet'],'recorded')]:[]});
   if(sleepHours!==null||present(answers.rested)){
    const context=[];
    if(sleepHours!==null)context.push(paragraph('sleep-baseline',phrase('sleepBaseline',{hours:sleepHours,rested:freezeText(answers.rested||C.unknown)}),[],'recorded'));
    if(answers.disrupted==='Yes')context.push(paragraph('sleep-constraint',phrase('sleepConstraint'),[],'recorded'));
-   module('sleep',{context,omit:sleepConcern?[]:['diary','cbti','apnea']});
+   addModule('sleep',{context,omit:sleepConcern?[]:['diary','cbti','apnea']});
   }
   const smoking=answers.smoking||inputs.smoking;
-  if(['Every day','Some days','Yes','Current smoker','Smoke now'].includes(smoking))module('tobacco');
+  if(['Every day','Some days','Yes','Current smoker','Smoke now'].includes(smoking))addModule('tobacco');
   else if(['Not at all','Never smoked','No','Former smoker'].includes(smoking))plain('foundations','maintain',[paragraph('tobacco-foundation',phrase('noTobacco'),['tobacco'])],'strength');
-  if(answers.alcohol==='Yes')module('alcohol',{context:exact(answers.alcoholDays)?[paragraph('alcohol-pattern',phrase(Number(answers.alcoholDays)===1?'alcoholOne':'alcoholBaseline',{days:answers.alcoholDays}),[],'recorded')]:[]});
-  if(['Often','Almost every day'].includes(answers.stress))module('stress');
+  if(answers.alcohol==='Yes')addModule('alcohol',{context:exact(answers.alcoholDays)?[paragraph('alcohol-pattern',phrase(Number(answers.alcoholDays)===1?'alcoholOne':'alcoholBaseline',{days:answers.alcoholDays}),[],'recorded')]:[]});
+  if(['Often','Almost every day'].includes(answers.stress))addModule('stress');
  }
  if(!critical){
   const plan=[];
