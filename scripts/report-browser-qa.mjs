@@ -152,6 +152,15 @@ try{
  async function familyExports(type){
   const selector=`[data-report-family="${type}"]`;
   await until(`!!document.querySelector(${JSON.stringify(selector)})`,type+' report');
+  const teaching={
+   'heart-vascular':/Systolic pressure is the upper number/,
+   metabolic:/With insulin resistance, cells respond less effectively/,
+   kidney:/kidney tubules then return/,
+   fitness:/millilitres of oxygen per kilogram/,
+   'health-profile':/Time in bed, time asleep and feeling restored/,
+  };
+  const lessonText=await evaluate(`document.querySelector(${JSON.stringify(selector)}).innerText`);
+  assert.match(lessonText,teaching[type],type+' must include its educational chapters');
   const folder=path.join(out,type);
   await mkdir(folder,{recursive:true});
   await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:folder,eventsEnabled:true});

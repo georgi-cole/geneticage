@@ -11,6 +11,7 @@ const rowsByGroup=rows=>[...new Set(rows.map(row=>row.group))].map(name=>[name,r
 export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
  const e=document.editorial, f=e.folio, m=e.metric;
  const family=isFamilyFolio(e),familyTitle=family?e.title:L.clinicalFamily;
+ const education=f.version==='assessment-folio-v2';
  const {accent,cover:coverPaper,paper,soft}=reportFolioPalette(e);
  const recordPadding=family&&e.type!=='health-profile'?3:4;
  const content=[];
@@ -67,7 +68,7 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
    const view=reportFolioPage(e,page);
    const chapter=e.chapters.find(ch=>ch.id===page.chapters[0]);
    const pageBand=band(page.highlights||[]);
-   const sectionBreak=!family||index===0;
+   const sectionBreak=!family||index===0||education&&page.lesson;
    const start={...(sectionBreak?{pageBreak:'before'}:{}),
     stack:[...(!sectionBreak?[{...rule(),margin:[0,12,0,13]}]:[]),
       title(page.eyebrow,page.title,page.id==='prevention'?'':chapter.deck,'clinical-'+page.id),...(pageBand?[pageBand]:[])],unbreakable:true};
@@ -90,6 +91,12 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
    section.push(...view.aside.map(block));
    if(family&&!sectionBreak)content.push({stack:section,unbreakable:true});
    else content.push(...section);
+   if(education&&page.id==='perspective'&&f.pages.length>3){
+    content.push(text(L.clinicalInside,'subhead',{margin:[0,18,0,9]}),...f.pages.slice(1).map(item=>({columns:[
+     text(item.title,'small',{linkToDestination:'clinical-'+item.id,color:accent}),
+     {text:[{pageReference:'clinical-'+item.id}],style:'small',width:22,alignment:'right',color:accent},
+    ],margin:[0,0,0,5]})));
+   }
   });
  }else{
   const {blood,collection,answers,outputs,alerts}=reportFolioRecord(e);
@@ -139,13 +146,16 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
  }
  if(e.citations.length){
   const sources=e.citations.map((source,index)=>({source,index}));
-  for(let start=0;start<sources.length;start+=20){
-   const section=sources.slice(start,start+20),middle=Math.ceil(section.length/2);
+  const sourcePageSize=education?36:20;
+  for(let start=0;start<sources.length;start+=sourcePageSize){
+   const section=sources.slice(start,start+sourcePageSize),columnCount=education?3:2,perColumn=Math.ceil(section.length/columnCount);
+   const groups=Array.from({length:columnCount},(_,i)=>section.slice(i*perColumn,(i+1)*perColumn)).filter(col=>col.length);
    const heading=title(C.evidence,L.clinicalSourceLibrary,start?'':L.clinicalSourcesLead);
-   const columns={columns:[section.slice(0,middle),section.slice(middle)].filter(col=>col.length).map(col=>({width:'*',stack:col.map(({source,index})=>({unbreakable:true,stack:[
-    {columns:[{text:String(index+1).padStart(2,'0'),style:'micro',color:accent,width:17},{stack:[text(source.label,'source',{...(safe(source.url)?{link:source.url}:{})}),text(source.kind,'micro')]}],columnGap:5,margin:[0,0,0,9]},
-   ]}))})),columnGap:22};
-   if(family)content.push({stack:[{...rule(),margin:[0,12,0,13]},heading,columns],unbreakable:true});
+   const columns={columns:groups.map(col=>({width:'*',stack:col.map(({source,index})=>({unbreakable:true,stack:[
+    {columns:[{text:String(index+1).padStart(2,'0'),style:'micro',color:accent,width:17},{stack:[text(source.label,'source',{...(safe(source.url)?{link:source.url}:{})}),text(source.kind,'micro')]}],columnGap:5,margin:[0,0,0,education?5:9]},
+   ]}))})),columnGap:education?15:22};
+   if(education)content.push({pageBreak:'before',stack:[heading]},columns);
+   else if(family)content.push({stack:[{...rule(),margin:[0,12,0,13]},heading,columns],unbreakable:true});
    else content.push({pageBreak:'before',stack:[heading]},columns);
   }
  }
@@ -163,7 +173,7 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
   pageSize:'A4',pageMargins:[45,71,45,62],
   defaultStyle:{font:'Roboto',fontSize:10.4,color:ink,lineHeight:1.23},
   styles:{
-   body:{fontSize:10.1,lineHeight:1.17,margin:[0,0,0,7]},
+   body:{fontSize:education?11.7:10.1,lineHeight:education?1.27:1.17,margin:[0,0,0,education?12:7]},
    small:{fontSize:8.5,lineHeight:1.22,color:muted,margin:[0,0,0,4]},
    micro:{fontSize:7.8,lineHeight:1.15,color:muted,margin:[0,0,0,2]},
    kicker:{fontSize:8,bold:true,color:accent,characterSpacing:1.4,margin:[0,0,0,11]},
@@ -173,7 +183,7 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
    coverDeck:{fontSize:13,color:muted,lineHeight:1.25,margin:[0,0,140,8]},
    subhead:{fontSize:11.1,bold:true,lineHeight:1.15,margin:[0,0,0,5]},
    cell:{fontSize:9.2,lineHeight:1.15},tableHead:{fontSize:8.1,bold:true,characterSpacing:.45},
-   source:{fontSize:9.3,bold:true,color:accent,lineHeight:1.16,margin:[0,0,0,3]},
+   source:{fontSize:education?8.8:9.3,bold:true,color:accent,lineHeight:education?1.1:1.16,margin:[0,0,0,3]},
   },
   background:(page,size)=>{
    const fill={canvas:[{type:'rect',x:0,y:0,w:size.width,h:size.height,color:showCover&&page===1?coverPaper:paper}]};

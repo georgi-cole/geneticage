@@ -88,11 +88,12 @@ function folioNarrative(document,key){
  const pages=f.pages.map(page=>{
   const view=reportFolioPage(e,page);
   const column=blocks=>blocks.map(b=>clinicalBlock(e,b)).join('');
+  const educationContents=f.version==='assessment-folio-v2'&&page.id==='perspective'?`<nav class="kq-folio-toc">${translated(e,L.clinicalInside,'h3')}${f.pages.slice(1).map(item=>`<a href="#clinical-${esc(item.id)}">${translated(e,item.title)}</a>`).join('')}</nav>`:'';
   const contents=page.id==='perspective'&&document.resultState==='ready'&&(!family||view.columns.some(col=>col.length))?`<aside class="kq-folio-toc">${translated(e,L.clinicalInside,'h3')}${f.pages.slice(1).map(item=>`<a href="#clinical-${esc(item.id)}">${translated(e,item.title)}</a>`).join('')}</aside>`:'';
   const agenda=view.agenda?.length?`<dl class="kq-followup">${view.agenda.map(row=>`<div><dt>${translated(e,row.when)}</dt><dd><p>${translated(e,row.review)} <sup class="kq-citations">${sourceLinks(e,row.sources)}</sup></p>${translated(e,row.question,'p','kq-follow-question')}</dd></div>`).join('')}</dl>`:'';
   return `<section id="clinical-${esc(page.id)}" class="report-narrative-section kq-folio-page" data-section-id="${esc(page.id)}">
    ${translated(e,page.eyebrow,'p','kq-kicker')}${translated(e,page.title,'h2')}
-   ${clinicalReadings(e,page.highlights||[])}${column(view.lead)}
+   ${clinicalReadings(e,page.highlights||[])}${column(view.lead)}${educationContents}
    ${view.steps?.length?`<ol class="kq-plan-steps">${view.steps.map(step=>`<li>${clinicalBlock(e,step)}</li>`).join('')}</ol>`:''}
    ${agenda}
    ${view.columns.some(col=>col.length)||contents?`<div class="kq-folio-columns">${view.columns.map((col,i)=>col.length||i===1&&contents?`<div>${column(col)}${i===1?contents:''}</div>`:'').join('')}</div>`:''}

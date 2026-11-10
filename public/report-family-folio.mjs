@@ -2,6 +2,7 @@ import {heartAgeReadout} from './heart-vascular.mjs';
 import {FAMILY_FOLIO_VERSION} from './report-family-art.mjs';
 import {CLINICAL_COPY as L} from './report-knowledge/clinical-copy.mjs';
 import {EDITORIAL_COPY as C} from './report-knowledge/copy.mjs';
+import {expandFamilyEducation,FAMILY_EDUCATION_VERSION} from './report-family-education.mjs';
 
 const themes={
  'heart-vascular':'heart',metabolic:'metabolic',kidney:'kidney',fitness:'fitness','health-profile':'profile',
@@ -9,7 +10,7 @@ const themes={
 const boundaryLabels={above:'Above',below:'Below','at-least':'At least','up-to':'Up to'};
 const measured=(label,value,unit='')=>({label,value,unit});
 
-export function composeFamilyFolio(document,{state,chapters,record,metric,methods,critical,established,limited,sleepConcern},{phrase,paragraph,freezeText,source}){
+export function composeFamilyFolio(document,{state,chapters,record,metric,methods,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},{phrase,paragraph,freezeText,source}){
  const {type,resultState}=document;
  const family=type==='heart-vascular'?state.heart:state.system;
  const inputs=family?.inputs||{};
@@ -31,9 +32,9 @@ export function composeFamilyFolio(document,{state,chapters,record,metric,method
   const systolic=reading('systolic'),diastolic=reading('diastolic');
   return systolic&&diastolic?[measured(freezeText('Blood pressure'),systolic.value+'/'+diastolic.value,'mmHg')]:readings('systolic');
  };
- const add=(id,title,{lead=[],columns=[],aside=[],highlights=[],eyebrow='clinicalFeatures'}={})=>{
+ const add=(id,title,{lead=[],columns=[],aside=[],highlights=[],eyebrow='clinicalFeatures',literal=false}={})=>{
   const blocks=[...lead,...columns.flat(),...aside].filter(Boolean);
-  const chapter={id,title:phrase(title),deck:'',kind:id==='perspective'?'intro':'feature',blocks};
+  const chapter={id,title:literal?freezeText(title):phrase(title),deck:'',kind:id==='perspective'?'intro':'feature',blocks};
   const index=chapters.findIndex(entry=>entry.id===id);
   if(index===-1)chapters.push(chapter);
   else chapters[index]=chapter;
@@ -173,15 +174,22 @@ export function composeFamilyFolio(document,{state,chapters,record,metric,method
   methods.unshift(phrase('familyProfileMethod'));
  }
 
+ expandFamilyEducation(document,{inputs,answers,result,review,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},
+  {add,pages,existing,reading,readings,valueReading,block,paragraph});
+ methods.push(phrase('educationEvidenceChecked'));
  if(agenda.length){
-  add('follow-up','clinicalFollowup',{eyebrow:'clinicalFollowupLabel'});
+  add('follow-up','clinicalFollowup',{eyebrow:'clinicalFollowupLabel',lead:critical?[]:[
+   block('review-agenda','educationClinicalReview',[], 'editorial'),
+   block('review-purpose','educationReviewPurpose',[], 'editorial'),
+  ]});
   pages.at(-1).agenda=agenda;
+  pages.at(-1).lesson=!critical;
  }
  for(const template of Object.values(L))freezeText(template);
  const coverMessage=profile?phrase('familyProfileMark'):C.notcalculated;
  const overview=pages.slice(0,3).map(({id,title})=>({id,title}));
  return {
-  version:FAMILY_FOLIO_VERSION,footer:phrase('clinicalClinicianNote'),headline:phrase(key+'Cover'),deck:phrase(key+'Deck'),
+  version:FAMILY_FOLIO_VERSION,knowledgeVersion:FAMILY_EDUCATION_VERSION,footer:phrase('clinicalClinicianNote'),headline:phrase(key+'Cover'),deck:phrase(key+'Deck'),
   coverReadings,coverMessage,overview,pages,urgent:critical,
  };
 }

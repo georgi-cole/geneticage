@@ -1,5 +1,6 @@
 import {composeFamilyFolio} from './report-family-folio.mjs';
 import {FAMILY_COPY} from './report-knowledge/family-copy.mjs';
+import {FAMILY_EDUCATION_COPY} from './report-knowledge/family-education.mjs';
 import {composeClinicalFolio} from './report-clinical.mjs';
 import {CLINICAL_COPY} from './report-knowledge/clinical-copy.mjs';
 import {KNOWLEDGE_MODULES,KNOWLEDGE_VERSION} from './report-knowledge/modules.mjs';
@@ -43,7 +44,7 @@ export function composeEditorialReport(document,state={}){
   if(!Object.hasOwn(translations,text))translations[text]=translateText(text,'bg');return text;
  };
  const phrase=(key,values={})=>{
-  const template=C[key]||CLINICAL_COPY[key]||FAMILY_COPY[key];
+  const template=C[key]||CLINICAL_COPY[key]||FAMILY_COPY[key]||FAMILY_EDUCATION_COPY[key];
   if(!template)throw Error('Unknown editorial copy: '+key);
   const bind=(text,language='en')=>text.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g,(_,key)=>{
    if(values[key]===undefined||values[key]===null)throw Error('Missing editorial fact: '+key);
@@ -90,8 +91,8 @@ export function composeEditorialReport(document,state={}){
  plain('perspective','context',intro,'intro');
 
  let glucose=labNumber('glucose'),glucoseEntry=blood.glucose,fasting=state.labFasting;
- if(type==='metabolic'&&inputs.fastingGlucose){
-  glucoseEntry=inputs.fastingGlucose;
+ if(type==='metabolic'&&inputs.glucose){
+  glucoseEntry=inputs.glucose;
   glucose=exact(glucoseEntry.value)?Number(glucoseEntry.value)*(glucoseEntry.unit==='mg/dL'?1/18.0182:1):null;
   // This input is explicitly named fasting glucose by the family intake.
   fasting='Yes';
@@ -269,13 +270,13 @@ export function composeEditorialReport(document,state={}){
  source(document.sourceIds);
  if(type==='clinical-phenoage')source(['phenoage','validation']);
  const folio=type==='clinical-phenoage'?composeClinicalFolio({chapters,record,derivedFacts,resultState:document.resultState},{phrase,paragraph,freezeText,prevention,glucoseQuiet,highDiagnostic,knownDiabetes,critical,sleepConcern,established,limited,moderate,vigorous,strength,sleepHours,rested:answers.rested,portions:answers.diet,fasting,assay:['standard-crp','hs-crp'].includes(blood.crp?.assay)?blood.crp.assay:null}):
-  composeFamilyFolio(document,{state,chapters,record,metric,methods,critical,established,limited,sleepConcern},{phrase,paragraph,freezeText,source});
+  composeFamilyFolio(document,{state,chapters,record,metric,methods,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},{phrase,paragraph,freezeText,source});
  const citations=evidenceSnapshot([...used]);
  for(const s of citations){freezeText(s.label);freezeText(s.kind);}
  for(const text of Object.values(C))freezeText(text);
  const order=['perspective','glucose','metabolic','prevention','pressure','lipids','fitness','starting-plan','movement','sleep','immune','crp','albumin','kidney','redcells','alp','nutrition','foundations','tobacco','alcohol','stress','follow-up'];
  chapters.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
- const editorial={version:EDITORIAL_VERSION,knowledgeVersion:KNOWLEDGE_VERSION,evidenceVersion:EVIDENCE_VERSION,layoutVersion:folio?.version||REPORT_LAYOUT_VERSION,reviewStatus:'clinical-review-required',type,signature:copy(signature),title:phrase(signature.key+'-title'),deck:phrase(signature.key+'-deck'),date:document.generatedAt||state.savedReport?.generatedAt||state.labDate||null,drawDate:state.labDate||null,sample:state.sample===true,resultState:document.resultState,metric,chapters,record,derivedFacts,methods,citations,decisions,translations,...(folio?{folio}:{})};
+ const editorial={version:EDITORIAL_VERSION,knowledgeVersion:folio?.knowledgeVersion||KNOWLEDGE_VERSION,evidenceVersion:EVIDENCE_VERSION,layoutVersion:folio?.version||REPORT_LAYOUT_VERSION,reviewStatus:'clinical-review-required',type,signature:copy(signature),title:phrase(signature.key+'-title'),deck:phrase(signature.key+'-deck'),date:document.generatedAt||state.savedReport?.generatedAt||state.labDate||null,drawDate:state.labDate||null,sample:state.sample===true,resultState:document.resultState,metric,chapters,record,derivedFacts,methods,citations,decisions,translations,...(folio?{folio}:{})};
  // Never retain implementation-only normalized glucose as a personal lab result.
  if(glucoseMg!==null&&!Number.isFinite(glucoseMg))throw Error('Non-finite normalized glucose.');
  return {...document,editorial};
