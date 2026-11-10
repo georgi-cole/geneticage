@@ -1,0 +1,33 @@
+name: Editorial report review
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/editorial-report-review.yml'
+      - 'public/report-*.mjs'
+      - 'public/report-*.css'
+      - 'public/report-knowledge/**'
+      - 'scripts/report-*.mjs'
+      - 'tests/report-*.mjs'
+      - 'docs/PREMIUM_REPORTS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Package tracked source for reproducible review
+        run: git archive --format=tar --output=/tmp/report-review-source.tar HEAD
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: report-review-source
+          path: /tmp/report-review-source.tar
+          retention-days: 1
+          if-no-files-found: error
