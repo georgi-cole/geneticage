@@ -25,7 +25,7 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
   table:{widths:items.map(()=>'*'),body:[items.map(({label,value,unit})=>({stack:[text(label,'small'),{text:t(String(value)),font:titleFont,fontSize:24,color:ink,margin:[0,0,0,0]},text(unit,'small')]}))]},
   layout:{hLineWidth:()=>.6,vLineWidth:i=>i>0&&i<items.length?.6:0,hLineColor:()=>lineColor,vLineColor:()=>lineColor,paddingTop:()=>8,paddingBottom:()=>7,paddingLeft:i=>i===0?0:12,paddingRight:()=>8},margin:[0,4,0,16],
  }:null;
- const title=(eyebrow,heading,deck='')=>({stack:[text(eyebrow,'kicker'),text(heading,'heading'),...(deck?[text(deck,'deck')]:[])],unbreakable:true});
+ const title=(eyebrow,heading,deck='',id)=>({stack:[text(eyebrow,'kicker',id?{id}:{}),text(heading,'heading'),...(deck?[text(deck,'deck')]:[])],unbreakable:true});
  const box=(stack,fill=soft)=>({table:{widths:['*'],body:[[{stack,fillColor:fill}]],dontBreakRows:true},
   layout:{hLineWidth:()=>0,vLineWidth:i=>i===0?1.4:0,vLineColor:()=>accent,paddingLeft:()=>12,paddingRight:()=>12,paddingTop:()=>6,paddingBottom:()=>4},margin:[0,0,0,6]});
  const block=b=>{
@@ -68,26 +68,28 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
    const chapter=e.chapters.find(ch=>ch.id===page.chapters[0]);
    const pageBand=band(page.highlights||[]);
    const sectionBreak=!family||index===0;
-   const start={id:'clinical-'+page.id,...(sectionBreak?{pageBreak:'before'}:{}),
+   const start={...(sectionBreak?{pageBreak:'before'}:{}),
     stack:[...(!sectionBreak?[{...rule(),margin:[0,12,0,13]}]:[]),
-      title(page.eyebrow,page.title,page.id==='prevention'?'':chapter.deck),...(pageBand?[pageBand]:[])],unbreakable:true};
-   content.push(start,...view.lead.map(block));
+      title(page.eyebrow,page.title,page.id==='prevention'?'':chapter.deck,'clinical-'+page.id),...(pageBand?[pageBand]:[])],unbreakable:true};
+   const section=[start,...view.lead.map(block)];
    if(view.steps?.length){
-    for(const [index,b] of view.steps.entries())content.push({stack:[rule(),{columns:[{text:String(index+1).padStart(2,'0'),width:27,font:titleFont,fontSize:23,color:accent},block(b)],columnGap:11,margin:[0,6,0,0]}],unbreakable:true});
+    for(const [index,b] of view.steps.entries())section.push({stack:[rule(),{columns:[{text:String(index+1).padStart(2,'0'),width:27,font:titleFont,fontSize:23,color:accent},block(b)],columnGap:11,margin:[0,6,0,0]}],unbreakable:true});
    }
    if(view.agenda?.length){
-    content.push(table([L.clinicalWhen,L.clinicalWhat,L.clinicalQuestion],view.agenda.map(r=>[text(r.when,'cell',{bold:true,color:accent}),paragraph(r.review,r.sources,'cell'),text(r.question,'cell')]),['20%','46%','34%'],5));
+    section.push(table([L.clinicalWhen,L.clinicalWhat,L.clinicalQuestion],view.agenda.map(r=>[text(r.when,'cell',{bold:true,color:accent}),paragraph(r.review,r.sources,'cell'),text(r.question,'cell')]),['20%','46%','34%'],5));
    }
    const [left=[],right=[]]=view.columns;
    if(page.id==='perspective'&&e.resultState==='ready'&&(!family||left.length)){
-    content.push({columns:[
+    section.push({columns:[
      {width:'*',stack:left.map(block)},
      {width:'*',stack:[box([text(L.clinicalInside,'kicker'),...f.pages.slice(1).filter(item=>family||['glucose','prevention','starting-plan','sleep','follow-up'].includes(item.id)).map(item=>text(item.title,'small',{linkToDestination:'clinical-'+item.id,margin:[0,0,0,5]}))])]},
     ],columnGap:23,margin:[0,6,0,4]});
    }else if(left.length||right.length){
-    content.push({columns:[left,right].filter(col=>col.length).map(col=>({width:'*',stack:col.map(block)})),columnGap:23,margin:[0,4,0,0]});
+    section.push({columns:[left,right].filter(col=>col.length).map(col=>({width:'*',stack:col.map(block)})),columnGap:23,margin:[0,4,0,0]});
    }
-   content.push(...view.aside.map(block));
+   section.push(...view.aside.map(block));
+   if(family&&!sectionBreak)content.push({stack:section,unbreakable:true});
+   else content.push(...section);
   });
  }else{
   const {blood,collection,answers,outputs,alerts}=reportFolioRecord(e);
@@ -139,10 +141,12 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
   const sources=e.citations.map((source,index)=>({source,index}));
   for(let start=0;start<sources.length;start+=20){
    const section=sources.slice(start,start+20),middle=Math.ceil(section.length/2);
-   content.push({pageBreak:'before',stack:[title(C.evidence,L.clinicalSourceLibrary,start?'':L.clinicalSourcesLead)]});
-   content.push({columns:[section.slice(0,middle),section.slice(middle)].filter(col=>col.length).map(col=>({width:'*',stack:col.map(({source,index})=>({unbreakable:true,stack:[
+   const heading=title(C.evidence,L.clinicalSourceLibrary,start?'':L.clinicalSourcesLead);
+   const columns={columns:[section.slice(0,middle),section.slice(middle)].filter(col=>col.length).map(col=>({width:'*',stack:col.map(({source,index})=>({unbreakable:true,stack:[
     {columns:[{text:String(index+1).padStart(2,'0'),style:'micro',color:accent,width:17},{stack:[text(source.label,'source',{...(safe(source.url)?{link:source.url}:{})}),text(source.kind,'micro')]}],columnGap:5,margin:[0,0,0,9]},
-   ]}))})),columnGap:22});
+   ]}))})),columnGap:22};
+   if(family)content.push({stack:[{...rule(),margin:[0,12,0,13]},heading,columns],unbreakable:true});
+   else content.push({pageBreak:'before',stack:[heading]},columns);
   }
  }
 
