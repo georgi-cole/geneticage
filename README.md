@@ -24,9 +24,17 @@ Saved historical report snapshots retain their original interpretation, prioriti
 
 Editorial standard: use concrete headings, ordinary English and defined terms; ask one clear question at a time; place the relevant limitation beside the result and leave technical detail in the methods section. Avoid motivational slogans, causal claims, repeated sales copy and interchangeable labels for biological, clinical and epigenetic age. Clinical review, population applicability and uncertainty calibration remain outstanding; an editorial review is not clinical validation.
 
+## Personal report composition: 9 November 2026
+
+Reports now separate **Your report**, **Your data**, and **Method & evidence** across the health profile, Clinical PhenoAge, Heart & Vascular, Metabolic, Kidney and Fitness assessments. The reading view starts with the existing result and follows with connected interpretation, selected priorities, useful context and a practical next step. Exact answers, measurements and their reference comparisons stay in the data tab. Methods, sources and version information remain independently accessible.
+
+The deterministic `personal-report-v1` composer binds curated prose to recorded facts and existing model outputs. It does not call an LLM or change any scientific equation. New server-validated saves include the composed document in the encrypted snapshot; historical reports without one retain their saved interpretation. The same renderer handles drafts, samples and saved documents, with the existing full-report access gate. See [report architecture and extension workflow](docs/PREMIUM_REPORTS.md).
+
+**Report PDF** exports the personal interpretation. **Data & methods PDF** exports the companion record. Browser-menu printing defaults to the personal report, regardless of the selected tab. Printing expands only the disclosures in that export and restores the reading state afterward. Both documents remain explicitly automated educational reports without clinical review.
+
 ## Assessment and report revision: 6 November 2026
 
-Content version `2026-11-06-report-v3` retains questionnaire answers and blood entries when switching routes. Reports opens the current draft, with Summary, Findings, Blood results and Details instead of a long chapter dropdown. Sample exploration keeps a temporary copy of the current draft so the user can return to it. Only explicit reset/new-assessment actions clear entries; reloading still clears unsaved data.
+Content version `2026-11-06-report-v3` introduced retained questionnaire answers and blood entries when switching routes, and replaced the long report chapter dropdown. The report destinations are now the three views described above. Sample exploration keeps a temporary copy of the current draft so the user can return to it. Only explicit reset/new-assessment actions clear entries; reloading still clears unsaved data.
 
 Users can enter their own reference limits in the measurement’s selected unit, including one-sided and exclusive limits. These take precedence. Published comparisons require adult collection context. The creatinine group and CRP test type appear beside their readings. Standard CRP uses the ABIM guide. High-sensitivity CRP uses the Mayo Clinic Laboratories cardiovascular threshold when selected. The encrypted record stores the guide version used. [Reference policy and sources](docs/LAB_REFERENCE_POLICY.md).
 
@@ -58,7 +66,7 @@ The report includes optional smoking history, diastolic blood pressure, ApoB and
 
 ## System assessments
 
-Metabolic, Kidney and Fitness each have a guided intake and a report with Summary, Measurements and Methods. They reuse matching answers for review and link to missing fields. A specialist result opens its own step with a short explanation, a route back to the current result and a link for help finding the test. Each system keeps its own versioned report and age reference. [Model inputs, references and research review](docs/SYSTEM_AGE_METHODS.md).
+Metabolic, Kidney and Fitness each have a guided intake and the shared report, data and methods views. They reuse matching answers for review and link to missing fields. A specialist result opens its own step with a short explanation, a route back to the current result and a link for help finding the test. Each system keeps its own versioned report and age reference. [Model inputs, references and research review](docs/SYSTEM_AGE_METHODS.md).
 
 ## Phone preview on GitHub Pages
 
@@ -167,8 +175,16 @@ Clinical scores, interpretation rules, attribution and terminology require indep
 
 ## Current interface
 
-The shared app canvas has four destinations: Overview, Assessments, Reports and Account. Guided entry uses one question at a time and five blood-entry steps; reports are read by chapter. The first-open screen has no invented personal age. Samples are explicitly labelled, and saved results remain immutable snapshots.
+The shared app canvas has four destinations: Overview, Assessments, Reports and Account. Guided entry uses one question at a time and five blood-entry steps. Reports separate the personal interpretation, recorded data and evidence. The first-open screen has no invented personal age. Samples are explicitly labelled, and saved results remain immutable snapshots.
 
 Black Metal is the default, with silver accents and a polished graphite action. Blood Moon has distinct cropped lunar portraits; Bionic uses porcelain, titanium and metallic blue. The three themes share geometry, controls and typography. Fine custom navigation/arrow symbols use the Paired icon family; the oversized decorative DNA spiral is retired.
 
 EN/БГ switches copy in place, preserving answers and the current screen, and persists only the language preference. The theme preference is also local. No health records are written to browser storage. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md), [design/ICON_SYSTEM.md](design/ICON_SYSTEM.md) and [design/LOCALIZATION.md](design/LOCALIZATION.md).
+
+## Editorial report integration: 10 November 2026
+
+New report editions include the educational `personal-science-v2` document: a versioned 18-module knowledge bank, assessment-specific chapters and visual signatures, evidence-linked clinical discussion, contextual derived values and a focused starting plan. English and Bulgarian narrative/source snapshots are frozen with the existing encrypted report. Older editions and payment entitlements remain unchanged.
+
+The two v2 export buttons generate actual locally rendered PDFs rather than opening a browser print dialog. The personal report and complete data/methods record come from the same saved content. Native exports use a private-cache file and the system share sheet; successful exports may leave an OS-managed temporary file, with owned files older than 24 hours cleaned on subsequent exports. No report data is sent to an external PDF or language-model service.
+
+`npm ci` installs the isolated pinned PDF engine. `npm run report:qa` generates fictional validation PDFs; the Editorial report review CI job also tests real browser downloads. See [report maintenance and privacy contract](docs/PREMIUM_REPORTS.md). Clinical-review status remains explicit and pending; source-backed automation is not clinical validation.

@@ -16,6 +16,9 @@ const eslintConfig = defineConfig([
     ".wrangler/**",
     ".sites-runtime/**",
     "outputs/**",
+    "report-engine/node_modules/**",
+    "public/assets/report-pdf-runtime.js",
+    "report-qa-output/**",
     "work/**",
   ]),
   {

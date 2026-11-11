@@ -1,3 +1,4 @@
+import {buildReportLocale} from './report-locale.mjs';
 import {readFile,writeFile,mkdir,readdir} from 'node:fs/promises';
 const args=process.argv.slice(2);
 if(args.some(arg=>arg!=='--check'))throw Error('Use no arguments to build, or --check to verify without writing.');
@@ -24,3 +25,5 @@ if(args.includes('--check')){
  await writeFile(output,generated);
  console.log('Built '+Object.keys(entries).length+' Bulgarian copy entries.');
 }
+
+await buildReportLocale({check:args.includes('--check')});
