@@ -6,11 +6,12 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createPagesServer} from './serve-pages.mjs';
 import {sampleAnswers} from '../public/model.mjs';
+import {systemSampleInputs} from '../public/system-assessments.mjs';
 
 // Real Chromium, the actual built app and synthetic samples only. No production
 // identity, access token, account, network API or health record is used.
 const root=fileURLToPath(new URL('../',import.meta.url));
-const out=process.env.REPORT_BROWSER_OUTPUT||path.join(root,'report-qa-output','browser');
+const out=path.resolve(process.env.REPORT_BROWSER_OUTPUT||path.join(root,'report-qa-output','browser'));
 await mkdir(out,{recursive:true});
 let binary;
 for(const candidate of [process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chromium-browser'].filter(Boolean)){
@@ -22,7 +23,7 @@ const server=await createPagesServer();
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const url=`http://127.0.0.1:${server.address().port}/geneticage/`;
 const chrome=spawn(binary,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:['ignore','ignore','pipe']});
-let socket,serial=0;const pending=new Map(),exceptions=[],downloads=[];
+let socket,send,serial=0;const pending=new Map(),exceptions=[],downloads=[];
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 try{
  const endpoint=await new Promise((resolve,reject)=>{
@@ -37,18 +38,20 @@ try{
   if(data.id){const p=pending.get(data.id);if(p){pending.delete(data.id);clearTimeout(p.timer);if(data.error)p.reject(Error(JSON.stringify(data.error)));else p.resolve(data.result);}}
   if(data.method==='Runtime.exceptionThrown')exceptions.push(data.params.exceptionDetails.exception?.description||data.params.exceptionDetails.text);
   if(data.method==='Browser.downloadProgress'&&data.params.state==='completed')downloads.push(data.params.guid);
+  if(data.method==='Browser.downloadProgress'&&data.params.state==='canceled')console.error('Browser download cancelled:',JSON.stringify(data.params));
+  if(data.method==='Log.entryAdded'&&data.params.entry.level==='error')console.error('Browser log:',data.params.entry.text);
  });
- const send=(method,params={},sessionId)=>new Promise((resolve,reject)=>{
+ send=(method,params={},sessionId)=>new Promise((resolve,reject)=>{
   const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout: '+method));},60000);
   pending.set(id,{resolve,reject,timer});socket.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));
  });
  const {targetId}=await send('Target.createTarget',{url:'about:blank'});
  const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});
  const page=(method,params)=>send(method,params,sessionId);
- await page('Page.enable');await page('Runtime.enable');
+ await page('Page.enable');await page('Runtime.enable');await page('Log.enable');
  await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:out,eventsEnabled:true});
- const evaluate=async expression=>{
-  const r=await page('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});
+ const evaluate=async(expression,userGesture=false)=>{
+  const r=await page('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture});
   if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);
   return r.result.value;
  };
@@ -57,7 +60,7 @@ try{
  };
  const click=async selector=>{
   await until(`!!document.querySelector(${JSON.stringify(selector)})`,selector);
-  await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);await pause(150);
+  await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`,true);await pause(150);
  };
  const fill=async(selector,value)=>{
   await until(`!!document.querySelector(${JSON.stringify(selector)})`,selector);
@@ -65,12 +68,16 @@ try{
  };
  async function download(scope){
   const before=downloads.length;
-  await click(`[data-action="print"][data-export="${scope}"]`);
+  const selector=`[data-action="print"][data-export="${scope}"]`;
+  const point=await evaluate(`(()=>{const button=document.querySelector(${JSON.stringify(selector)});button.scrollIntoView({block:'center'});const r=button.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+  await page('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
+  await page('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
   const end=Date.now()+60000;
   while(downloads.length===before&&Date.now()<end){
    const failed=await evaluate("document.querySelector('.kq-pdf-status')?.hasAttribute('data-error')");
    assert.ok(!failed,'The real PDF export reported an error.');await pause(150);
   }
+  if(downloads.length!==before+1)console.error('PDF delivery state:',await evaluate("({status:document.querySelector('.kq-pdf-status')?.outerHTML,title:document.title,lang:document.documentElement.lang})"));
   assert.equal(downloads.length,before+1,'A finished PDF must actually reach the download directory.');
  }
  await page('Page.navigate',{url});
@@ -80,11 +87,11 @@ try{
  await click('[data-action="sample-report"]');
  await until("!!document.querySelector('.kq-editorial')",'Editorial sample');
  const checks=[];
- for(const width of [320,390,1280]){
+ for(const width of process.env.REPORT_BROWSER_QUICK?[390]:[320,390,1280]){
   await page('Emulation.setDeviceMetricsOverride',{width,height:width<600?844:1000,deviceScaleFactor:1,mobile:width<600});
   for(const language of ['en','bg']){
    if(await evaluate('document.documentElement.lang')!==language)await click('#language-toggle');
-   for(const theme of ['black-metal','blood-moon','bionic']){
+   for(const theme of process.env.REPORT_BROWSER_QUICK?['bionic']:['black-metal','blood-moon','bionic']){
     await click(`[data-theme-preference="${theme}"]`);await pause(1200);
     const measurements=await evaluate(`(()=>{const e=document.querySelector('.kq-editorial'),r=e.getBoundingClientRect();return {width:r.width,scroll:e.scrollWidth,client:e.clientWidth,lang:document.documentElement.lang,text:e.innerText,theme:document.documentElement.dataset.theme};})()`);
     assert.ok(measurements.scroll<=measurements.client+2,`Report overflow at ${width} / ${language} / ${theme}`);
@@ -98,6 +105,7 @@ try{
    }
   }
  }
+ console.log('Clinical layouts checked; downloading the actual app PDFs.');
  for(const language of ['en','bg']){
   if(await evaluate('document.documentElement.lang')!==language)await click('#language-toggle');
   for(const scope of ['report','technical'])await download(scope);
@@ -149,7 +157,7 @@ try{
  assert.equal(secondFiles.length,2);
  const families={};
  const openAssessments=()=>click('.sidebar-nav [data-route="history"]');
- async function familyExports(type){
+ async function familyExports(type,edition=type){
   const selector=`[data-report-family="${type}"]`;
   await until(`!!document.querySelector(${JSON.stringify(selector)})`,type+' report');
   const teaching={
@@ -161,7 +169,17 @@ try{
   };
   const lessonText=await evaluate(`document.querySelector(${JSON.stringify(selector)}).innerText`);
   assert.match(lessonText,teaching[type],type+' must include its educational chapters');
-  const folder=path.join(out,type);
+  const interpretation={
+   'heart-vascular':/Your ApoB result and the question of a personal target/,
+   metabolic:/What your glucose results suggest now/,
+   kidney:/What your urine result adds to filtration/,
+   fitness:/What your capacity and activity suggest doing next/,
+   'health-profile':/How your recorded routine shapes the priorities/,
+  };
+  assert.match(lessonText,interpretation[type],type+' must interpret the actual recorded results');
+  if(edition==='heart-vascular')assert.match(lessonText,/ApoB and wider lipid discussion a more useful optimisation focus/);
+  if(edition==='heart-inherited-risk')assert.match(lessonText,/Your ApoB is below 90 mg\/dL, while Lp\(a\) is in the higher category/);
+  const folder=path.join(out,edition);
   await mkdir(folder,{recursive:true});
   await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:folder,eventsEnabled:true});
   for(const scope of ['report','technical'])await download(scope);
@@ -187,7 +205,7 @@ try{
    }
   }
   await click('#language-toggle');
-  families[type]=exported;
+  families[edition]=exported;
  }
 
  // A fictional cardiovascular assessment, entered through the normal forms.
@@ -204,14 +222,52 @@ try{
    if(await evaluate(`!!document.querySelector(${JSON.stringify(input)})`))await fill(input,value);
    else if(await evaluate(`!!document.querySelector(${JSON.stringify(option)})`))await click(option);
   }
+  if(await evaluate("!!document.querySelector('[name=lpaUnit]')"))await fill('[name=lpaUnit]','mg/dL');
   await click('#heart-form [type=submit]');
  }
  await familyExports('heart-vascular');
 
+ // Keep the cardiovascular inputs unchanged and contrast a new lipid pattern.
+ await click('[data-action="report-tab"][data-tab="measurements"]');
+ await click('[data-action="heart-edit"][data-part="specialist"]');
+ await fill('#heart-apob','0.8');
+ await fill('[name=apobreferenceHigh]','1.2');
+ await fill('[name=lpaUnit]','nmol/L');
+ await fill('#heart-lpa','150');
+ await click('#heart-form [type=submit]');
+ await click('[data-action="report-tab"][data-tab="summary"]');
+ await familyExports('heart-vascular','heart-inherited-risk');
+
  for(const type of ['metabolic','kidney','fitness']){
   await openAssessments();
   await click(`[data-action="start-system"][data-type="${type}"]`);
-  await click(`[data-action="sample"][data-type="${type}"]`);
+  if(await evaluate("!!document.querySelector('#consent')")){
+   await click('#consent');await click('[data-action="consent-next"]');
+  }
+  const entries=systemSampleInputs(type);
+  for(let i=0;i<24&&!await evaluate(`!!document.querySelector('[data-report-family="${type}"]')`);i++){
+   await until("!!document.querySelector('#system-form')",type+' intake');
+   for(const [id,entry] of Object.entries(entries)){
+    const selector='#system-'+id,value=typeof entry==='object'?entry.value:entry;
+    const option=`#system-form input[name="${id}"][value="${value}"]`;
+    if(await evaluate(`!!document.querySelector(${JSON.stringify(selector)})`))await fill(selector,value);
+    else if(await evaluate(`!!document.querySelector(${JSON.stringify(option)})`))await click(option);
+   }
+   await click('#system-form [type=submit]');
+  }
+  if(type==='metabolic'){
+   await click('[data-action="system-extra"][data-part="metabolic-labs"]');
+   await fill('#system-hba1c','6.0');await fill('#system-glucose','6.1');
+   await click('#system-form [type=submit]');
+  }
+  if(type==='kidney'){
+   await click('[data-action="system-extra"][data-part="kidney-urine"]');
+   await fill('#system-acr','12');
+   await click('#system-form [type=submit]');
+   await click('[data-action="system-extra"][data-part="kidney-cystatin"]');
+   await fill('#system-cystatin','0.9');
+   await click('#system-form [type=submit]');
+  }
   await familyExports(type);
  }
 
@@ -244,9 +300,14 @@ try{
  assert.deepEqual(exceptions,[],'The browser must have no uncaught application errors.');
  const summary={browser:(await send('Browser.getVersion')).product,checks,pdfs:files,comparisonCase:secondFiles,families,uncaughtExceptions:exceptions};
  await writeFile(path.join(out,'checks.json'),JSON.stringify(summary,null,2));
- console.log('Real-browser report review passed: English/Bulgarian layouts and 16 downloads across six assessments.');
+ console.log('Real-browser report review passed: English/Bulgarian layouts and 18 downloads across six assessments, including contrasting lipid cases.');
+}catch(error){
+ console.error(error);throw error;
 }finally{
+ if(socket?.readyState===1)await send('Browser.close').catch(()=>{});
  for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Browser review closed.'));}
  socket?.close();chrome.kill();server.close();
- await pause(300);await rm(profile,{recursive:true,force:true,maxRetries:3});
+ await pause(1000);
+ if(!path.resolve(profile).startsWith(path.resolve(tmpdir())+path.sep+'kq-report-chrome-'))throw Error('Unexpected browser review directory.');
+ await rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150}).catch(error=>console.warn('Temporary browser profile cleanup: '+error.code));
 }

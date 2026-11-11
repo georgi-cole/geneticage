@@ -93,7 +93,7 @@ test('the educational edition exposes complete, sourced lessons in both language
  }
  for(const {id,document} of reportFixtures().filter(f=>['heart-vascular','metabolic','kidney','fitness','health-profile'].includes(f.id))){
   const stored=JSON.parse(JSON.stringify(document));
-  assert.equal(stored.editorial.folio.version,'assessment-folio-v2',id);
+  assert.equal(stored.editorial.folio.version,'assessment-folio-v3',id);
   for(const page of stored.editorial.folio.pages){
    const content=reportFolioPage(stored.editorial,page);
    for(const b of [...content.lead,...content.columns.flat(),...content.aside]){

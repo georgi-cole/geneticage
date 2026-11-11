@@ -11,7 +11,7 @@ const rowsByGroup=rows=>[...new Set(rows.map(row=>row.group))].map(name=>[name,r
 export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
  const e=document.editorial, f=e.folio, m=e.metric;
  const family=isFamilyFolio(e),familyTitle=family?e.title:L.clinicalFamily;
- const education=f.version==='assessment-folio-v2';
+ const education=['assessment-folio-v2','assessment-folio-v3'].includes(f.version);
  const {accent,cover:coverPaper,paper,soft}=reportFolioPalette(e);
  const recordPadding=family&&e.type!=='health-profile'?3:4;
  const content=[];
@@ -29,8 +29,8 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
  const title=(eyebrow,heading,deck='',id)=>({stack:[text(eyebrow,'kicker',id?{id}:{}),text(heading,'heading'),...(deck?[text(deck,'deck')]:[])],unbreakable:true});
  const box=(stack,fill=soft)=>({table:{widths:['*'],body:[[{stack,fillColor:fill}]],dontBreakRows:true},
   layout:{hLineWidth:()=>0,vLineWidth:i=>i===0?1.4:0,vLineColor:()=>accent,paddingLeft:()=>12,paddingRight:()=>12,paddingTop:()=>6,paddingBottom:()=>4},margin:[0,0,0,6]});
- const block=b=>{
-  const body=[...(b.title?[text(b.title,'subhead')]:[]),paragraph(b.text,b.sources)];
+ const block=(b,interpretation=false)=>{
+  const body=[...(b.title?[text(b.title,'subhead')]:[]),paragraph(b.text,b.sources,interpretation===true?'caseBody':'body')];
   return ['trial','treatment','derived','safety','aside'].includes(b.kind)?box(body,b.kind==='safety'?'#FFF0E4':soft):{stack:body,unbreakable:true};
  };
  const measure=family?f.coverReadings:m.age===null?[]:[
@@ -72,7 +72,7 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
    const start={...(sectionBreak?{pageBreak:'before'}:{}),
     stack:[...(!sectionBreak?[{...rule(),margin:[0,12,0,13]}]:[]),
       title(page.eyebrow,page.title,page.id==='prevention'?'':chapter.deck,'clinical-'+page.id),...(pageBand?[pageBand]:[])],unbreakable:true};
-   const section=[start,...view.lead.map(block)];
+   const section=[start,...view.lead.map(b=>block(b,f.version==='assessment-folio-v3'&&page.interpretation))];
    if(view.steps?.length){
     for(const [index,b] of view.steps.entries())section.push({stack:[rule(),{columns:[{text:String(index+1).padStart(2,'0'),width:27,font:titleFont,fontSize:23,color:accent},block(b)],columnGap:11,margin:[0,6,0,0]}],unbreakable:true});
    }
@@ -92,10 +92,15 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
    if(family&&!sectionBreak)content.push({stack:section,unbreakable:true});
    else content.push(...section);
    if(education&&page.id==='perspective'&&f.pages.length>3){
-    content.push(text(L.clinicalInside,'subhead',{margin:[0,18,0,9]}),...f.pages.slice(1).map(item=>({columns:[
+    const contents=f.pages.slice(1).map(item=>({columns:[
      text(item.title,'small',{linkToDestination:'clinical-'+item.id,color:accent}),
-     {text:[{pageReference:'clinical-'+item.id}],style:'small',width:22,alignment:'right',color:accent},
-    ],margin:[0,0,0,5]})));
+     {text:[{pageReference:'clinical-'+item.id}],style:'small',width:34,alignment:'right',color:accent},
+    ],margin:[0,0,0,5]}));
+    content.push(text(L.clinicalInside,'subhead',{margin:[0,18,0,9]}));
+    if(f.version==='assessment-folio-v3'&&contents.length>12){
+     const middle=Math.ceil(contents.length/2);
+     content.push({columns:[{width:'*',stack:contents.slice(0,middle)},{width:'*',stack:contents.slice(middle)}],columnGap:22});
+    }else content.push(...contents);
    }
   });
  }else{
@@ -133,7 +138,7 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
    }
   }
   if(family){
-   content.push({stack:[{...rule(),margin:[0,0,0,13]},title(L.clinicalMethodsLabel,L.clinicalMethods),...e.methods.slice(0,1).map(value=>text(value))],margin:[0,16,0,0],unbreakable:true});
+   content.push({stack:[{...rule(),margin:[0,0,0,13]},title(L.clinicalMethodsLabel,L.clinicalMethods),...e.methods.slice(0,1).map(value=>text(value))],margin:[0,16,0,0],unbreakable:true,...(f.version==='assessment-folio-v3'&&e.type==='health-profile'?{pageBreak:'before'}:{})});
    content.push(...e.methods.slice(1).map(value=>text(value)));
   }else content.push({stack:[title(L.clinicalMethodsLabel,L.clinicalMethods),...e.methods.map(value=>text(value))],pageBreak:'before'});
   if(outputs.length)content.push(text(L.clinicalResultPrecision,'small'),table([C.input,C.value],outputs.map(row=>recordPair(row)),['55%','45%'],4));
@@ -174,6 +179,7 @@ export function folioPdfDefinition(document,{scope,logo,t,titleFont}){
   defaultStyle:{font:'Roboto',fontSize:10.4,color:ink,lineHeight:1.23},
   styles:{
    body:{fontSize:education?11.7:10.1,lineHeight:education?1.27:1.17,margin:[0,0,0,education?12:7]},
+   caseBody:{fontSize:11.4,lineHeight:1.23,margin:[0,0,0,9]},
    small:{fontSize:8.5,lineHeight:1.22,color:muted,margin:[0,0,0,4]},
    micro:{fontSize:7.8,lineHeight:1.15,color:muted,margin:[0,0,0,2]},
    kicker:{fontSize:8,bold:true,color:accent,characterSpacing:1.4,margin:[0,0,0,11]},

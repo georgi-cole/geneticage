@@ -1,9 +1,10 @@
 import {FAMILY_EDUCATION,FAMILY_EDUCATION_VERSION} from './report-knowledge/family-education.mjs';
 import {KNOWLEDGE_MODULES} from './report-knowledge/modules.mjs';
+import {addResultInterpretations,RESULT_INTERPRETATION_VERSION} from './report-result-interpretation.mjs';
 
 // Select education from facts already validated by the assessment. This layer
 // supplies explanations and planning examples, without setting clinical cutoffs.
-export function expandFamilyEducation(document,context,{add,pages,existing,reading,readings,valueReading,block,paragraph}){
+export function expandFamilyEducation(document,context,{add,pages,existing,reading,block,paragraph,phrase,freezeText,joinText}){
  const {type,resultState}=document;
  const {inputs,answers,critical,established,limited,sleepConcern,routineKnown,knownDiabetes,specialContext}=context;
  if(critical)return;
@@ -28,6 +29,7 @@ export function expandFamilyEducation(document,context,{add,pages,existing,readi
  // Replace the short v1 summaries with complete features. The original opening
  // retains the case priority, recorded values and any eligibility explanation.
  pages.splice(1);
+ addResultInterpretations(document,context,{add,pages,reading,paragraph,phrase,freezeText,joinText});
 
  if(!ready&&!profile){
   const explanations={
@@ -44,9 +46,9 @@ export function expandFamilyEducation(document,context,{add,pages,existing,readi
    feature('home-pressure');
   }
   if(['total','hdl','apob','lpa'].some(reading))feature('lipids');
-  if(reading('apob')||reading('lpa'))feature('advanced-lipids',{highlights:readings('apob','lpa')});
-  if(reading('cfpwv'))feature('arterial-wave',{highlights:readings('cfpwv')});
-  if(reading('hba1c')||reading('glucose'))feature('glucose-tests',{highlights:readings('hba1c','glucose')});
+  if(reading('apob')||reading('lpa'))feature('advanced-lipids');
+  if(reading('cfpwv'))feature('arterial-wave');
+  if(reading('hba1c')||reading('glucose'))feature('glucose-tests');
   if(reading('egfr'))addModule('heart-kidney-context','educationHeartKidneyTitle',[
    entry('heart-kidney','educationHeartKidneyText',['score2-diabetes','kidney-tests']),
    paragraph('egfr-meaning',FAMILY_EDUCATION.filtration.blocks[0].text,['ckd-epi-2021','kidney-context']),
@@ -61,7 +63,6 @@ export function expandFamilyEducation(document,context,{add,pages,existing,readi
   feature('metabolic-biology');
   feature('glucose-tests',{
    intro:[entry('glucose-context',reading('glucose')||reading('hba1c')?'educationGlucosePresent':'educationNoGlucose',['glucose-followup'])],
-   highlights:readings('glucose','hba1c'),
   });
   feature('metabolic-food');
   feature('metabolic-movement');
@@ -76,9 +77,8 @@ export function expandFamilyEducation(document,context,{add,pages,existing,readi
   feature('kidney-work');
   feature('filtration',{
    intro:reading('cystatin')?[entry('combined-context','kidneyCystatinText',['ckd-epi-2021'])]:[],
-   highlights:[...readings('cystatin'),...valueReading('eGFR from creatinine and cystatin C',context.review.egfrCombined,'mL/min/1.73 m²')],
   });
-  feature('urine',{intro:[entry('urine-context',reading('acr')?'educationKidneyUrineKnown':'educationKidneyUrineMissing',['kidney-tests'])],highlights:readings('acr')});
+  feature('urine',{intro:[entry('urine-context',reading('acr')?'educationKidneyUrineKnown':'educationKidneyUrineMissing',['kidney-tests'])]});
   feature('kidney-care');
   feature('kidney-food');
   feature('aerobic',{intro:activityIntro()});
@@ -127,4 +127,4 @@ export function expandFamilyEducation(document,context,{add,pages,existing,readi
  }
 }
 
-export {FAMILY_EDUCATION_VERSION};
+export {FAMILY_EDUCATION_VERSION,RESULT_INTERPRETATION_VERSION};

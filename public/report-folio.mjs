@@ -2,7 +2,7 @@ import {clinicalCoverArt,clinicalPageContent,clinicalRecordGroups,hasClinicalFol
 import {FAMILY_FOLIO_VERSION,familyCoverArt,familyPalette} from './report-family-art.mjs';
 import {familyPageContent} from './report-family-folio.mjs';
 
-export const isFamilyFolio=editorial=>['assessment-folio-v1',FAMILY_FOLIO_VERSION].includes(editorial?.folio?.version);
+export const isFamilyFolio=editorial=>['assessment-folio-v1','assessment-folio-v2',FAMILY_FOLIO_VERSION].includes(editorial?.folio?.version);
 export const hasReportFolio=editorial=>isFamilyFolio(editorial)||hasClinicalFolio(editorial);
 
 export function reportFolioArt(editorial){

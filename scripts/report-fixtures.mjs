@@ -14,7 +14,7 @@ export function reportFixtures(){
   ['health-profile',good,null],
   ['sparse-profile',sparse,null],
   ['critical',critical,clinical(critical)],
-  ['heart-vascular',{assessmentType:'heart-vascular',sample:true,heart:assessHeartVascular({age:50,country:'Germany',sex:'Male',smoking:'Yes',conditions:'No',treatment:'No',systolic:{value:'140',unit:'mmHg'},diastolic:{value:'85',unit:'mmHg'},total:{value:'5.5',unit:'mmol/L'},hdl:{value:'1.3',unit:'mmol/L'}})},null],
+  ['heart-vascular',{assessmentType:'heart-vascular',sample:true,heart:assessHeartVascular({age:50,country:'Germany',sex:'Male',smoking:'Yes',conditions:'No',treatment:'No',systolic:{value:'140',unit:'mmHg'},diastolic:{value:'85',unit:'mmHg'},total:{value:'5.5',unit:'mmol/L'},hdl:{value:'1.3',unit:'mmol/L'},apob:{value:'0.95',unit:'g/L'},lpa:{value:'<12',unit:'mg/dL'}})},null],
   ...['metabolic','kidney','fitness'].map(type=>[type,{assessmentType:type,sample:true,system:assessSystem(type,systemSampleInputs(type))},null]),
  ];
  return cases.map(([id,state,result])=>({id,state,clinical:result,document:composeReportDocument({state,clinical:result,generatedAt:'2026-11-10T00:00:00.000Z'})}));

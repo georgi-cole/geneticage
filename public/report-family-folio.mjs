@@ -2,7 +2,7 @@ import {heartAgeReadout} from './heart-vascular.mjs';
 import {FAMILY_FOLIO_VERSION} from './report-family-art.mjs';
 import {CLINICAL_COPY as L} from './report-knowledge/clinical-copy.mjs';
 import {EDITORIAL_COPY as C} from './report-knowledge/copy.mjs';
-import {expandFamilyEducation,FAMILY_EDUCATION_VERSION} from './report-family-education.mjs';
+import {expandFamilyEducation,RESULT_INTERPRETATION_VERSION} from './report-family-education.mjs';
 
 const themes={
  'heart-vascular':'heart',metabolic:'metabolic',kidney:'kidney',fitness:'fitness','health-profile':'profile',
@@ -10,7 +10,7 @@ const themes={
 const boundaryLabels={above:'Above',below:'Below','at-least':'At least','up-to':'Up to'};
 const measured=(label,value,unit='')=>({label,value,unit});
 
-export function composeFamilyFolio(document,{state,chapters,record,metric,methods,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},{phrase,paragraph,freezeText,source}){
+export function composeFamilyFolio(document,{state,chapters,record,metric,methods,derivedFacts,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},{phrase,paragraph,freezeText,joinText,source}){
  const {type,resultState}=document;
  const family=type==='heart-vascular'?state.heart:state.system;
  const inputs=family?.inputs||{};
@@ -174,9 +174,10 @@ export function composeFamilyFolio(document,{state,chapters,record,metric,method
   methods.unshift(phrase('familyProfileMethod'));
  }
 
- expandFamilyEducation(document,{inputs,answers,result,review,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},
-  {add,pages,existing,reading,readings,valueReading,block,paragraph});
+ expandFamilyEducation(document,{inputs,answers,result,review,derivedFacts,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},
+  {add,pages,existing,reading,readings,valueReading,block,paragraph,phrase,freezeText,joinText});
  methods.push(phrase('educationEvidenceChecked'));
+ methods.push(phrase('resultEvidence'));
  if(agenda.length){
   add('follow-up','clinicalFollowup',{eyebrow:'clinicalFollowupLabel',lead:critical?[]:[
    block('review-agenda','educationClinicalReview',[], 'editorial'),
@@ -189,7 +190,7 @@ export function composeFamilyFolio(document,{state,chapters,record,metric,method
  const coverMessage=profile?phrase('familyProfileMark'):C.notcalculated;
  const overview=pages.slice(0,3).map(({id,title})=>({id,title}));
  return {
-  version:FAMILY_FOLIO_VERSION,knowledgeVersion:FAMILY_EDUCATION_VERSION,footer:phrase('clinicalClinicianNote'),headline:phrase(key+'Cover'),deck:phrase(key+'Deck'),
+  version:FAMILY_FOLIO_VERSION,knowledgeVersion:RESULT_INTERPRETATION_VERSION,footer:phrase('clinicalClinicianNote'),headline:phrase(key+'Cover'),deck:phrase(key+'Deck'),
   coverReadings,coverMessage,overview,pages,urgent:critical,
  };
 }

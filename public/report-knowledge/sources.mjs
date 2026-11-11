@@ -3,6 +3,8 @@ import {references} from '../evidence.mjs';
 // Versioned educational evidence, not a claim of clinician approval. Runtime
 // composition never retrieves live literature or substitutes a missing source.
 const additions = [
+ ['lpa-nla-2024','NLA (2024) · Lipoprotein(a) risk categories','https://www.lipid.org/resource/a-focused-update-to-the-2019-nla-scientific-statement-on-use-of-lipoproteina-in-clinical-practice/','consensus'],
+ ['lpa-repeat','NLA (2022) · Lipoprotein(a) measurement and repeat testing','https://doi.org/10.1016/j.jacl.2022.08.007','consensus'],
  ['lpa-consensus','EAS · Lipoprotein(a) consensus, 2022','https://academic.oup.com/eurheartj/article/43/39/3925/6670882','consensus'],
  ['glucose-diagnosis','ADA · Diagnosis and classification, 2026','https://diabetesjournals.org/care/article/49/Supplement_1/S27/163926/2-Diagnosis-and-Classification-of-Diabetes','guideline'],
  ['glucose-followup','NIDDK · Diabetes and prediabetes testing','https://www.niddk.nih.gov/health-information/professionals/clinical-tools-patient-management/diabetes/diabetes-prediabetes','clinical-guidance'],
@@ -60,7 +62,7 @@ const additions = [
  ['healthy-eating-living','NIDDK · Food, activity and everyday wellbeing','https://www.niddk.nih.gov/health-information/weight-management/keep-active-eat-healthy-feel-great','education'],
  ['cpet-explained','Cambridge University Hospitals · Cardiopulmonary exercise testing','https://www.cuh.nhs.uk/patient-information/cardiopulmonary-exercise-test-cpet/','clinical-guidance'],
 ];
-export const EVIDENCE_VERSION = '2026-11-11-evidence-v3';
+export const EVIDENCE_VERSION = '2026-11-11-evidence-v4';
 export const REPORT_EVIDENCE = Object.freeze(Object.fromEntries([
  ...references.map(item=>[item.id,{...item,kind:'assessment-source',reviewStatus:'clinical-review-required'}]),
  ...additions.map(([id,label,url,kind])=>[id,{id,label,url,kind,reviewStatus:'clinical-review-required'}]),

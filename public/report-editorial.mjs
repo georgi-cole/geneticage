@@ -1,6 +1,7 @@
 import {composeFamilyFolio} from './report-family-folio.mjs';
 import {FAMILY_COPY} from './report-knowledge/family-copy.mjs';
 import {FAMILY_EDUCATION_COPY} from './report-knowledge/family-education.mjs';
+import {RESULT_COPY} from './report-knowledge/result-copy.mjs';
 import {composeClinicalFolio} from './report-clinical.mjs';
 import {CLINICAL_COPY} from './report-knowledge/clinical-copy.mjs';
 import {KNOWLEDGE_MODULES,KNOWLEDGE_VERSION} from './report-knowledge/modules.mjs';
@@ -43,12 +44,17 @@ export function composeEditorialReport(document,state={}){
   if(typeof text!=='string')return '';
   if(!Object.hasOwn(translations,text))translations[text]=translateText(text,'bg');return text;
  };
+ const joinText=parts=>{
+  const text=parts.join(' ');
+  translations[text]=parts.map(part=>translations[part]??translateText(part,'bg')).join(' ');
+  return text;
+ };
  const phrase=(key,values={})=>{
-  const template=C[key]||CLINICAL_COPY[key]||FAMILY_COPY[key]||FAMILY_EDUCATION_COPY[key];
+  const template=C[key]||CLINICAL_COPY[key]||FAMILY_COPY[key]||FAMILY_EDUCATION_COPY[key]||RESULT_COPY[key];
   if(!template)throw Error('Unknown editorial copy: '+key);
   const bind=(text,language='en')=>text.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g,(_,key)=>{
    if(values[key]===undefined||values[key]===null)throw Error('Missing editorial fact: '+key);
-   return language==='bg'&&['label','fasting','rested','assay','portions'].includes(key)?translateText(String(values[key]),'bg'):String(values[key]);
+   return language==='bg'&&['label','fasting','rested','assay','portions','range','origin','reference'].includes(key)?translateText(String(values[key]),'bg'):String(values[key]);
   });
   const en=bind(template);translations[en]=bind(translateText(template,'bg'),'bg');return en;
  };
@@ -270,7 +276,7 @@ export function composeEditorialReport(document,state={}){
  source(document.sourceIds);
  if(type==='clinical-phenoage')source(['phenoage','validation']);
  const folio=type==='clinical-phenoage'?composeClinicalFolio({chapters,record,derivedFacts,resultState:document.resultState},{phrase,paragraph,freezeText,prevention,glucoseQuiet,highDiagnostic,knownDiabetes,critical,sleepConcern,established,limited,moderate,vigorous,strength,sleepHours,rested:answers.rested,portions:answers.diet,fasting,assay:['standard-crp','hs-crp'].includes(blood.crp?.assay)?blood.crp.assay:null}):
-  composeFamilyFolio(document,{state,chapters,record,metric,methods,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},{phrase,paragraph,freezeText,source});
+  composeFamilyFolio(document,{state,chapters,record,metric,methods,derivedFacts,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},{phrase,paragraph,freezeText,joinText,source});
  const citations=evidenceSnapshot([...used]);
  for(const s of citations){freezeText(s.label);freezeText(s.kind);}
  for(const text of Object.values(C))freezeText(text);

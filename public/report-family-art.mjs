@@ -1,4 +1,4 @@
-export const FAMILY_FOLIO_VERSION='assessment-folio-v2';
+export const FAMILY_FOLIO_VERSION='assessment-folio-v3';
 
 const palettes={
  'heart-vascular':{accent:'#963F32',cover:'#F4E8E1',paper:'#FCF7F2',soft:'#F1E1D9',light:'#E2A084',dark:'#7A302B'},
