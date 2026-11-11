@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {createPagesServer} from './serve-pages.mjs';
 import {sampleAnswers} from '../public/model.mjs';
 import {systemSampleInputs} from '../public/system-assessments.mjs';
+import {createBrowserEvaluator} from './browser-evaluation.mjs';
 
 // Real Chromium, the actual built app and synthetic samples only. No production
 // identity, access token, account, network API or health record is used.
@@ -50,50 +51,50 @@ try{
  const page=(method,params)=>send(method,params,sessionId);
  await page('Page.enable');await page('Runtime.enable');await page('Log.enable');
  await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:out,eventsEnabled:true});
- const evaluate=async(expression,userGesture=false)=>{
-  const r=await page('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture});
-  if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);
-  return r.result.value;
+ let evaluate;
+ const until=async(fn,label,values=[],timeout=20000)=>{
+  const end=Date.now()+timeout;while(Date.now()<end){if(await evaluate(fn,values))return;await pause(100);}throw Error('Browser check timed out: '+label);
  };
- const until=async(expression,label,timeout=20000)=>{
-  const end=Date.now()+timeout;while(Date.now()<end){if(await evaluate(expression))return;await pause(100);}throw Error('Browser check timed out: '+label);
- };
+ const exists=selector=>evaluate(selector=>!!document.querySelector(selector),[selector]);
+ const waitFor=(selector,label=selector)=>until(selector=>!!document.querySelector(selector),label,[selector]);
  const click=async selector=>{
-  await until(`!!document.querySelector(${JSON.stringify(selector)})`,selector);
-  await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`,true);await pause(150);
+  await waitFor(selector);
+  await evaluate(selector=>document.querySelector(selector).click(),[selector],true);await pause(150);
  };
  const fill=async(selector,value)=>{
-  await until(`!!document.querySelector(${JSON.stringify(selector)})`,selector);
-  await evaluate(`(()=>{const input=document.querySelector(${JSON.stringify(selector)});input.value=${JSON.stringify(value)};input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  await waitFor(selector);
+  await evaluate((selector,value)=>{const input=document.querySelector(selector);input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));},[selector,value]);
  };
  async function download(scope){
   const before=downloads.length;
   const selector=`[data-action="print"][data-export="${scope}"]`;
-  const point=await evaluate(`(()=>{const button=document.querySelector(${JSON.stringify(selector)});button.scrollIntoView({block:'center'});const r=button.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+  const point=await evaluate(selector=>{const button=document.querySelector(selector);button.scrollIntoView({block:'center'});const r=button.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};},[selector]);
   await page('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});
   await page('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
   const end=Date.now()+60000;
   while(downloads.length===before&&Date.now()<end){
-   const failed=await evaluate("document.querySelector('.kq-pdf-status')?.hasAttribute('data-error')");
+   const failed=await evaluate(()=>document.querySelector('.kq-pdf-status')?.hasAttribute('data-error'));
    assert.ok(!failed,'The real PDF export reported an error.');await pause(150);
   }
-  if(downloads.length!==before+1)console.error('PDF delivery state:',await evaluate("({status:document.querySelector('.kq-pdf-status')?.outerHTML,title:document.title,lang:document.documentElement.lang})"));
+  if(downloads.length!==before+1)console.error('PDF delivery state:',await evaluate(()=>({status:document.querySelector('.kq-pdf-status')?.outerHTML,title:document.title,lang:document.documentElement.lang})));
   assert.equal(downloads.length,before+1,'A finished PDF must actually reach the download directory.');
  }
- await page('Page.navigate',{url});
- await until("document.querySelector('[data-route=reports]') && document.documentElement.dataset.launch !== 'pending'",'App launch');
+ const {frameId}=await page('Page.navigate',{url});
+ const {executionContextId}=await page('Page.createIsolatedWorld',{frameId,worldName:'kolequant-report-qa'});
+ evaluate=createBrowserEvaluator(page,executionContextId);
+ await until(()=>document.querySelector('[data-route=reports]')&&document.documentElement.dataset.launch!=='pending','App launch');
  await pause(4500);
  await click('.sidebar-nav [data-route="reports"]');
  await click('[data-action="sample-report"]');
- await until("!!document.querySelector('.kq-editorial')",'Editorial sample');
+ await waitFor('.kq-editorial','Editorial sample');
  const checks=[];
  for(const width of process.env.REPORT_BROWSER_QUICK?[390]:[320,390,1280]){
   await page('Emulation.setDeviceMetricsOverride',{width,height:width<600?844:1000,deviceScaleFactor:1,mobile:width<600});
   for(const language of ['en','bg']){
-   if(await evaluate('document.documentElement.lang')!==language)await click('#language-toggle');
+   if(await evaluate(()=>document.documentElement.lang)!==language)await click('#language-toggle');
    for(const theme of process.env.REPORT_BROWSER_QUICK?['bionic']:['black-metal','blood-moon','bionic']){
     await click(`[data-theme-preference="${theme}"]`);await pause(1200);
-    const measurements=await evaluate(`(()=>{const e=document.querySelector('.kq-editorial'),r=e.getBoundingClientRect();return {width:r.width,scroll:e.scrollWidth,client:e.clientWidth,lang:document.documentElement.lang,text:e.innerText,theme:document.documentElement.dataset.theme};})()`);
+    const measurements=await evaluate(()=>{const e=document.querySelector('.kq-editorial'),r=e.getBoundingClientRect();return {width:r.width,scroll:e.scrollWidth,client:e.clientWidth,lang:document.documentElement.lang,text:e.innerText,theme:document.documentElement.dataset.theme};});
     assert.ok(measurements.scroll<=measurements.client+2,`Report overflow at ${width} / ${language} / ${theme}`);
     assert.equal(measurements.lang,language);
     assert.match(measurements.text,language==='bg'?/глюкоз/i:/glucose/i);
@@ -107,7 +108,7 @@ try{
  }
  console.log('Clinical layouts checked; downloading the actual app PDFs.');
  for(const language of ['en','bg']){
-  if(await evaluate('document.documentElement.lang')!==language)await click('#language-toggle');
+  if(await evaluate(()=>document.documentElement.lang)!==language)await click('#language-toggle');
   for(const scope of ['report','technical'])await download(scope);
  }
  const files=(await readdir(out)).filter(name=>name.endsWith('.pdf'));
@@ -115,36 +116,36 @@ try{
  for(const file of files){const bytes=await readFile(path.join(out,file));assert.equal(bytes.subarray(0,4).toString(),'%PDF');assert.ok(bytes.length>2000);}
  for(const tab of ['data','details','summary']){
   await click(`[data-action="report-tab"][data-tab="${tab}"]`);
-  assert.equal(await evaluate(`document.querySelector('.report-panel:not([hidden])').dataset.reportPanel`),tab);
+  assert.equal(await evaluate(()=>document.querySelector('.report-panel:not([hidden])').dataset.reportPanel),tab);
  }
  // Edit the fictional sample through the same forms a reader uses.
- if(await evaluate('document.documentElement.lang')!=='en')await click('#language-toggle');
+ if(await evaluate(()=>document.documentElement.lang)!=='en')await click('#language-toggle');
  await click('[data-action="report-tab"][data-tab="data"]');
  await click('.kq-clinical-support [data-action="review"]');
  await click('[data-action="edit-section"][data-index="3"]');
  await fill('#moderate','180');await click('#questions [type=submit]');
- await until("!!document.querySelector('#vigorous')",'vigorous activity');await click('#questions [type=submit]');
+ await waitFor('#vigorous','vigorous activity');await click('#questions [type=submit]');
  await click('[data-answer="strength"][value="2"]');await click('#questions [type=submit]');
- await until("!!document.querySelector('[data-answer=limitations]')",'activity limits');await click('#questions [type=submit]');
+ await waitFor('[data-answer=limitations]','activity limits');await click('#questions [type=submit]');
  await click('[data-action="edit-section"][data-index="4"]');
  await fill('#sleep','8');await click('#questions [type=submit]');
  await click('[data-answer="rested"][value="Usually"]');await click('#questions [type=submit]');
- await until("!!document.querySelector('[data-answer=disrupted]')",'sleep disruption');await click('#questions [type=submit]');
- await until("!!document.querySelector('[data-answer=stress]')",'stress');await click('#questions [type=submit]');
- await until("!!document.querySelector('.review-screen')",'return to questionnaire review');
+ await waitFor('[data-answer=disrupted]','sleep disruption');await click('#questions [type=submit]');
+ await waitFor('[data-answer=stress]','stress');await click('#questions [type=submit]');
+ await waitFor('.review-screen','return to questionnaire review');
  await click('[data-action="back-screen"]');
  await click('[data-action="report-tab"][data-tab="data"]');
  await click('.kq-clinical-support [data-action="labs"]');
  await click('#labs-form [type=submit]');
  await fill('[data-lab="glucose"]','4.9');
  for(const marker of ['glucose','crp','wbc']){
-  await until(`!!document.querySelector('[data-lab="${marker}"]')`,marker);
+  await waitFor(`[data-lab="${marker}"]`,marker);
   await click('#labs-form [type=submit]');
  }
- await until("!!document.querySelector('#lab-valid')",'collection confirmation');
+ await waitFor('#lab-valid','collection confirmation');
  await click('#labs-form [type=submit]');
  await click('[data-action="report-tab"][data-tab="summary"]');
- const changed=await evaluate("document.querySelector('.kq-clinical-folio').innerText");
+ const changed=await evaluate(()=>document.querySelector('.kq-clinical-folio').innerText);
  assert.match(changed,/Build on the routine you already have/);
  assert.match(changed,/4\.9/);
  assert.match(changed,/Moderate activity\s+180\s+minutes \/ week/);
@@ -159,7 +160,7 @@ try{
  const openAssessments=()=>click('.sidebar-nav [data-route="history"]');
  async function familyExports(type,edition=type){
   const selector=`[data-report-family="${type}"]`;
-  await until(`!!document.querySelector(${JSON.stringify(selector)})`,type+' report');
+  await waitFor(selector,type+' report');
   const teaching={
    'heart-vascular':/Systolic pressure is the upper number/,
    metabolic:/With insulin resistance, cells respond less effectively/,
@@ -167,7 +168,7 @@ try{
    fitness:/millilitres of oxygen per kilogram/,
    'health-profile':/Time in bed, time asleep and feeling restored/,
   };
-  const lessonText=await evaluate(`document.querySelector(${JSON.stringify(selector)}).innerText`);
+  const lessonText=await evaluate(selector=>document.querySelector(selector).innerText,[selector]);
   assert.match(lessonText,teaching[type],type+' must include its educational chapters');
   const interpretation={
    'heart-vascular':/Your ApoB result and the question of a personal target/,
@@ -193,8 +194,8 @@ try{
   for(const width of [390,1280]){
    await page('Emulation.setDeviceMetricsOverride',{width,height:width===390?844:1000,deviceScaleFactor:1,mobile:width===390});
    for(const language of ['en','bg']){
-    if(await evaluate('document.documentElement.lang')!==language)await click('#language-toggle');
-    const layout=await evaluate(`(()=>{const report=document.querySelector(${JSON.stringify(selector)});return {client:report.clientWidth,scroll:report.scrollWidth,art:!!report.querySelector('.kq-folio-art svg'),body:report.innerText};})()`);
+    if(await evaluate(()=>document.documentElement.lang)!==language)await click('#language-toggle');
+    const layout=await evaluate(selector=>{const report=document.querySelector(selector);return {client:report.clientWidth,scroll:report.scrollWidth,art:!!report.querySelector('.kq-folio-art svg'),body:report.innerText};},[selector]);
     assert.ok(layout.scroll<=layout.client+2,type+' at '+width+' '+language);
     assert.ok(layout.art,type+' artwork');
     assert.match(layout.body,language==='bg'?/не поставя диагноза/:/This report is not a diagnosis/);
@@ -214,15 +215,15 @@ try{
  await click('#consent');await click('[data-action="consent-next"]');
  const heartInputs={age:'50',country:'Germany',sex:'Male',smoking:'Some days',smokingDays30:'8',cigarettes:'3',smokingYears:'12',
   conditions:'No',treatment:'No',systolic:'140',diastolic:'85',total:'5.5',hdl:'1.3',apob:'0.95',lpa:'<12'};
- for(let i=0;i<24&&!await evaluate("!!document.querySelector('[data-report-family=heart-vascular]')");i++){
-  await until("!!document.querySelector('#heart-form')",'heart intake');
+ for(let i=0;i<24&&!await exists('[data-report-family=heart-vascular]');i++){
+  await waitFor('#heart-form','heart intake');
   for(const [key,value] of Object.entries(heartInputs)){
    const input='#heart-'+key;
    const option=`#heart-form input[name="${key}"][value="${value}"]`;
-   if(await evaluate(`!!document.querySelector(${JSON.stringify(input)})`))await fill(input,value);
-   else if(await evaluate(`!!document.querySelector(${JSON.stringify(option)})`))await click(option);
+   if(await exists(input))await fill(input,value);
+   else if(await exists(option))await click(option);
   }
-  if(await evaluate("!!document.querySelector('[name=lpaUnit]')"))await fill('[name=lpaUnit]','mg/dL');
+  if(await exists('[name=lpaUnit]'))await fill('[name=lpaUnit]','mg/dL');
   await click('#heart-form [type=submit]');
  }
  await familyExports('heart-vascular');
@@ -241,17 +242,17 @@ try{
  for(const type of ['metabolic','kidney','fitness']){
   await openAssessments();
   await click(`[data-action="start-system"][data-type="${type}"]`);
-  if(await evaluate("!!document.querySelector('#consent')")){
+  if(await exists('#consent')){
    await click('#consent');await click('[data-action="consent-next"]');
   }
   const entries=systemSampleInputs(type);
-  for(let i=0;i<24&&!await evaluate(`!!document.querySelector('[data-report-family="${type}"]')`);i++){
-   await until("!!document.querySelector('#system-form')",type+' intake');
+  for(let i=0;i<24&&!await exists(`[data-report-family="${type}"]`);i++){
+   await waitFor('#system-form',type+' intake');
    for(const [id,entry] of Object.entries(entries)){
     const selector='#system-'+id,value=typeof entry==='object'?entry.value:entry;
     const option=`#system-form input[name="${id}"][value="${value}"]`;
-    if(await evaluate(`!!document.querySelector(${JSON.stringify(selector)})`))await fill(selector,value);
-    else if(await evaluate(`!!document.querySelector(${JSON.stringify(option)})`))await click(option);
+    if(await exists(selector))await fill(selector,value);
+    else if(await exists(option))await click(option);
    }
    await click('#system-form [type=submit]');
   }
@@ -274,13 +275,13 @@ try{
  // A fictional lifestyle profile with unrestorative sleep, entered without labs.
  await openAssessments();
  await click('.assessment-routes [data-action="start"]');
- if(await evaluate("!!document.querySelector('#consent')")){
+ if(await exists('#consent')){
   await click('#consent');await click('[data-action="consent-next"]');
  }
  const profile={...sampleAnswers,moderate:'70',sleep:'6',rested:'Sometimes',alcohol:'No, I have never drunk alcohol regularly'};
- for(let i=0;i<40&&!await evaluate("!!document.querySelector('.review-screen')");i++){
-  await until("!!document.querySelector('#questions')",'profile intake');
-  const field=await evaluate(`(()=>{const input=document.querySelector('#questions [data-answer]');return input?{id:input.dataset.answer,type:input.type}:null;})()`);
+ for(let i=0;i<40&&!await exists('.review-screen');i++){
+  await waitFor('#questions','profile intake');
+  const field=await evaluate(()=>{const input=document.querySelector('#questions [data-answer]');return input?{id:input.dataset.answer,type:input.type}:null;});
   const value=field?profile[field.id]:undefined;
   if(value===undefined){
    await click('#questions [data-action="skip"]');

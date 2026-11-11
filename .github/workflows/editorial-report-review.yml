@@ -6,6 +6,7 @@ on:
       - '.github/workflows/editorial-report-review.yml'
       - 'public/**'
       - 'scripts/report-*.mjs'
+      - 'scripts/browser-evaluation.mjs'
       - 'scripts/build-pages.mjs'
       - 'scripts/serve-pages.mjs'
       - 'tests/report-*.mjs'
