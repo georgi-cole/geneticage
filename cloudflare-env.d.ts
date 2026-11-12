@@ -5,6 +5,12 @@ declare namespace Cloudflare {
     ASSESSMENT_ENCRYPTION_KEY?: string;
     RESEND_API_KEY?: string;
     AUTH_EMAIL_FROM?: string;
+    GOOGLE_CLIENT_ID?: string;
+    GOOGLE_CLIENT_SECRET?: string;
+    APPLE_SERVICES_ID?: string;
+    APPLE_TEAM_ID?: string;
+    APPLE_KEY_ID?: string;
+    APPLE_PRIVATE_KEY?: string;
     PAYMENTS_ENABLED?: string;
     PAYMENT_WEBHOOK_READY?: string;
     PUBLIC_SITE_ORIGIN?: string;

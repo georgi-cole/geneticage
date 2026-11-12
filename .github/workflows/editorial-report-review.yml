@@ -1,0 +1,52 @@
+name: Editorial report review
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/editorial-report-review.yml'
+      - 'public/**'
+      - 'scripts/report-*.mjs'
+      - 'scripts/browser-evaluation.mjs'
+      - 'scripts/build-pages.mjs'
+      - 'scripts/serve-pages.mjs'
+      - 'tests/report-*.mjs'
+      - 'report-engine/**'
+      - 'design/localization/editorial/**'
+      - 'package*.json'
+      - 'docs/PREMIUM_REPORTS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  editorial-exports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            report-engine/package-lock.json
+      - run: npm ci
+      - name: Check isolated PDF dependency advisories
+        run: npm audit --prefix report-engine --omit=dev --audit-level=moderate
+      - name: Generate real PDFs from all fictional assessment families
+        run: npm run report:qa
+      - name: Build and exercise the actual browser app
+        run: |
+          npm run build:pages
+          node scripts/report-browser-qa.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: editorial-report-evidence
+          path: report-qa-output/
+          retention-days: 14
+          if-no-files-found: error

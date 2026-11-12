@@ -1,4 +1,6 @@
-import {BG} from './locales/bg.mjs';
+import {BG as BASE_BG} from './locales/bg.mjs';
+import {REPORT_BG} from './report-knowledge/bg.mjs';
+const BG=Object.freeze({...BASE_BG,...REPORT_BG});
 
 export const LANGUAGE_KEY='kq-language-v1';
 export const languageBootstrap="(()=>{let v='en';try{v=localStorage.getItem('kq-language-v1')||'en'}catch{}v=v==='bg'?'bg':'en';document.documentElement.lang=v;document.documentElement.dataset.language=v})()";
@@ -6,12 +8,40 @@ const normalize=text=>text.replace(/\s+/g,' ').trim();
 const escapePattern=value=>value.replace(/[.*+?^{}$()|[\]\\]/g,'\\$&');
 const phrases=Object.keys(BG).sort((a,b)=>b.length-a.length);
 const phrasePattern=new RegExp('(?<![\\p{L}\\p{N}])(?:'+phrases.map(escapePattern).join('|')+')(?![\\p{L}\\p{N}])','gu');
+// Composed report sentences retain canonical English in saved snapshots. Match
+// only complete, curated templates so changing language never changes a number,
+// unit, model identifier or other interpolated fact.
+const placeholder=/\{([A-Za-z][A-Za-z0-9_]*)\}/g;
+const translationTemplates=phrases.filter(key=>/\{[A-Za-z][A-Za-z0-9_]*\}/.test(key)).map(key=>{
+ const names=[];
+ const parts=[];
+ let offset=0;
+ for(const match of key.matchAll(placeholder)){
+  parts.push(escapePattern(key.slice(offset,match.index)),'(.+?)');
+  names.push(match[1]);offset=match.index+match[0].length;
+ }
+ parts.push(escapePattern(key.slice(offset)));
+ return {pattern:new RegExp('^'+parts.join('')+'$','u'),names,text:BG[key]};
+});
+function translateTemplate(source){
+ for(const template of translationTemplates){
+  const match=template.pattern.exec(source);
+  if(!match)continue;
+  const values=new Map();
+  let consistent=true;
+  template.names.forEach((name,index)=>{
+   if(values.has(name)&&values.get(name)!==match[index+1])consistent=false;
+   values.set(name,match[index+1]);
+  });
+  if(consistent)return template.text.replace(placeholder,(_,name)=>values.get(name)??'{'+name+'}');
+ }
+}
 
 export function translateText(text,language='en',{protectedPrefix=''}={}){
  if(protectedPrefix&&text.startsWith(protectedPrefix))return protectedPrefix+translateText(text.slice(protectedPrefix.length),language);
  if(language!=='bg'||!text||!/[A-Za-z]/.test(text))return text;
  const source=normalize(text);
- let translated=BG[source];
+ let translated=BG[source]??translateTemplate(source);
  if(translated===undefined){
   const match=source.match(/^(\d+) saved (assessment|report)s?$/);
   const dated=source.match(/^(\d+) dated (record|records)$/);
@@ -25,7 +55,7 @@ export function translateText(text,language='en',{protectedPrefix=''}={}){
 export function initializeLanguage(){
  let language=document.documentElement.dataset.language==='bg'?'bg':'en',queued=false;
  const originals=new WeakMap(),attributes=new WeakMap(),nativeErrors=new Set();
- const ignored='script,style,svg,textarea,input,[data-no-translate]';
+ const ignored='script,style,svg,textarea,input,[data-no-translate],[data-kq-en]';
  function textNode(node){
   const parent=node.parentElement;
   if(!parent||parent.closest(ignored+',.brand,[data-count-to]')||!node.nodeValue?.trim())return;
@@ -37,6 +67,10 @@ export function initializeLanguage(){
   record.rendered=rendered;originals.set(node,record);
  }
  function refresh(){
+  document.querySelectorAll('[data-kq-en]').forEach(element=>{
+   const text=language==='bg'?element.dataset.kqBg||element.dataset.kqEn:element.dataset.kqEn;
+   if(element.textContent!==text)element.textContent=text;
+  });
   const walker=document.createTreeWalker(document.documentElement,NodeFilter.SHOW_TEXT);
   let node;while(node=walker.nextNode())textNode(node);
   document.querySelectorAll('[aria-label],[title],[placeholder]').forEach(element=>{
