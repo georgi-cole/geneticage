@@ -22,6 +22,27 @@
       "when": 1794156770013,
       "tag": "0002_clumsy_silver_samurai",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794226364905,
+      "tag": "0003_provider-sign-in",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794232164963,
+      "tag": "0004_apple-account-revocation",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794232488828,
+      "tag": "0005_native-sign-in",
+      "breakpoints": true
     }
   ]
 }

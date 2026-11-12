@@ -2,7 +2,7 @@
 
 The product owner selected **GeneticAge** on 6 November 2026. KoleQuant remains the publisher and the opening brand signature.
 
-Mobile-friendly full-stack Site with email-code accounts, per-user managed D1 storage and application-encrypted health records. The existing Site is owner-private.
+Mobile-friendly full-stack Site with Apple, Google and email-code sign-in, per-user managed D1 storage and application-encrypted health records. The hosted preview has a separate Sites access gate.
 
 Current priority: scientific content, design and core functionality. Payment activation is deferred. The private review release enables full report reading without payment through the server setting `REPORT_REVIEW_MODE=true`; this does not create orders or purchased entitlements, and is disabled whenever `PAYMENTS_ENABLED=true`.
 
@@ -24,9 +24,17 @@ Saved historical report snapshots retain their original interpretation, prioriti
 
 Editorial standard: use concrete headings, ordinary English and defined terms; ask one clear question at a time; place the relevant limitation beside the result and leave technical detail in the methods section. Avoid motivational slogans, causal claims, repeated sales copy and interchangeable labels for biological, clinical and epigenetic age. Clinical review, population applicability and uncertainty calibration remain outstanding; an editorial review is not clinical validation.
 
+## Personal report composition: 9 November 2026
+
+Reports now separate **Your report**, **Your data**, and **Method & evidence** across the health profile, Clinical PhenoAge, Heart & Vascular, Metabolic, Kidney and Fitness assessments. The reading view starts with the existing result and follows with connected interpretation, selected priorities, useful context and a practical next step. Exact answers, measurements and their reference comparisons stay in the data tab. Methods, sources and version information remain independently accessible.
+
+The deterministic `personal-report-v1` composer binds curated prose to recorded facts and existing model outputs. It does not call an LLM or change any scientific equation. New server-validated saves include the composed document in the encrypted snapshot; historical reports without one retain their saved interpretation. The same renderer handles drafts, samples and saved documents, with the existing full-report access gate. See [report architecture and extension workflow](docs/PREMIUM_REPORTS.md).
+
+**Report PDF** exports the personal interpretation. **Data & methods PDF** exports the companion record. Browser-menu printing defaults to the personal report, regardless of the selected tab. Printing expands only the disclosures in that export and restores the reading state afterward. Both documents remain explicitly automated educational reports without clinical review.
+
 ## Assessment and report revision: 6 November 2026
 
-Content version `2026-11-06-report-v3` retains questionnaire answers and blood entries when switching routes. Reports opens the current draft, with Summary, Findings, Blood results and Details instead of a long chapter dropdown. Sample exploration keeps a temporary copy of the current draft so the user can return to it. Only explicit reset/new-assessment actions clear entries; reloading still clears unsaved data.
+Content version `2026-11-06-report-v3` introduced retained questionnaire answers and blood entries when switching routes, and replaced the long report chapter dropdown. The report destinations are now the three views described above. Sample exploration keeps a temporary copy of the current draft so the user can return to it. Only explicit reset/new-assessment actions clear entries; reloading still clears unsaved data.
 
 Users can enter their own reference limits in the measurement’s selected unit, including one-sided and exclusive limits. These take precedence. Published comparisons require adult collection context. The creatinine group and CRP test type appear beside their readings. Standard CRP uses the ABIM guide. High-sensitivity CRP uses the Mayo Clinic Laboratories cardiovascular threshold when selected. The encrypted record stores the guide version used. [Reference policy and sources](docs/LAB_REFERENCE_POLICY.md).
 
@@ -58,7 +66,7 @@ The report includes optional smoking history, diastolic blood pressure, ApoB and
 
 ## System assessments
 
-Metabolic, Kidney and Fitness each have a guided intake and a report with Summary, Measurements and Methods. They reuse matching answers for review and link to missing fields. A specialist result opens its own step with a short explanation, a route back to the current result and a link for help finding the test. Each system keeps its own versioned report and age reference. [Model inputs, references and research review](docs/SYSTEM_AGE_METHODS.md).
+Metabolic, Kidney and Fitness each have a guided intake and the shared report, data and methods views. They reuse matching answers for review and link to missing fields. A specialist result opens its own step with a short explanation, a route back to the current result and a link for help finding the test. Each system keeps its own versioned report and age reference. [Model inputs, references and research review](docs/SYSTEM_AGE_METHODS.md).
 
 ## Phone preview on GitHub Pages
 
@@ -72,23 +80,35 @@ The **App checks** workflow builds both editions. A maintainer can run it manual
 
 ## Included features
 
-- A 31-question, six-section questionnaire with conditional questions, optional answers and validation.
+- A seven-section questionnaire with conditional questions, optional answers and validation.
 - A health profile, manual blood-entry route, and demo clinical PhenoAge calculation with unit conversions and explicit withholding states.
 - A separate Heart & Vascular assessment with regional SCORE2, SCORE2-OP and SCORE2-Diabetes, age comparisons, and optional ApoB and Lp(a) results.
 - Report preview, Stripe hosted Checkout integration, verified purchased-report access and browser print/save-PDF layout. Charging stays disabled until merchant configuration and webhook delivery are ready.
 - Consultation enquiry preview with selectable sharing categories. No enquiry is transmitted.
-- Email sign-in uses a one-time code. New accounts confirm adult eligibility and health-storage consent before they can save. The app keeps the sign-in email, nickname and consent record. Resend receives the email address and sign-in message.
+- Sign in with Apple or Google when configured, or use a one-time email code. New accounts confirm adult eligibility and health-storage consent. The health profile then collects age, height and weight, and calculates BMI from those measurements. An explicitly saved personal assessment with these details completes the profile across devices.
+- Body measurements are optional. BMI describes weight relative to height. For adults with BMI below 35, waist-to-height ratio can add information about central body size. Body fat, skeletal muscle and total body water percentages are recorded only when a user has measured values. Smart-scale estimates vary with measurement conditions, including hydration. The measurements are separate from the blood-based age calculation. [CDC BMI guidance](https://www.cdc.gov/BMI/about/index.html) · [NICE waist measurement guidance](https://www.nice.org.uk/guidance/ng246/chapter/Recommendations#identifying-and-assessing-overweight-obesity-and-central-adiposity) · [Bioimpedance measurement study](https://pmc.ncbi.nlm.nih.gov/articles/PMC12678178/)
 - Explicit cloud saving, immutable assessment/report snapshots, cross-device history, a reports tab, same-method progress charts, JSON export and live-record deletion.
 - Sample and personal progress are separated. Optional explicit import of old browser-local demo history; original copies are retained.
 - Responsive layouts, labeled controls, keyboard focus, dialog focus containment and sample data.
 
 ## Prototype boundaries
 
-Account storage is real. Unsaved questionnaire/lab entries remain in page memory. Users explicitly choose to save; no new health records or sign-in tokens are written to browser storage. Legacy demo data is read only for opt-in import. Stripe payment code is implemented but live payments are not configured. No research, marketing or live consultation-submission service is connected. No analytics SDK is installed.
+Account storage is real. Unsaved questionnaire and lab entries remain in page memory. Users explicitly choose when to save. Browser local storage holds display preferences and hidden-record IDs, and sign-in sessions use HttpOnly cookies. Legacy demo data is read only for opt-in import. Stripe payment code is implemented but live payments are not configured. No research, marketing or live consultation-submission service is connected. No analytics SDK is installed.
 
 Health payloads and report snapshots use AES-256-GCM with a fresh nonce, bound to their owner, record ID and record kind. The encryption key is a hosted runtime secret, separate from the database and source. This is application encryption, not end-to-end encryption. Site operators with runtime administration access can administer stored data.
 
-Account data APIs require a verified email session. The Sites audience gate applies separately at the hosting layer. Every record query uses the server-derived owner ID. Mutations require same-origin requests, JSON and an account-bound HMAC CSRF token. Writes are rate-limited (120/hour per identity), request size is capped at 48 KiB, and account history is capped at 500 snapshots. SQL uses parameter binding. Account responses are private/no-store. The app stores keyed digests of one-time codes and session tokens, limits delivery requests and verification attempts, and uses HttpOnly session cookies.
+Account data APIs require a verified app session. The Sites audience gate applies separately at the hosting layer. Every record query uses the server-derived owner ID. Mutations require same-origin requests, JSON and an account-bound HMAC CSRF token. Writes are rate-limited (120/hour per identity), request size is capped at 48 KiB, and account history is capped at 500 snapshots. SQL uses parameter binding. Account responses are private/no-store. The app stores keyed digests of one-time codes and session tokens, limits delivery requests and verification attempts, and uses HttpOnly session cookies.
+
+### Enable Apple and Google sign-in on Sites
+
+Use the hosted HTTPS address as `PUBLIC_SITE_ORIGIN`. Each button appears when its provider settings are present. Configure them in the Site’s runtime settings and store the Google secret and Apple private key as secrets.
+
+- **Apple.** Register the hosted domain and the return URL `<PUBLIC_SITE_ORIGIN>/api/auth/oauth/apple/callback` on a Services ID associated with a Sign in with Apple-enabled primary App ID. Set `APPLE_SERVICES_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID` and `APPLE_PRIVATE_KEY` (the complete PKCS#8 `.p8` key). [Apple web setup](https://developer.apple.com/help/account/capabilities/configure-sign-in-with-apple-for-the-web)
+- **Google.** Create a Web application OAuth client with the authorized redirect URI `<PUBLIC_SITE_ORIGIN>/api/auth/oauth/google/callback`. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. [Google OpenID Connect setup](https://developers.google.com/identity/openid-connect/openid-connect)
+
+Publish with the OAuth D1 migration and test first-time registration, returning sign-in, cancellation and account deletion on the hosted URL. The app requests an opaque identity from each provider and keeps a keyed digest of its identifier. Each sign-in method has its own account identity. Use the same method to reopen saved history. The app sends no assessment inputs to sign-in providers. Separate assessment consent and explicit saving still apply.
+
+Both providers are enabled on the hosted preview. [Hosted sign-in verification and native store requirements](PRODUCT_RELEASE_NOTES.md#native-store-submission).
 
 ### Enable email sign-in on Sites
 
@@ -155,8 +175,16 @@ Clinical scores, interpretation rules, attribution and terminology require indep
 
 ## Current interface
 
-The shared app canvas has four destinations: Overview, Assessments, Reports and Account. Guided entry uses one question at a time and five blood-entry steps; reports are read by chapter. The first-open screen has no invented personal age. Samples are explicitly labelled, and saved results remain immutable snapshots.
+The shared app canvas has four destinations: Overview, Assessments, Reports and Account. Guided entry uses one question at a time and five blood-entry steps. Reports separate the personal interpretation, recorded data and evidence. The first-open screen has no invented personal age. Samples are explicitly labelled, and saved results remain immutable snapshots.
 
 Black Metal is the default, with silver accents and a polished graphite action. Blood Moon has distinct cropped lunar portraits; Bionic uses porcelain, titanium and metallic blue. The three themes share geometry, controls and typography. Fine custom navigation/arrow symbols use the Paired icon family; the oversized decorative DNA spiral is retired.
 
 EN/БГ switches copy in place, preserving answers and the current screen, and persists only the language preference. The theme preference is also local. No health records are written to browser storage. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md), [design/ICON_SYSTEM.md](design/ICON_SYSTEM.md) and [design/LOCALIZATION.md](design/LOCALIZATION.md).
+
+## Editorial report integration: 10 November 2026
+
+New report editions include the educational `personal-science-v2` document: a versioned 18-module knowledge bank, assessment-specific chapters and visual signatures, evidence-linked clinical discussion, contextual derived values and a focused starting plan. English and Bulgarian narrative/source snapshots are frozen with the existing encrypted report. Older editions and payment entitlements remain unchanged.
+
+The two v2 export buttons generate actual locally rendered PDFs rather than opening a browser print dialog. The personal report and complete data/methods record come from the same saved content. Native exports use a private-cache file and the system share sheet; successful exports may leave an OS-managed temporary file, with owned files older than 24 hours cleaned on subsequent exports. No report data is sent to an external PDF or language-model service.
+
+`npm ci` installs the isolated pinned PDF engine. `npm run report:qa` generates fictional validation PDFs; the Editorial report review CI job also tests real browser downloads. See [report maintenance and privacy contract](docs/PREMIUM_REPORTS.md). Clinical-review status remains explicit and pending; source-backed automation is not clinical validation.

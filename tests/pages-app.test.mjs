@@ -60,14 +60,21 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await submit('#questions');
  await click('[data-answer="sex"][value="Male"]');await submit('#questions');
  await enter('[data-answer="country"]','Fictional test country');await submit('#questions');
+ assert.equal($('[data-action="skip"]'),null,'Height is required in the health profile.');
+ await submit('#questions');
+ assert.equal($('#questions [role="alert"]').textContent,'Enter your height.');
  await enter('[data-answer="height"]','176');await submit('#questions');
+ assert.equal($('[data-action="skip"]'),null,'Weight is required in the health profile.');
+ await submit('#questions');
+ assert.equal($('#questions [role="alert"]').textContent,'Enter your weight.');
  await enter('[data-answer="weight"]','77');await submit('#questions');
  await enter('[data-answer="weightYearAgo"]','77');await submit('#questions');
  const health=$('[data-answer="health"][value="Good"]'),form=$('#questions');health.focus();health.click();await flush();
  assert.equal($('#questions'),form);assert.equal(document.activeElement,health);assert.equal(health.checked,true);
  await submit('#questions');await click('[data-answer="smokingEver100"][value="No"]');await submit('#questions');
  await click('[data-answer="smoking"][value="Not at all"]');await submit('#questions');
- assert.match($('#main').textContent,/Answer separately from cigarettes/);assert.equal(document.querySelectorAll('[data-answer="nicotine"]').length,8);
+ assert.match($('#main').textContent,/Answer separately from cigarettes/);assert.equal(document.querySelectorAll('[data-answer="nicotine"]').length,7);
+ assert.equal($('[data-answer="nicotine"][value="Prefer not to say"]'),null);
  await click('[data-answer="nicotine"][value="Vape or e-cigarette"]');await click('[data-answer="nicotine"][value="None"]');
  assert.equal($('[data-answer="nicotine"][value="Vape or e-cigarette"]').checked,false);assert.equal($('[data-answer="nicotine"][value="None"]').checked,true);
  await click('.mobile-nav [data-route="history"]');await click('[data-action="start-labs"]');
@@ -107,16 +114,26 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.equal($('.home-workspace [data-overview-swipe]'),null);
  await click('.instrument-footer [data-action="results"]');
  await click('[data-action="report"]');
- assert.equal(document.querySelectorAll('.report-tabs button').length,4);assert.equal(document.querySelector('#report-chapter'),null);
- await click('[data-action="report-tab"][data-tab="details"]');
- assert.match($('[data-report-panel="details"]').textContent,/Fictional test country/);assert.match($('[data-report-panel="details"]').textContent,/52 years/);
- await click('[data-action="report-tab"][data-tab="blood"]');
+ assert.equal(document.querySelectorAll('.report-tabs button').length,3);assert.equal(document.querySelector('#report-chapter'),null);
+ assert.ok($('[data-report-panel="summary"] .personal-report-document'));
+ await click('[data-action="report-tab"][data-tab="data"]');
+ assert.match($('[data-report-panel="data"]').textContent,/Fictional test country/);assert.match($('[data-report-panel="data"]').textContent,/52 years/);
  assert.equal(document.querySelectorAll('[data-reference-source="lab"]').length,1);assert.equal(document.querySelectorAll('[data-reference-source="published"]').length,8);
- assert.ok([...$('[data-report-panel="blood"]').querySelectorAll('a')].some(a=>a.href==='https://www.mayocliniclabs.com/test-catalog/Overview/800024'));
+ assert.ok([...$('[data-report-panel="data"]').querySelectorAll('a')].some(a=>a.href==='https://www.mayocliniclabs.com/test-catalog/Overview/800024'));
  let printed=0;const details=[...document.querySelectorAll('.report-paper details')],previous=details.map(el=>el.open);
- window.print=()=>{printed++;assert.ok(details.every(el=>el.open),'Print includes every disclosure in all four report sections.');};
- await click('[data-action="print"]');assert.equal(printed,1);window.dispatchEvent(new window.Event('afterprint'));assert.deepEqual(details.map(el=>el.open),previous);
- await click('#language-toggle');assert.match($('[data-report-panel="blood"]').textContent,/Публикуван/);await click('#language-toggle');
+ window.print=()=>{printed++;};
+ // Editorial exports download real PDFs rather than invoking the print dialog.
+ // JSDOM cannot load the browser ESM runtime: the user must receive a visible
+ // failure, never a false success or an implicit fallback to a different report.
+ for(const scope of ['report','technical']){
+  await click(`[data-action="print"][data-export="${scope}"]`);
+  await flush();
+  assert.deepEqual(details.map(el=>el.open),previous);
+  assert.equal(document.body.hasAttribute('data-report-export'),false);
+  assert.ok(document.querySelector('.kq-pdf-status[data-error]'));
+ }
+ assert.equal(printed,0);
+ await click('#language-toggle');assert.match($('[data-report-panel="data"]').textContent,/Публикуван/);await click('#language-toggle');
  // The existing sample entry is an isolated detour and can restore the real draft.
  await click('[data-action="labs"]');await click('[data-action="sample-labs"]');
  await click('.mobile-nav [data-route="reports"]');await click('[data-action="report"]');assert.match($('#main').textContent,/Illustrative sample data/);
@@ -193,8 +210,8 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await enter('#heart-apob','');await enter('#heart-lpa','');assert.match($('#heart-form [type=submit]').textContent,/Continue without these tests/);await submit('#heart-form');
  assert.match($('.heart-estimate').textContent,/14\.0%/);
  await click('[data-action="report-tab"][data-tab="measurements"]');assert.match($('[data-report-panel="measurements"]').textContent,/Add ApoB or Lp\(a\)/);
- await click('[data-action="report-tab"][data-tab="methods"]');
- assert.match($('[data-report-panel="methods"]').textContent,/Days you smoked in the past 30 days\s*8/);
+ assert.match($('[data-report-panel="measurements"]').textContent,/Days you smoked in the past 30 days\s*8/);
+ assert.doesNotMatch($('[data-report-panel="methods"]').textContent,/Days you smoked in the past 30 days\s*8/);
  await click('[data-action="heart-edit"][data-part="answers"]');
  await click('[data-action="heart-review-edit"][data-part="age"]');
  await enter('#heart-age','33');await submit('#heart-form');

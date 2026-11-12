@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delete your GeneticAge account</title>
+  <link rel="stylesheet" href="/support.css">
+  <script src="/delete-account.js" defer></script>
+</head>
+<body>
+  <main>
+    <p class="publisher">GeneticAge by KoleQuant</p>
+    <h1>Delete your GeneticAge account</h1>
+    <p>You can delete your account here after uninstalling GeneticAge. Use the same sign-in method you chose in the app.</p>
+    <p>Deletion removes your profile, sign-in information, sessions, saved assessments and reports from the live database. Deleted records can remain in Cloudflare’s recovery backups for up to 30 days. Exported copies stay where you saved them.</p>
+    <p id="message" role="status"></p>
+    <section id="sign-in" hidden aria-label="Sign in to delete">
+      <div class="providers">
+        <a id="apple" href="/api/auth/oauth/apple/start" hidden>Sign in with Apple</a>
+        <a id="google" href="/api/auth/oauth/google/start" hidden>Sign in with Google</a>
+      </div>
+      <form id="request-code" hidden>
+        <label for="email">Email address used in GeneticAge</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <button type="submit">Send an email code</button>
+      </form>
+      <form id="verify-code" hidden>
+        <label for="code">Enter the 8-digit code from your email</label>
+        <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]{8}" required>
+        <button type="submit">Verify code</button>
+      </form>
+    </section>
+    <form id="delete" hidden>
+      <label for="confirm">Type DELETE to confirm</label>
+      <input id="confirm" name="confirm" pattern="DELETE" autocomplete="off" required>
+      <button type="submit">Delete my account and saved data</button>
+    </form>
+    <p id="apple-manual" hidden>To remove GeneticAge from Sign in with Apple, use your Apple Account settings. <a href="https://support.apple.com/102571">Apple’s instructions</a>.</p>
+    <h2>Request help if you can’t sign in</h2>
+    <p>Email KoleQuant with the subject “GeneticAge account deletion” and the sign-in method you used. KoleQuant will verify account ownership before deleting it. Keep health entries, passwords and codes out of your message. <a href="mailto:support@kolequant.xyz?subject=GeneticAge%20account%20deletion">Request account deletion by email</a>.</p>
+    <p>For information about what GeneticAge stores and how it uses it, read the <a href="/privacy/">privacy policy</a>.</p>
+  </main>
+</body>
+</html>

@@ -21,6 +21,9 @@ export const iconPaths=Object.freeze({
   close:'<path d="m6 6 12 12M18 6 6 18"/>',
   remove:'<path d="M4 7h16M6 7l1 13h10l1-13M9 7V4h6v3M10 10v6m4-6v6"/>',
   check:'<path d="m5 12 4 4L19 6"/>',
+  'status-complete':'<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5 5-5"/>',
+  'status-partial':'<circle cx="12" cy="12" r="9"/><path d="M12 6a6 6 0 0 1 0 12Z" fill="currentColor" stroke="none"/>',
+  'status-incomplete':'<circle cx="12" cy="12" r="9"/>',
   spark:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>',
 });
 

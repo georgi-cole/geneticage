@@ -1,3 +1,5 @@
+import {renderEditorialSources,renderFamilyRecord,renderClinicalMethods} from './report-editorial-ui.mjs';
+import {isFamilyFolio} from './report-folio.mjs';
 import {
   heartQuestions, heartRegionLabels, heartDiagnosisQuestion, heartDiagnosisActive, heartSmokingFields, heartLegacySmoking,
   heartStartIssue, heartLimitations, heartModelForReport, heartAgeReadout, heartSources, HEART_UNSPECIFIED_CVD, SCORE2_DIABETES, FRAMINGHAM,
@@ -10,6 +12,8 @@ import {pday, heartPdayAge} from './heart-pday.mjs';
 import {setMeasurementUnit} from './lab-review.mjs';
 import {measurementFeedbackMarkup, safetyMarkup} from './lab-feedback.mjs';
 import {backButton, escapeHTML as esc, reportArtwork, screenHeading, specialistHelp, uiIcon} from './ui-components.mjs';
+import {composeReportDocument} from './report-composer.mjs';
+import {renderReportDocument} from './report-document-ui.mjs';
 
 const arrow = uiIcon('forward');
 const [country, sex, smoking, conditions, treatment] = heartQuestions;
@@ -540,7 +544,11 @@ function methodsPanel(inputs, result, review, sourceLinks) {
       <p>The comparison finds the age at which the median carotid–femoral pulse wave velocity in the Austrian LEAD study matches your result. It uses the reference curve for your sex and stays within ages 18–80.</p>
       <p>The measurement uses 80% of the direct carotid–femoral distance. Blood pressure at the time of the test can affect the reading. This age describes arterial stiffness. A 10-year event risk uses a separate calculation.</p>
     </details>` : ''}
-    <details class="report-answer-group"><summary>Your answers</summary>
+    <details class="report-answer-group"><summary>Evidence and sources</summary>${sourceLinks(heartSources(result, review))}</details>`;
+}
+
+function heartAnswersPanel(inputs) {
+  return `<details class="report-answer-group" open><summary>Your answers</summary>
       <dl>${row('Age in years', inputs.age)}
         ${heartQuestions.filter(({id}) => inputs[id]).map(({id, label}) => row(label, id === 'smoking' && Object.hasOwn(heartLegacySmoking, inputs[id]) ? heartLegacySmoking[inputs[id]] : inputs[id])).join('')}
         ${heartDiagnosisActive(inputs) && inputs.diagnoses?.length ? inputs.diagnoses.map(diagnosis => row('Reported health history', diagnosis)).join('') : ''}
@@ -550,11 +558,10 @@ function methodsPanel(inputs, result, review, sourceLinks) {
         ${heartSmokingFields(inputs).filter(field => inputs[field.id] !== undefined).map(field => row(smokingLabel(field, inputs), inputs[field.id])).join('')}
       </dl>
       <button class="text-btn" data-action="heart-edit" data-part="answers">Edit answers ${arrow}</button>
-    </details>
-    <details class="report-answer-group"><summary>Evidence and sources</summary>${sourceLinks(heartSources(result, review))}</details>`;
+    </details>`;
 }
 
-const reportTabs = [['summary', 'Summary'], ['measurements', 'Measurements'], ['methods', 'Methods']];
+const reportTabs = [['summary', 'Your report'], ['measurements', 'Your data'], ['methods', 'Method & evidence']];
 
 function nextStep(result, inputs, review) {
   if (result.issue === 'diabetes-data') return `<section class="report-explanation heart-missing">
@@ -602,8 +609,15 @@ function finishVascularAge(missing, isPday) {
   </section>`;
 }
 
-export function renderHeartReport({heart, saved, pagesPreview, sourceLinks, tab = 'summary'}) {
+export function renderHeartReport({heart, saved, savedReport, sample, pagesPreview, sourceLinks, tab = 'summary'}) {
   const {inputs, result, review} = heart;
+  const document = savedReport?.document || (saved || savedReport ? null : composeReportDocument({state:{assessmentType:'heart-vascular',heart,sample}}));
+  const narrative = renderReportDocument(document, {sourceLinks});
+  const folio=isFamilyFolio(document?.editorial);
+  const readout = result.reason ? null : heartAgeReadout(result);
+  const boundLabel = {above:'Above',below:'Below','up-to':'Up to','at-least':'At least'}[readout?.direction];
+  const recordedAge = boundLabel ? `<span>${boundLabel}</span> ${esc(readout.boundary)}` : esc(readout?.age);
+  const record = `<div class="report-opening print-only"><h2>Data & methods</h2></div><div class="report-record-summary"><span>Recorded result</span><strong>${readout ? `${recordedAge} <span>years</span>` : 'Estimate withheld'}</strong>${result.method ? `<p>${esc(result.method)}</p>` : ''}</div>`;
   const selected = reportTabs.some(([id]) => id === tab) ? tab : 'summary';
   const summary = riskSummary(heart);
   const next = result.reason ? nextStep(result, inputs, review) : '';
@@ -615,24 +629,30 @@ export function renderHeartReport({heart, saved, pagesPreview, sourceLinks, tab 
   const panels = {
     summary: result.reason ? (missing.length ? finishVascularAge(missing, heartPdayAge(inputs.age)) + summary + arterial
       : result.issue === 'diabetes-data' ? next + summary : arterial + summary + next)
-      : `${summary}<section class="report-explanation">
+      : `${summary}${narrative ? '' : `<section class="report-explanation">
         <h2>What this tells you</h2>
         <p>${isPday ? 'This age comparison matches your risk factors for coronary plaque to the study’s reference profile.'
           : isFramingham ? 'Your answers and readings match the modeled risk of someone this age with the study’s reference readings.'
           : 'The percentage estimates the chance of a first heart attack, stroke, or cardiovascular death over 10 years. Vascular risk age expresses that risk as a comparison with a reference profile.'}</p>
-      </section>${(isFramingham || isPday) && review?.pressureFollowUp ? `<section class="heart-reading"><dl>${pressureRow(inputs, review)}</dl></section>` : ''}${arterial}`,
-    measurements: measurementsPanel(inputs, review),
-    methods: methodsPanel(inputs, result, review, sourceLinks),
+      </section>`}${(isFramingham || isPday) && review?.pressureFollowUp ? `<section class="heart-reading"><dl>${pressureRow(inputs, review)}</dl></section>` : ''}${arterial}`,
+    measurements: record + measurementsPanel(inputs, review) + heartAnswersPanel(inputs),
+    methods: renderEditorialSources(document) + methodsPanel(inputs, result, review, sourceLinks) + `<section class="report-provenance"><h3>About this report</h3><dl>${row('Model version',result.version || 'Not available')}${document ? row('Report edition',document.version) : ''}</dl></section>`,
   };
-  return `<div class="wrap app-screen report-workspace heart-report-screen">
+  if(folio){
+    panels.summary=narrative+`<div class="kq-folio-extra">${result.reason?panels.summary:
+      `<details class="report-answer-group"><summary>Calculation details</summary>${summary}</details>${arterial}`}</div>`;
+    panels.measurements=renderFamilyRecord(document)+`<details class="report-answer-group"><summary>Review and edit entries</summary>${measurementsPanel(inputs,review)}${heartAnswersPanel(inputs)}</details>`;
+    panels.methods=renderClinicalMethods(document);
+  }else panels.summary+=narrative;
+  return `<div class="wrap app-screen report-workspace personal-report-workspace heart-report-screen">
     <header class="report-heading" data-theme-part>
       <div><span class="eyebrow">ASSESSMENT REPORT</span><h1>Heart & Vascular</h1>${saved ? '<p>Saved assessment</p>' : ''}</div>
-      <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print">${uiIcon('report')}<span>PDF</span></button></div>
+      <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print" data-export="report">${uiIcon('report')}<span>Report PDF</span></button><button class="text-btn" data-action="print" data-export="technical">${uiIcon('report')}<span>Data & methods PDF</span></button></div>
     </header>
     <nav class="report-tabs heart-report-tabs no-print" aria-label="Report sections">${reportTabs.map(([id, label]) => `<button type="button" data-action="report-tab" data-tab="${id}"${id === selected ? ' aria-current="page"' : ''}>${label}</button>`).join('')}</nav>
-    <article class="report-paper">${reportTabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}
-      <p class="print-only report-footnote">Educational report. Prepared automatically.</p>
+    <article class="report-paper${folio?' has-clinical-folio':''}">${reportTabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" data-export-scope="${id === 'summary' ? 'report' : 'technical'}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}
+      ${folio?'':'<p class="print-only report-footnote">Educational report. Prepared automatically; not clinically reviewed.</p>'}
     </article>
-    <p class="report-footnote">Educational estimates · Not clinically reviewed.</p>
+    ${folio?'':'<p class="report-footnote">Educational estimates · Not clinically reviewed.</p>'}
   </div>`;
 }

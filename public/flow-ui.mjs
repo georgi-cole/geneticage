@@ -1,6 +1,6 @@
 import {feedbackState,labFeedbackMarkup} from './lab-feedback.mjs';
-import {sections,labs} from './model.mjs';
-import {backButton,escapeHTML as esc,screenHeading} from './ui-components.mjs';
+import {sections,labs,DECLINED_ANSWER} from './model.mjs';
+import {backButton,escapeHTML as esc,screenHeading,uiIcon} from './ui-components.mjs';
 import {REFERENCE_CATALOG_SOURCE} from './lab-reference-catalog.mjs';
 import {labReferenceGroup} from './lab-review.mjs';
 
@@ -18,19 +18,24 @@ function labReferenceChoice(state,lab){
 }
 
 export function questionContext(state){const section=sections[state.step],questions=section.questions.filter(q=>!q.show||q.show(state.answers));const index=Math.max(0,Math.min(state.questionIndex||0,questions.length-1));return {section,questions,index,question:questions[index]};}
-export function questionChoices(state){const q=questionContext(state).question,total=q.options?.length||0,maximum=Math.max(2,state.choiceCapacity||total||6),pages=q.type==='multi'?Math.max(1,Math.ceil(total/maximum)):1,capacity=pages>1?Math.min(maximum,Math.ceil(total/pages/2)*2):maximum,page=Math.max(0,Math.min(state.optionPage||0,pages-1));return {page,pages,total,capacity,question:pages>1?{...q,options:q.options.slice(page*capacity,page*capacity+capacity)}:q};}
 export function questionDestination(state,direction=1){
  const {questions,index}=questionContext(state);
- if(direction>0){if(index<questions.length-1)return {step:state.step,questionIndex:index+1,optionPage:0,view:'questionnaire'};if(state.step<sections.length-1)return {step:state.step+1,questionIndex:0,optionPage:0,view:'questionnaire'};return {step:state.step,questionIndex:index,optionPage:0,view:'review'};}
- if(index>0)return {step:state.step,questionIndex:index-1,optionPage:0,view:'questionnaire'};
- if(state.step===0)return {step:0,questionIndex:0,optionPage:0,view:'consent'};
- const previous=sections[state.step-1].questions.filter(q=>!q.show||q.show(state.answers));return {step:state.step-1,questionIndex:previous.length-1,optionPage:0,view:'questionnaire'};
+ if(direction>0){if(index<questions.length-1)return {step:state.step,questionIndex:index+1,view:'questionnaire'};if(state.step<sections.length-1)return {step:state.step+1,questionIndex:0,view:'questionnaire'};return {step:state.step,questionIndex:index,view:'review'};}
+ if(index>0)return {step:state.step,questionIndex:index-1,view:'questionnaire'};
+ if(state.step===0)return {step:0,questionIndex:0,view:'consent'};
+ const previous=sections[state.step-1].questions.filter(q=>!q.show||q.show(state.answers));return {step:state.step-1,questionIndex:previous.length-1,view:'questionnaire'};
+}
+export function questionNextLabel(state,editStep){
+ const {questions,index}=questionContext(state);
+ return index===questions.length-1&&(state.step===sections.length-1||state.step===editStep)?'Review answers':'Continue';
 }
 export function renderQuestionnaire(state,inputField,entryLabel='Back',editStep){
- const {section,questions,index,question:q}=questionContext(state),choices=questionChoices(state),numeric=q.options?.filter(x=>/^\d$/.test(x)).length>5;
- const back=backButton('question-back',index===0&&choices.page===0&&(state.step===0||state.step===editStep)?entryLabel:'Back');
+ const {section,questions,index,question:q}=questionContext(state);
+ const options=q.options?.filter(value=>value!==DECLINED_ANSWER);
+ const numeric=options?.filter(value=>/^\d$/.test(value)).length>5;
+ const back=backButton('question-back',index===0&&(state.step===0||state.step===editStep)?entryLabel:'Back');
  return `<div class="wrap app-screen task-screen question-screen">${back}${screenHeading('HEALTH & LIFESTYLE',section.name)}<div class="task-caption"><span>Section ${state.step+1} of ${sections.length}</span><span>Question ${index+1} / ${questions.length}</span></div><div class="task-progress" role="progressbar" aria-label="Questionnaire progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round((state.step+(index+1)/questions.length)/sections.length*100)}"><span style="width:${(state.step+(index+1)/questions.length)/sections.length*100}%"></span></div>
- <form id="questions" novalidate><fieldset class="question ${numeric?'numeric-options':''}" data-theme-part><legend>${esc(q.label)}</legend>${q.hint?`<p class="hint">${esc(q.hint)}</p>`:''}${q.options?`<div class="choice-set-caption"><span>${q.type==='multi'?'Select all that apply':'Select one answer'}</span>${choices.pages>1?`<span>${choices.page*choices.capacity+1}–${Math.min((choices.page+1)*choices.capacity,choices.total)} of ${choices.total}</span>`:''}</div>`:''}${inputField(choices.question)}${state.errors[q.id]?`<p class="error" role="alert">${esc(state.errors[q.id])}</p>`:''}<div class="question-optional"><span>${q.required?'Required to continue':'Optional · You can leave this unanswered'}</span>${!q.required?`<button class="text-link" data-action="skip" data-id="${q.id}" type="button">Skip →</button>`:''}</div></fieldset><div class="form-nav"><button class="btn" type="submit">${choices.page<choices.pages-1?'More choices':state.step===sections.length-1&&index===questions.length-1?'Review answers':'Continue'} →</button></div></form></div>`;
+ <form id="questions" novalidate><fieldset class="question ${numeric?'numeric-options':''}" data-theme-part><legend>${esc(q.label)}</legend>${q.hint?`<p class="hint">${esc(q.hint)}</p>`:''}${options?`<p class="choice-set-caption">${q.type==='multi'?'Select all that apply':'Select one answer'}</p>`:''}${inputField({...q,options})}${state.errors[q.id]?`<p class="error" role="alert">${esc(state.errors[q.id])}</p>`:''}</fieldset><div class="form-nav question-navigation">${q.required?'<span class="muted small">Required to continue</span>':`<button class="text-link" data-action="skip" data-id="${q.id}" type="button">Skip</button>`}<button class="btn" type="submit"><span data-question-next>${questionNextLabel(state,editStep)}</span>${uiIcon('arrow')}</button></div></form></div>`;
 }
 
 export function labErrorStep(errors){if(errors.age||errors.date)return 0;const i=labs.findIndex(l=>errors[l.id]||errors[l.id+'Reference']);return i>=0?1+Math.floor(i/3):4;}

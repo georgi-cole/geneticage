@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
+import { exportJWK, exportPKCS8, generateKeyPair, jwtVerify, SignJWT } from 'jose';
 import { CONSENT_VERSION, handleAccountApi } from './lib/account-api.mjs';
-import { getEmailUser, handleEmailAuthApi } from './lib/email-auth.mjs';
+import { getSessionUser, handleAuthApi } from './lib/auth-api.mjs';
 
 const db = new DatabaseSync(':memory:');
 db.exec('PRAGMA foreign_keys=ON');
@@ -13,7 +14,12 @@ function prepared(sql, values = []) {
     bind(...args) { return prepared(sql, args); },
     async first() { return db.prepare(sql).get(...values) ?? null; },
     async all() { return { results: db.prepare(sql).all(...values) }; },
-    async run() { const result = db.prepare(sql).run(...values); return { meta: { changes: Number(result.changes) } }; },
+    async run() {
+      const statement = db.prepare(sql);
+      if (sql.includes('RETURNING')) return { results: statement.all(...values) };
+      const result = statement.run(...values);
+      return { meta: { changes: Number(result.changes) } };
+    },
   };
 }
 const env = {
@@ -49,19 +55,209 @@ function request(path, method = 'GET', data, { cookie = '', origin = 'https://si
   });
 }
 async function authCall(path, method = 'GET', data, options) {
-  const response = await handleEmailAuthApi(request('/api/auth/' + path, method, data, options), env);
+  const response = await handleAuthApi(request('/api/auth/' + path, method, data, options), env);
   return { response, data: await response.json() };
 }
 const cookieValue = header => header.split(';', 1)[0];
 const withSiteCookie = cookie => 'site_access=fixture; ' + cookie;
 const codeFrom = message => message.text.match(/\b(\d{8})\b/)?.[1];
 
+async function verifySocialSignIn(emailOwner) {
+  const signing = await generateKeyPair('RS256');
+  const client = await generateKeyPair('ES256', { extractable: true });
+  const key = { ...await exportJWK(signing.publicKey), kid: 'fixture-key', alg: 'RS256' };
+  const socialEnv = {
+    ...env, PUBLIC_SITE_ORIGIN: 'https://site.test', NATIVE_AUTH_ENABLED: 'true', GOOGLE_CLIENT_ID: 'google-fixture',
+    GOOGLE_CLIENT_SECRET: 'google-secret-fixture', APPLE_SERVICES_ID: 'apple-fixture',
+    APPLE_TEAM_ID: 'team-fixture', APPLE_KEY_ID: 'apple-key-fixture', APPLE_PRIVATE_KEY: await exportPKCS8(client.privateKey),
+  };
+  const fixtures = {
+    google: { issuer: 'https://accounts.google.com', clientId: socialEnv.GOOGLE_CLIENT_ID, token: 'https://oauth2.googleapis.com/token' },
+    apple: { issuer: 'https://appleid.apple.com', clientId: socialEnv.APPLE_SERVICES_ID, token: 'https://appleid.apple.com/auth/token' },
+  };
+  const start = async (provider, challenge = '', returnToApp = false) => {
+    const queryString = challenge ? '?native_challenge=' + challenge + (returnToApp ? '&native_return=app' : '') : '';
+    const response = await handleAuthApi(request(`/api/auth/oauth/${provider}/start${queryString}`), socialEnv);
+    assert.equal(response.status, 303);
+    const authorize = new URL(response.headers.get('Location'));
+    const stateCookie = response.headers.getSetCookie()[0];
+    assert.match(stateCookie, /^__Host-kq_oauth_state=.*HttpOnly; SameSite=Lax;.*Secure$/);
+    const query = authorize.searchParams;
+    assert.equal(query.get('client_id'), fixtures[provider].clientId);
+    assert.equal(query.get('redirect_uri'), `https://site.test/api/auth/oauth/${provider}/callback`);
+    assert.equal(query.get('response_type'), 'code');
+    assert.equal(query.get('scope'), provider === 'google' ? 'openid' : null);
+    assert.equal(query.get('code_challenge_method'), provider === 'google' ? 'S256' : null);
+    if (provider === 'apple') assert.equal(query.get('response_mode'), 'query');
+    return { provider, query, cookie: cookieValue(stateCookie) };
+  };
+  const callback = (flow, cookie = flow.cookie, params = {}) => {
+    const query = new URLSearchParams({ state: flow.query.get('state'), code: 'fixture-code', ...params });
+    return handleAuthApi(request(`/api/auth/oauth/${flow.provider}/callback?${query}`, 'GET', undefined, { cookie }), socialEnv);
+  };
+  const consent = { name: 'Fictional social user', adult: true, consent: true, consentVersion: CONSENT_VERSION, signInMethod: 'social' };
+  const register = (cookie, fields = {}) => handleAuthApi(request('/api/auth/register', 'POST', { ...consent, ...fields }, { cookie }), socialEnv);
+  const completeNative = (ticket, verifier) => handleAuthApi(request('/api/auth/native-complete', 'POST', { ticket, verifier }), socialEnv);
+  const outcome = response => response.headers.get('Location');
+  const emailFetch = globalThis.fetch;
+  let flow, invalidClaim = '', exchanges = 0, revocations = 0, appleRefreshToken, revokeFails = false;
+  globalThis.fetch = async (url, options = {}) => {
+    const address = String(url);
+    if (address === 'https://www.googleapis.com/oauth2/v3/certs' || address === 'https://appleid.apple.com/auth/keys') {
+      return Response.json({ keys: [key] });
+    }
+    if (address === 'https://appleid.apple.com/auth/revoke') {
+      assert.equal(options.method, 'POST');
+      assert.equal(options.redirect, 'manual');
+      assert.equal(options.body.get('client_id'), fixtures.apple.clientId);
+      assert.equal(options.body.get('token_type_hint'), 'refresh_token');
+      assert.equal(options.body.get('token'), appleRefreshToken);
+      await jwtVerify(options.body.get('client_secret'), client.publicKey, {
+        algorithms: ['ES256'], issuer: socialEnv.APPLE_TEAM_ID, audience: fixtures.apple.issuer, subject: fixtures.apple.clientId,
+      });
+      revocations++;
+      return new Response(null, { status: revokeFails ? 503 : 200 });
+    }
+    const fixture = fixtures[flow.provider];
+    assert.equal(address, fixture.token);
+    assert.equal(options.method, 'POST');
+    assert.equal(options.redirect, 'manual', 'The worker must reject redirects without forwarding credentials.');
+    assert.equal(options.body.get('code'), 'fixture-code');
+    assert.equal(options.body.get('redirect_uri'), flow.query.get('redirect_uri'));
+    if (flow.provider === 'google') {
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(options.body.get('code_verifier')));
+      assert.equal(Buffer.from(digest).toString('base64url'), flow.query.get('code_challenge'));
+    } else {
+      assert.equal(options.body.has('code_verifier'), false);
+      await jwtVerify(options.body.get('client_secret'), client.publicKey, {
+        algorithms: ['ES256'], issuer: socialEnv.APPLE_TEAM_ID, audience: fixture.issuer, subject: fixture.clientId,
+      });
+    }
+    exchanges++;
+    const token = await new SignJWT({
+      nonce: invalidClaim === 'nonce' ? 'different-nonce' : flow.query.get('nonce'),
+      email: 'member@example.com', email_verified: true,
+    }).setProtectedHeader({ alg: 'RS256', kid: key.kid }).setIssuer(fixture.issuer)
+      .setAudience(invalidClaim === 'aud' ? 'different-app' : fixture.clientId)
+      .setSubject('fictional-provider-subject').setIssuedAt().setExpirationTime('5m').sign(signing.privateKey);
+    appleRefreshToken = 'fictional-apple-refresh-' + exchanges;
+    return Response.json({ id_token: token, refresh_token: flow.provider === 'apple' ? appleRefreshToken : 'unused-google-refresh' });
+  };
+  try {
+    const options = await handleAccountApi(request('/api/session'), socialEnv, null);
+    assert.deepEqual((await options.json()).providers, ['apple', 'google']);
+    const disabled = await handleAccountApi(request('/api/session'), { ...socialEnv, PUBLIC_SITE_ORIGIN: 'https://other.test' }, null);
+    assert.deepEqual((await disabled.json()).providers, []);
+    assert.equal((await register('')).status, 401);
+    flow = await start('google');
+    assert.equal(outcome(await callback(flow, '')), '/?auth=retry#account');
+    assert.equal(outcome(await callback(flow, flow.cookie, { state: 'f'.repeat(64) })), '/?auth=retry#account');
+    assert.equal(outcome(await callback(flow, flow.cookie, { error: 'access_denied' })), '/?auth=cancelled#account');
+    assert.equal(outcome(await callback(flow)), '/?auth=retry#account');
+    assert.equal(exchanges, 0, 'Missing state, mismatched state and cancellations must never exchange a code.');
+
+    for (const claim of ['nonce', 'aud']) {
+      flow = await start('google');
+      invalidClaim = claim;
+      assert.equal(outcome(await callback(flow)), '/?auth=retry#account');
+    }
+    invalidClaim = '';
+    for (const provider of ['google', 'apple']) {
+      flow = await start(provider);
+      const responses = await Promise.all([callback(flow), callback(flow)]);
+      const verified = responses.find(response=>outcome(response)==='/?auth=register#account');
+      assert.ok(verified, 'The signed provider identity leads to registration.');
+      assert.equal(responses.filter(response=>outcome(response)==='/?auth=retry#account').length, 1);
+      const proof = cookieValue(verified.headers.getSetCookie()[0]);
+      assert.match(proof, /^__Host-kq_oauth_proof=/);
+      const pendingGrant = db.prepare('SELECT apple_grant FROM oauth_pending WHERE subject_hash IS NOT NULL').get().apple_grant;
+      if (provider === 'apple') {
+        assert.match(pendingGrant, /^v1\./);
+        assert.ok(!pendingGrant.includes(appleRefreshToken));
+      } else assert.equal(pendingGrant, null);
+      assert.equal(await getSessionUser(request('/api/session', 'GET', undefined, { cookie: proof }), socialEnv), null);
+      assert.equal((await register(proof, { consent: false })).status, 400);
+      const registration = await register(proof);
+      assert.equal(registration.status, 201);
+      assert.equal((await register(proof)).status, 401);
+      const cookie = cookieValue(registration.headers.getSetCookie()[0]);
+      const owner = await getSessionUser(request('/api/session', 'GET', undefined, { cookie }), socialEnv);
+      assert.notEqual(owner.userId, emailOwner.userId, 'A matching provider email must never open the existing email account.');
+      const session = await (await handleAccountApi(request('/api/session'), socialEnv, owner)).json();
+      assert.equal(session.email, null);
+      assert.equal(session.profile.name, consent.name);
+      assert.equal(db.prepare('SELECT apple_grant FROM oauth_accounts WHERE user_id=?').get(owner.userId).apple_grant, pendingGrant);
+
+      // Simulate a pre-migration Apple account. Its next sign-in backfills the grant.
+      if (provider === 'apple') db.prepare('UPDATE oauth_accounts SET apple_grant=NULL WHERE user_id=?').run(owner.userId);
+      flow = await start(provider);
+      const returning = await callback(flow);
+      assert.equal(outcome(returning), '/?auth=signed-in#account');
+      const returningCookie = cookieValue(returning.headers.getSetCookie()[0]);
+      assert.deepEqual(await getSessionUser(request('/api/session', 'GET', undefined, { cookie: returningCookie }), socialEnv), owner);
+      const deletion = await handleAccountApi(request('/api/account', 'DELETE', { confirm: 'DELETE' }, { csrf: session.csrf }), socialEnv, owner);
+      assert.equal(deletion.status, 200);
+      assert.deepEqual(await deletion.json(), provider === 'apple' ? { deleted: true, appleRevocation: 'revoked' } : { deleted: true });
+      assert.equal(revocations, provider === 'apple' ? 1 : 0);
+      assert.equal(db.prepare('SELECT COUNT(*) n FROM oauth_accounts WHERE user_id=?').get(owner.userId).n, 0);
+      assert.equal(await getSessionUser(request('/api/session', 'GET', undefined, { cookie: returningCookie }), socialEnv), null);
+    }
+    for (const legacy of [true, false]) {
+      flow = await start('apple');
+      const verified = await callback(flow);
+      const registration = await register(cookieValue(verified.headers.getSetCookie()[0]));
+      const cookie = cookieValue(registration.headers.getSetCookie()[0]);
+      const owner = await getSessionUser(request('/api/session', 'GET', undefined, { cookie }), socialEnv);
+      if (legacy) db.prepare('UPDATE oauth_accounts SET apple_grant=NULL WHERE user_id=?').run(owner.userId);
+      const session = await (await handleAccountApi(request('/api/session'), socialEnv, owner)).json();
+      revokeFails = true;
+      const deletion = await handleAccountApi(request('/api/account', 'DELETE', { confirm: 'DELETE' }, { csrf: session.csrf }), socialEnv, owner);
+      assert.deepEqual(await deletion.json(), { deleted: true, appleRevocation: 'manual' });
+      assert.equal(await getSessionUser(request('/api/session', 'GET', undefined, { cookie }), socialEnv), null);
+      assert.equal(revocations, legacy ? 1 : 2);
+    }
+    const verifier = randomBytes(32).toString('hex');
+    const challenge = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))).toString('hex');
+    flow = await start('apple', challenge, true);
+    assert.equal(outcome(await callback(flow, flow.cookie, {error:'user_cancelled_authorize'})), 'xyz.kolequant.geneticage://signin/complete#cancelled');
+    flow = await start('apple', challenge, true);
+    const changedMode = flow.cookie.replace('=app.', '=');
+    assert.equal(outcome(await callback(flow, changedMode)), '/?auth=retry#account', 'OAuth state is bound to the app-return mode.');
+    for (const provider of ['apple', 'google']) {
+      const directReturn = provider === 'apple';
+      flow = await start(provider, challenge, directReturn);
+      const redirected = await callback(flow);
+      const ticket = outcome(redirected).split('#')[1];
+      const location = directReturn ? 'xyz.kolequant.geneticage://signin/complete#' : '/sign-in-return/#';
+      assert.equal(outcome(redirected), location + ticket);
+      assert.match(ticket, /^[a-f0-9]{64}$/);
+      assert.equal((await register('__Host-kq_oauth_proof=' + ticket)).status, 401);
+      assert.equal((await completeNative(ticket, '0'.repeat(64))).status, 401);
+      const native = await completeNative(ticket, verifier);
+      assert.deepEqual(await native.json(), { registrationRequired: true });
+      assert.equal((await completeNative(ticket, verifier)).status, 401);
+      const created = await register(cookieValue(native.headers.getSetCookie()[0]));
+      assert.equal(created.status, 201);
+      const cookie = cookieValue(created.headers.getSetCookie()[0]);
+      const firstUser = await getSessionUser(request('/api/session', 'GET', undefined, { cookie }), socialEnv);
+      assert.ok(firstUser?.userId);
+      flow = await start(provider, challenge, !directReturn);
+      const again = await completeNative(outcome(await callback(flow)).split('#')[1], verifier);
+      assert.deepEqual(await again.json(), { authenticated: true });
+      const returnCookie = cookieValue(again.headers.getSetCookie()[0]);
+      assert.deepEqual(await getSessionUser(request('/api/session', 'GET', undefined, { cookie: returnCookie }), socialEnv), firstUser);
+    }
+  } finally {
+    globalThis.fetch = emailFetch;
+  }
+}
+
 try {
   assert.equal((await authCall('code', 'POST', { email: 'member@example.com' }, { origin: 'https://evil.test' })).response.status, 403);
   assert.equal(sent.length, 0, 'Cross-site requests must not send mail.');
 
   const address = '  MEMBER@example.com ';
-  const unconfigured = await handleEmailAuthApi(request('/api/auth/code', 'POST', {email:address}), {...env,RESEND_API_KEY:undefined});
+  const unconfigured = await handleAuthApi(request('/api/auth/code', 'POST', {email:address}), {...env,RESEND_API_KEY:undefined});
   assert.equal(unconfigured.status, 503);
   assert.equal(sent.length, 0);
   const sentCode = await authCall('code', 'POST', { email: address });
@@ -110,7 +306,7 @@ try {
   assert.match(registrationCookies.find(value => value.startsWith('__Host-kq_email_proof=')), /Max-Age=0/);
   const sessionCookie = cookieValue(sessionHeader);
   const sessionToken = sessionCookie.split('=')[1];
-  const owner = await getEmailUser(request('/api/session', 'GET', undefined, { cookie: withSiteCookie(sessionCookie) }), env);
+  const owner = await getSessionUser(request('/api/session', 'GET', undefined, { cookie: withSiteCookie(sessionCookie) }), env);
   assert.ok(owner?.userId);
   const storedSessionHash = db.prepare('SELECT token_hash FROM auth_sessions').get().token_hash;
   assert.match(storedSessionHash, /^[a-f0-9]{64}$/);
@@ -125,14 +321,16 @@ try {
   assert.equal(login.data.authenticated, true);
   assert.equal(login.data.registrationRequired, false);
   const loginCookie = cookieValue(login.response.headers.getSetCookie()[0]);
-  const loginOwner = await getEmailUser(request('/api/session', 'GET', undefined, { cookie: loginCookie }), env);
+  const loginOwner = await getSessionUser(request('/api/session', 'GET', undefined, { cookie: loginCookie }), env);
   assert.equal(loginOwner.userId, owner.userId);
   assert.equal(loginCode.response.status, 202);
 
   const logout = await authCall('logout', 'POST', {}, { cookie: withSiteCookie(loginCookie) });
   assert.equal(logout.response.status, 200);
   assert.ok(logout.response.headers.getSetCookie().length >= 2);
-  assert.equal(await getEmailUser(request('/api/session', 'GET', undefined, { cookie: loginCookie }), env), null);
+  assert.equal(await getSessionUser(request('/api/session', 'GET', undefined, { cookie: loginCookie }), env), null);
+
+  await verifySocialSignIn(owner);
 
   const attemptsEmail = 'attempts@example.com';
   const attemptCode = await authCall('code', 'POST', { email: attemptsEmail });
@@ -154,7 +352,7 @@ try {
   assert.equal(db.prepare('SELECT count(*) n FROM email_auth_codes WHERE email=?').get('member@example.com').n, 0);
   assert.equal(db.prepare('SELECT count(*) n FROM auth_accounts WHERE user_id=?').get(owner.userId).n, 0);
   assert.equal(db.prepare('SELECT count(*) n FROM auth_sessions WHERE user_id=?').get(owner.userId).n, 0);
-  console.log('Passed: same-origin email sign-in, Resend message contents, code hashing/expiry/attempt limit, consent-gated registration, separate secure cookies, account login, session hashing/logout and cascading deletion. No real email was sent.');
+  console.log('Passed: email codes, Google and Apple identity verification, consent-gated registration, session isolation, logout and cascading deletion. No providers were contacted.');
 } finally {
   globalThis.fetch = originalFetch;
   db.close();

@@ -1,6 +1,11 @@
 import {labs,normalizeLab} from './lab-definitions.mjs';
 import {reviewLabSafety,clinicalForDisplay,LAB_SAFETY_VERSION} from './lab-safety.mjs';
 export {labs,normalizeLab} from './lab-definitions.mjs';
+export const DECLINED_ANSWER='Prefer not to say';
+export const EXCLUSIVE_ANSWERS=['None','Not sure',DECLINED_ANSWER];
+const compositionMethods=['Smart scale or bioimpedance','DXA scan','Other measurement'];
+const hasCompositionReading=answers=>compositionMethods.includes(answers.compositionMethod);
+const centimetres=(value,unit)=>Number(value)*(unit==='in'?2.54:1);
 const weightKg=(value,unit)=>Number.isFinite(Number(value))&&Number(value)>0?Number(value)*(unit==='lb'?0.45359237:1):null;
 const weightChangeKg=a=>{
  const current=weightKg(a.weight,a.weightUnit||'kg'),yearAgo=weightKg(a.weightYearAgo,a.weightYearAgoUnit||'kg');
@@ -10,13 +15,13 @@ export const hasLargeRecentWeightLoss=a=>{
  const change=weightChangeKg(a);
  return change!==null&&change.loss>=Math.min(4.5359237,change.previous*0.05)-1e-9;
 };
-export const sections=[
- {name:'About you',title:'About you',intro:'Enter your age to begin. The other questions are optional.',questions:[
+export const profileSectionsV1=[
+ {name:'About you',title:'About you',intro:'Enter your age, height and weight to complete your health profile.',questions:[
   {id:'age',label:'How old are you?',type:'number',unit:'years',required:true,min:18,max:120,step:1},
   {id:'sex',label:'Which sex should we use for health comparisons?',options:['Female','Male','Prefer not to say'],hint:'Some reference equations use separate values for female and male adults.'},
   {id:'country',label:'Which country do you live in?',type:'country',hint:'Helps KoleQuant check consultation availability. It does not affect your age estimate.'},
-  {id:'height',label:'What is your height?',type:'measure',units:['cm','in'],hint:'For feet and inches, enter the total in inches. Height and weight are recorded for health context; they do not change the blood-based age calculation.'},
-  {id:'weight',label:'What is your weight?',type:'measure',units:['kg','lb']},
+  {id:'height',label:'What is your height?',type:'measure',units:['cm','in'],required:true,requiredMessage:'Enter your height.',hint:'For feet and inches, enter the total in inches. We use your height and weight to calculate BMI.'},
+  {id:'weight',label:'What is your weight?',type:'measure',units:['kg','lb'],required:true,requiredMessage:'Enter your weight.'},
   {id:'weightYearAgo',label:'About how much did you weigh 12 months ago?',type:'measure',units:['kg','lb'],hint:'Use your best estimate. If you are pregnant, enter your weight before pregnancy.'},
   {id:'weightChangeIntent',label:'Was this weight loss intentional?',options:['Yes','No','Not sure','Prefer not to say'],show:hasLargeRecentWeightLoss},
   {id:'health',label:'How would you describe your overall health today?',options:['Excellent','Very good','Good','Fair','Poor','Not sure']} ]},
@@ -50,7 +55,17 @@ export const sections=[
   {id:'context',label:'Does any of the following apply to you now?',type:'multi',options:['Pregnant','Recently gave birth','Receiving dialysis','Recovering from major surgery','None','Prefer not to say'],optionLabels:{'Recently gave birth':'Recovering after childbirth'}},
   {id:'illness',label:'Have you had a fever, infection or other short-term illness during the past two weeks?',options:['No','Yes','Not sure','Prefer not to say']} ]}
 ];
-export const legacySections=sections.map(section=>{
+export const sections=[
+ ...profileSectionsV1,
+ {name:'Body measurements',questions:[
+  {id:'waist',label:'What is your waist circumference?',type:'measure',units:['cm','in'],min:1,max:300,hint:'Measure midway between your lowest rib and the top of your hip after breathing out normally. Skip if you don’t have a measurement.'},
+  {id:'compositionMethod',label:'How was your body composition measured?',options:compositionMethods,hint:'Use an existing scale or scan reading. Skip if you don’t have one.'},
+  {id:'bodyFat',label:'What body fat percentage was reported?',type:'number',unit:'%',min:0.1,max:100,show:hasCompositionReading},
+  {id:'skeletalMuscle',label:'What skeletal muscle percentage was reported?',type:'number',unit:'%',min:0.1,max:100,show:hasCompositionReading,hint:'Use the value labeled skeletal muscle percentage. Skip if your report lists only lean mass.'},
+  {id:'bodyWater',label:'What total body water percentage was reported?',type:'number',unit:'%',min:0.1,max:100,show:hasCompositionReading,hint:'Use the reported percentage from the same reading if available.'}
+ ]}
+];
+export const legacySections=profileSectionsV1.map(section=>{
  if(section.name==='About you')return {...section,questions:section.questions.filter(q=>!['weightYearAgo','weightChangeIntent'].includes(q.id))};
  if(section.name==='Tobacco')return {...section,questions:[
   {id:'smoking',label:'Which best describes your cigarette smoking?',options:['Never smoked regularly','Used to smoke regularly','Smoke now','Prefer not to say'],optionLabels:{'Never smoked regularly':'I do not smoke and have never smoked regularly','Used to smoke regularly':'I used to smoke, but no longer do','Smoke now':'I smoke now, daily or occasionally'}},
@@ -77,7 +92,7 @@ export function eligibility(a,age){
  if(!Number.isInteger(Number(age))||age<20||age>84)return 'This version provides a blood-based age estimate for ages 20–84. You can still use the health and lifestyle assessment.';
  return null;
 }
-export const ASSESSMENT_PROTOCOL='questionnaire-context-2026-11-07-v1';
+export const ASSESSMENT_PROTOCOL='questionnaire-context-2026-11-09-v2';
 export function assessClinical({age,lab,contextConfirmed,fasting}){
  const checks=labs.map(({id})=>({id,...reviewLabSafety(id,lab?.[id])})).filter(check=>!['ok','missing'].includes(check.status)||check.warning);
  const metadata={checks,safetyVersion:LAB_SAFETY_VERSION};
@@ -90,16 +105,45 @@ export function assessClinical({age,lab,contextConfirmed,fasting}){
  const x=normalizeLab(lab),value=calculatePhenoAge(Number(age),x);
  return clinicalForDisplay({...metadata,x,value,gap:value-Number(age)});
 }
-export function validateQuestionnaire(a,{requireAge=true}={}){
+export function validateQuestionnaire(a,{requireAge=true,requireMeasurements=false}={}){
  const errors={};
- for(const q of sections.flatMap(s=>s.questions).filter(q=>!q.show||q.show(a))){const v=a[q.id];if(q.id==='age'&&requireAge&&(v===undefined||v===''))errors.age='Enter your age in whole years.';if((q.type==='number'||q.type==='measure')&&v!==undefined&&v!==''){const n=Number(v);if(!Number.isFinite(n)||n<(q.min??0.1)||n>(q.max??1000)||(q.id==='age'&&!Number.isInteger(n)))errors[q.id]=q.id==='age'?'This assessment is for adults aged 18 or over. Enter your age in whole years.':'Check this number and the selected unit.';}}
+ for(const q of sections.flatMap(s=>s.questions).filter(q=>!q.show||q.show(a))){
+  if(q.type!=='number'&&q.type!=='measure')continue;
+  const value=a[q.id];
+  if(value==null||value===''){
+   if(q.id==='age'&&requireAge)errors.age='Enter your age in whole years.';
+   else if(requireMeasurements&&q.requiredMessage)errors[q.id]=q.requiredMessage;
+   continue;
+  }
+  const n=Number(value),unit=a[q.id+'Unit'];
+  if(!['number','string'].includes(typeof value)||!Number.isFinite(n)||n<(q.min??0.1)||n>(q.max??1000)||
+     (q.id==='age'&&!Number.isInteger(n))||(q.units&&unit&&!q.units.includes(unit))){
+   errors[q.id]=q.id==='age'?'This assessment is for adults aged 18 or over. Enter your age in whole years.':'Check this number and the selected unit.';
+  }
+ }
  if(a.smokingStartAge!==undefined&&a.smokingStartAge!==''&&(!Number.isInteger(Number(a.smokingStartAge))||Number(a.smokingStartAge)>Number(a.age)))errors.smokingStartAge='Starting age must be a whole number no greater than your current age.';
  if(a.smokingDays30!==undefined&&a.smokingDays30!==''&&!Number.isInteger(Number(a.smokingDays30)))errors.smokingDays30='Enter a whole number of days.';
  if(a.smokingYears!==undefined&&a.smokingYears!==''&&a.age&&Number(a.smokingYears)>Number(a.age))errors.smokingYears='The number of years smoked cannot be greater than your age.';
- for(const q of sections.flatMap(s=>s.questions).filter(q=>q.type==='multi')){const v=a[q.id];if(Array.isArray(v)&&v.length>1&&v.some(x=>['None','Not sure','Prefer not to say'].includes(x)))errors[q.id]='Choose either the applicable answers or one of “None”, “Not sure” and “Prefer not to say”.';}
+ for(const q of sections.flatMap(s=>s.questions).filter(q=>q.type==='multi')){const v=a[q.id];if(Array.isArray(v)&&v.length>1&&v.some(x=>EXCLUSIVE_ANSWERS.includes(x)))errors[q.id]='Choose an exclusive answer on its own.';}
  if(a.moderate!==undefined&&a.vigorous!==undefined&&Number(a.moderate)+Number(a.vigorous)>10080)errors.vigorous='Together, these activity totals exceed the number of minutes in a week. Check that you entered weekly minutes.';
  for(const d of a.drinks||[])if([d.count,d.ml,d.abv].some(v=>v!==''&&(!Number.isFinite(Number(v))||Number(v)<=0))||Number(d.abv)>100)errors.drinks='Check the serving count, size and alcohol percentage. Leave an amount blank if you do not know it.';
  return errors;
+}
+
+export function profileMeasurementErrors(answers={}){
+ const errors=validateQuestionnaire(answers,{requireMeasurements:true});
+ return Object.fromEntries(['age','height','weight'].filter(id=>errors[id]).map(id=>[id,errors[id]]));
+}
+
+export function profileBmi(answers){
+ if(Object.keys(profileMeasurementErrors(answers)).length)return null;
+ const heightMetres=centimetres(answers.height,answers.heightUnit)/100;
+ return weightKg(answers.weight,answers.weightUnit)/heightMetres**2;
+}
+export function profileWaistRatio(answers,bmi){
+ if(bmi===null||bmi>=35||!answers.waist||validateQuestionnaire(answers).waist)return null;
+ if(answers.context?.some(value=>['Pregnant','Recently gave birth'].includes(value)))return null;
+ return centimetres(answers.waist,answers.waistUnit)/centimetres(answers.height,answers.heightUnit);
 }
 const known=v=>v!==undefined&&v!==null&&v!==''&&v!=='Not sure'&&v!=='Prefer not to say';
 export function sleepReference(age){return Number(age)>=65?'7–8 hours a day':Number(age)>=61?'7–9 hours a day':'at least 7 hours a day';}

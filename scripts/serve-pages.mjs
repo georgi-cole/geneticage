@@ -5,7 +5,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 
 export async function createPagesServer(directory=fileURLToPath(new URL('../dist-pages/',import.meta.url))){
  const {basePath}=JSON.parse(await readFile(path.join(directory,'build-info.json'),'utf8'));
- const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2','.woff':'font/woff','.json':'application/json','.webmanifest':'application/manifest+json'};
+ const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.png':'image/png','.json':'application/json','.webmanifest':'application/manifest+json'};
  return createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname;
   if(pathname==='/'&&basePath!=='/'){res.writeHead(302,{Location:basePath});res.end();return;}

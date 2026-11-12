@@ -1,4 +1,4 @@
-# Email sign-in and registration
+# Sign-in and registration
 Email sign-in is not configured yet.	Входът с имейл още не е настроен.
 Please use this website to sign in.	Използвайте този уебсайт, за да влезете.
 Enter a valid email address.	Въведете валиден имейл адрес.
@@ -25,9 +25,8 @@ Create your account	Създайте профил
 Choose a nickname for your private health journal.	Изберете име за личния си здравен дневник.
 We keep your email for sign-in. Resend delivers the code. Assessments are encrypted and stored only when you choose to save them. You can export or delete them in Data & settings.	Пазим имейла ви за вход. Resend доставя кода. Анализите се криптират и съхраняват само когато ги запазите. Можете да ги изтеглите или изтриете от „Данни и настройки“.
 I consent to storing health information when I choose to save an assessment.	Давам съгласие за съхранение на здравна информация, когато избера да запазя анализ.
-Start sign-in again	Започнете входа отначало
 Your session could not be opened. Try signing in again.	Сесията не се отвори. Опитайте да влезете отново.
-Signed in with email	Влезли сте с имейл
+Signed in	Влезли сте
 Keep your assessments across devices	Отваряйте анализите си на различни устройства
 Sign in / Create account →	Вход / Създаване на профил →
 KoleQuant stores your sign-in email, nickname and consent record. Resend delivers a one-time code to your email address. Sign-in emails contain no health information.	KoleQuant съхранява имейла ви за вход, името на профила и съгласието ви. Resend изпраща еднократен код на имейла ви. Писмата за вход не съдържат здравна информация.
@@ -35,4 +34,32 @@ This removes your profile, email sign-in, sessions, and saved reports from the l
 This preview is offline for accounts	Профилите изискват хостваното приложение
 Account creation needs the hosted app. You can use assessments in this preview, and your entries stay on this page.	За да създадете профил, отворете хостваното приложение. Можете да правите анализи в този преглед, като въведените данни остават на страницата.
 Email sign-in is temporarily unavailable.	Входът с имейл временно не е достъпен.
+Sign-in is not configured yet.	Входът още не е настроен.
+Sign-in is temporarily unavailable.	Входът временно не е достъпен.
+Continue with Apple	Продължете с Apple
+Continue with Google	Продължете с Google
+Or sign in with a code sent to your email.	Или влезте с код, изпратен на имейла ви.
+Use the same sign-in method to open an existing account.	За да отворите съществуващ профил, използвайте същия начин за вход.
+Provider sign-in opens in a new tab so your entries stay here. Return to this tab when you’re done.	Входът през Apple или Google се отваря в нов раздел, за да запазите въведените данни тук. След това се върнете в този раздел.
+Continue here after signing in	Продължете тук след вход
+Choose a nickname for your private health journal. You’ll enter your health details separately.	Изберете име за личния си здравен дневник. След това ще въведете здравните си данни отделно.
+We keep your email for sign-in. Resend delivers the code. Assessments are encrypted and stored only when you choose to save them. You can export or delete them from your account.	Пазим имейла ви за вход. Resend доставя кода. Анализите се криптират и съхраняват само когато ги запазите. Можете да ги изтеглите или изтриете от профила си.
+We keep a sign-in identifier from your provider. Assessments are encrypted and stored only when you choose to save them. You can export or delete them from your account.	Съхраняваме идентификатор за вход от доставчика. Анализите се криптират и съхраняват само когато ги запазите. Можете да ги изтеглите или изтриете от профила си.
+Sign-in was cancelled. Choose a sign-in method to try again.	Входът бе отменен. Изберете начин за вход, за да опитате отново.
+Sign-in could not be completed. Please try again.	Входът не завърши. Опитайте отново.
+Your sign-in expired. Please sign in again.	Времето за вход изтече. Влезте отново.
+Start Apple or Google sign-in again.	Започнете отново входа с Apple или Google.
+Sign out before using a different account.	Излезте, преди да влезете с друг профил.
+Could not finish account registration. Please sign in again.	Регистрацията не завърши. Влезте отново.
+Complete your health profile	Попълнете здравния си профил
+complete	попълнен
+Enter your age, height and weight	Въведете възраст, ръст и тегло
+Enter your age, height and weight. We calculate BMI from your height and weight.	Въведете възраст, ръст и тегло. Изчисляваме индекса на телесна маса от ръста и теглото ви.
+Enter your age, height and weight to complete your health profile.	За да попълните здравния си профил, въведете възраст, ръст и тегло.
+For feet and inches, enter the total in inches. We use your height and weight to calculate BMI.	Ако измервате във футове и инчове, въведете общия брой инчове. Използваме ръста и теглото ви, за да изчислим индекса на телесна маса.
+Enter your height.	Въведете ръста си.
+Enter your weight.	Въведете теглото си.
+BMI	ИТМ
+KoleQuant stores your nickname, consent record and sign-in information. If you use email, we store your address and Resend delivers the sign-in code. If you use Apple or Google, we keep a sign-in identifier. Sign-in providers receive no health information.	KoleQuant съхранява името на профила, съгласието ви и данните за вход. При вход с имейл пазим адреса ви, а Resend изпраща кода. При вход с Apple или Google пазим идентификатор за вход. Доставчиците на вход не получават здравна информация.
+This removes your profile, sign-in information, sessions and saved reports from the live database. Provider backups, downloads and Stripe payment records have separate lifecycles.	Това премахва профила, данните за вход, сесиите и запазените доклади от активната база данни. Резервните копия, изтеглените файлове и записите за плащания в Stripe се съхраняват отделно.
 Add pulse-wave measurement	Добавете измерване на пулсовата вълна

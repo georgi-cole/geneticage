@@ -1,0 +1,81 @@
+name: Prepare signed Android store build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: Android version code
+        required: true
+        type: string
+      expected_sha:
+        description: Exact verified main commit
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: geneticage-android-release
+  cancel-in-progress: false
+
+jobs:
+  bundle:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: geneticage-android
+    steps:
+      - name: Verify the requested source and version
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+        run: |
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ && "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
+          [[ "$BUILD_NUMBER" =~ ^[1-9][0-9]{0,8}$ ]]
+          printf 'GENETICAGE_BUILD_NUMBER=%s\n' "$BUILD_NUMBER" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            native/package-lock.json
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci && npm ci --prefix native
+      - run: npm run build:native
+      - run: npx --no-install cap sync android
+        working-directory: native
+      - name: Build and verify the signed bundle
+        env:
+          UPLOAD_KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          GENETICAGE_UPLOAD_PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
+        run: |
+          : "${UPLOAD_KEYSTORE:?Missing Android upload identity}"
+          : "${GENETICAGE_UPLOAD_PASSWORD:?Missing Android upload password}"
+          umask 077
+          export GENETICAGE_UPLOAD_STORE="$RUNNER_TEMP/geneticage-upload.p12"
+          trap 'rm -f "$GENETICAGE_UPLOAD_STORE"' EXIT
+          printf '%s' "$UPLOAD_KEYSTORE" | base64 --decode > "$GENETICAGE_UPLOAD_STORE"
+          chmod +x native/android/gradlew
+          (cd native/android && ./gradlew :app:bundleRelease --no-daemon --max-workers=2)
+          bundle="native/android/app/build/outputs/bundle/release/app-release.aab"
+          verification="$(jarsigner -verify "$bundle")"
+          printf '%s\n' "$verification"
+          [[ "$verification" == *"jar verified."* ]]
+          mkdir release
+          cp "$bundle" "release/GeneticAge-1.0-${GENETICAGE_BUILD_NUMBER}.aab"
+          printf '%s\n' "$GITHUB_SHA" > release/source-commit.txt
+          (cd release && sha256sum *.aab > SHA256SUMS)
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: GeneticAge-Android-signed
+          path: release/
+          retention-days: 7
+          if-no-files-found: error
