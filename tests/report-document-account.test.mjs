@@ -262,3 +262,22 @@ test('a stored narrative remains bound to its owner, assessment ID and report re
   assert.equal((await f.call('a', `assessments/${second.id}/report`)).status, 200);
   assert.equal((await f.call('b', `assessments/${first.id}/report`)).status, 404);
 });
+
+
+test('new family reports freeze validated health-profile context without changing the family calculation', async t => {
+ const f=await accountFixture(t);
+ const id=randomUUID(),system=systemSampleInputs('fitness');
+ const answers={...sampleAnswers,moderate:'180',strength:'2'};
+ const without=validateSnapshot({assessmentType:'fitness',system});
+ const validated=validateSnapshot({assessmentType:'fitness',system,answers});
+ assert.deepEqual(validated.system,without.system,'Health-profile context does not change the fitness equation.');
+ assert.equal((await f.call('a','assessments','POST',{id,assessmentType:'fitness',system,answers})).status,201);
+ const original=(await f.call('a','assessments/'+id)).data;
+ assert.equal(original.assessment.answers.moderate,'180');
+ assert.equal(original.report.full,true,'The previously included family entitlement is preserved.');
+ assert.deepEqual(original.report.document,composeReportDocument({state:validated,generatedAt:original.report.generatedAt}));
+ assert.equal((await f.call('a','assessments','POST',{id,assessmentType:'fitness',system,answers:{...answers,moderate:'0'}})).status,201);
+ assert.deepEqual((await f.call('a','assessments/'+id)).data,original,'Reusing a saved ID cannot replace its profile or document.');
+ assert.equal((await f.call('b','assessments/'+id+'?snapshot=1')).status,404);
+ assert.equal((await f.call('a','assessments','POST',{id:randomUUID(),assessmentType:'fitness',system,answers:{age:'not-an-age'}})).status,400);
+});

@@ -77,12 +77,12 @@ test('new saved documents are authoritative even when inputs would select differ
  assert.deepEqual(saved,before);
 });
 
-test('server preview gates composed text, next steps, detailed answers and blood comparisons out of the DOM',()=>{
+test('basic reports keep recorded data free while gating premium composed text and next steps',()=>{
  const saved={...state,savedReport:{document:{version:'personal-report-v1',sections:[{id:'secret',kind:'plan',title:'Premium private chapter',paragraphs:['Premium content must not be in preview DOM.'],sources:[]}]},priorities:[{name:'Allowed original preview',text:'One permitted insight.',action:'Premium next step must not be in preview DOM.',sources:[]},{name:'Second hidden finding',text:'Second hidden interpretation.',sources:[]}]}};
  const doc=render(saved,{full:false,reviewing:false,pagesPreview:false});
- assert.equal(doc.querySelectorAll('.finding-card').length,1);assert.equal(doc.querySelectorAll('.answer-row dt').length,4,'Collection metadata remains visible, not the full questionnaire.');
- assert.equal(doc.querySelectorAll('.blood-review-item').length,0);assert.equal(doc.querySelectorAll('.personal-report-document').length,0);
- assert.equal(doc.querySelector('[data-action="print"]'),null);
+ assert.equal(doc.querySelectorAll('.finding-card').length,1);assert.ok(doc.querySelectorAll('.answer-row dt').length>4,'Recorded questionnaire answers remain available.');
+ assert.equal(doc.querySelectorAll('.blood-review-item').length,9);assert.equal(doc.querySelectorAll('.personal-report-document').length,0);
+ assert.ok(doc.querySelector('[data-action="print"]'));
  assert.match(doc.body.textContent,/One permitted insight/);
  assert.doesNotMatch(doc.body.textContent,/Premium private chapter|Premium content|Premium next step|Second hidden/);
  assert.ok(doc.querySelector('[data-action="save"]'));assert.ok(doc.querySelector('[data-action="checkout"]'));

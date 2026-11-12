@@ -145,8 +145,8 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('.mobile-nav [data-route="reports"]');assert.equal($('#main [data-action="signup"]'),null);await click('#main [data-action="report"]');
  assert.match($('#main').textContent,/Unsaved assessment/);assert.match($('#main').textContent,/Fictional test country/);assert.equal($('#main [data-action="save"]'),null);
  const cloud=document.createElement('button');cloud.dataset.action='checkout';document.body.append(cloud);cloud.click();await flush();
- assert.match($('.modal').textContent,/Account creation needs the hosted app/);
- assert.equal($('.modal a').origin,'https://kolequant-age-prototype.quartzpaddock.chatgpt.site');
+ assert.match($('.modal').textContent,/US\$7\.99/);
+ assert.equal($('.modal [data-action="purchase-checkout"]'),null);
  await click('.modal [data-action="close"]');
  await click('.mobile-nav [data-route="history"]');await click('[data-action="start-heart"]');
  $('#consent').checked=true;await click('[data-action="consent-next"]');
@@ -353,7 +353,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
  assert.match($('#system-prefill-age').parentElement.textContent,/33 years/,'Trying the sample leaves the personal draft available.');
  await click('.mobile-nav [data-route="history"]');
  await click('[data-action="start-system"][data-type="kidney"]');
- assert.match($('.modal').textContent,/Starting over replaces the working answers/);
+ assert.match($('.modal').textContent,/Starting new clears this assessment’s working answers and keeps your saved history/);
  await click('[data-action="edit-existing-assessment"]');
  assert.ok($('#system-age').value,'Edit opens the completed assessment with its answers.');
  await click('.mobile-nav [data-route="history"]');
@@ -391,6 +391,15 @@ test('Pages runs the actual app without a backend, fake account or stored health
  await click('.reports-screen [data-action="remove-local"]');
  await click('[data-action="confirm-remove-local"]');
  assert.ok($('.reports-screen [data-action="sample-report"]'),'Removing an unsaved sample clears the current report.');
+ for(const [type,title] of [['labs','Clinical PhenoAge'],['heart-vascular','Heart & Vascular'],['metabolic','Metabolic'],['kidney','Kidney'],['fitness','Fitness'],['profile','Health & lifestyle profile']]){
+  await click('.mobile-nav [data-route="reports"]');
+  assert.equal(document.querySelectorAll('.sample-report-grid [data-action="sample-report"]').length,6);
+  await click('.sample-report-grid [data-type="'+type+'"]');
+  assert.equal($('.report-heading h1').textContent,title);
+  assert.ok($('.kq-editorial'),'Every sample opens the current editorial report.');
+  assert.deepEqual([...document.querySelectorAll('.report-tools [data-action="print"]')].map(button=>button.dataset.export),['report','technical']);
+  assert.match($('#main').textContent,/This report is not a diagnosis/);
+ }
  assert.equal(requests,0);
  assert.ok(Object.keys(localStorage).every(key=>['kq-theme-v2','kq-language-v1'].includes(key)));
 });

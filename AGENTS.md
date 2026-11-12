@@ -1,6 +1,6 @@
 # GeneticAge by KoleQuant
 
-Read `README.md` and `CONTRIBUTING.md` before making changes. For visual work also read `DESIGN_SYSTEM.md`; the three active themes share one layout and Black Metal is the default. Edit Bulgarian copy in `design/localization/*.tsv` and regenerate with `npm run locale:build`.
+Read `README.md` and `CONTRIBUTING.md` before making changes. For visual work also read `DESIGN_SYSTEM.md`; the three active themes share one layout and Blood Moon is the default. Edit Bulgarian copy in `design/localization/*.tsv` and regenerate with `npm run locale:build`.
 
 Preserve the scientific formula, unit conversions, collection/eligibility gates, consent, authenticated ownership, encryption and payment entitlements unless the task explicitly requires changing them. Saved assessments are immutable snapshots; do not silently recalculate old records. Use fictional data and isolated test stores.
 

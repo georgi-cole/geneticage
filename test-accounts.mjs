@@ -27,7 +27,7 @@ assert.equal((await call(a, 'account', 'POST', registration, { 'X-KQ-CSRF': toke
 assert.equal((await call(a, 'account', 'POST', { ...registration, consent: false })).response.status, 400);
 for (const user of [a,b]) assert.equal((await call(user, 'account', 'POST', registration)).response.status, 201);
 const id = randomUUID();
-const entry = { id, userId: b.userId, answers: structuredClone(sampleAnswers), lab: sampleLabs(), labAge: '45', labDate: '2026-11-01', labSubmitted: true, labContext: true, labFasting: 'Yes', sample: true, unlocked: true, value: 18, report: { clinical: { value: 18 } } };
+const entry = { id, userId: b.userId, answers: structuredClone(sampleAnswers), lab: sampleLabs(), labAge: '45', labDate: '2026-11-01', labSubmitted: true, labContext: true, labFasting: 'Yes', sample: false, unlocked: true, value: 18, report: { clinical: { value: 18 } } };
 assert.equal((await call(a, 'assessments', 'POST', entry)).response.status, 201);
 assert.equal((await call(a, 'assessments', 'POST', entry)).response.status, 201);
 assert.equal((await call(a, 'assessments')).data.assessments.length, 1);
@@ -94,6 +94,7 @@ assert.equal(savedHeart.report.heart.review.fields.apob.comparison.label,'Within
 assert.equal(savedHeart.report.heart.review.fields.lpa.direction,'unknown');
 assert.deepEqual(savedHeart.report.heart.inputs.lpa,heartEntry.heart.lpa);
 assert.equal(savedHeart.report.full,true);
+assert.equal(savedHeart.report.guidance,undefined);
 assert.equal(savedHeart.report.access.purchased,false);
 assert.equal((await call(a,'assessments')).data.assessments.find(x=>x.id===heartId).assessmentType,'heart-vascular');
 assert.equal((await call(a,'assessments')).data.assessments.find(x=>x.id===entry.id).hasProfile,true);
@@ -166,8 +167,15 @@ const fitnessSampleMeta=(await call(a,'assessments')).data.assessments.find(reco
 assert.equal(fitnessSampleMeta.assessmentType,'fitness');
 assert.equal(fitnessSampleMeta.sample,true);
 const fitnessSample=(await call(a,'assessments/'+fitnessSampleId)).data;
+const fitnessSnapshot=(await call(a,'assessments/'+fitnessSampleId+'?snapshot=1')).data;
+assert.deepEqual(Object.keys(fitnessSnapshot),['assessment']);
+assert.equal(fitnessSnapshot.assessment.system.result.method,'HUNT');
+assert.equal((await call(b,'assessments/'+fitnessSampleId+'?snapshot=1')).response.status,404);
 assert.equal(fitnessSample.assessment.sample,true);
 assert.equal(fitnessSample.report.sample,true);
+assert.equal(fitnessSample.report.full,true);
+assert.equal(fitnessSample.report.document.type,'fitness');
+assert.equal((await call(a,'payments/checkout','POST',{confirm:true,assessmentId:fitnessSampleId})).response.status,400);
 assert.equal(fitnessSample.report.system.result.status,'ready');
 removeFixture(fitnessSampleId);
 // AES-GCM binds records to their owner and ID, rejecting ciphertext substitution.
