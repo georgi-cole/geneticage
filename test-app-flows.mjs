@@ -4,6 +4,7 @@ import {accountEntry} from './public/account-entry.mjs';
 import {questionContext,questionDestination,renderQuestionnaire,labErrorStep,renderLabForm} from './public/flow-ui.mjs';
 import {renderAssessments,renderReportLibrary,renderRecordLibrary,renderAccount,pageSlice,resultInstrument} from './public/ui-components.mjs';
 import {previousAssessment,profileProgress,profileSectionProgress} from './public/assessment-flow.mjs';
+import {comparableHistory} from './public/assessment-history.mjs';
 
 // Every applicable question is visited once, including conditional follow-ups.
 for(const answers of [{age:'45'},sampleAnswers,{...sampleAnswers,smoking:'Used to smoke regularly',alcohol:'Yes'},{...sampleAnswers,smoking:'Smoke now',alcohol:'Yes'}]){
@@ -35,7 +36,7 @@ const entryState={answers:{},lab:{},errors:{},labAge:'45',labDate:'2026-11-01'};
 const labMarkup=[1,2,3].map(labStep=>renderLabForm({...entryState,labStep},{})).join('');
 assert.equal((labMarkup.match(/data-lab="/g)||[]).length,9,'All nine blood inputs appear exactly once across the entry steps.');
 assert.match(resultInstrument({value:50,illustrative:true}),/>SAMPLE</,'Sample values never receive a personal-result badge.');
-assert.deepEqual(pageSlice([1,2,3,4,5],99),{items:[5],page:2,pages:3});
+assert.deepEqual(pageSlice([1,2,3,4,5,6,7,8,9,10],99),{items:[9,10],page:1,pages:2});
 assert.deepEqual(pageSlice([],0),{items:[],page:0,pages:1});
 assert.equal(pageSlice([1,2,3],-1).page,0);
 const guest={profile:null,history:[],loading:false,error:''};
@@ -49,14 +50,26 @@ const history=[
 const assessmentHistory=renderRecordLibrary({history});
 assert.match(assessmentHistory,/Fitness/);
 assert.match(assessmentHistory,/Heart & Vascular/);
-assert.doesNotMatch(assessmentHistory,/data-action="open-(report|saved)"/,'System histories show summaries, with detailed reports in Reports.');
+assert.doesNotMatch(assessmentHistory,/data-action="offer-report"/,'Full reports are offered in Reports.');
 assert.match(renderRecordLibrary({history,page:1}),/data-action="open-saved" data-id="blood-fixture">View result/);
 const savedReports=renderRecordLibrary({history,reports:true});
-assert.match(savedReports,/data-action="open-report" data-id="fitness-fixture">Read report/);
-assert.match(savedReports,/data-action="open-report" data-id="heart-fixture">Read report/);
+assert.match(savedReports,/data-action="offer-report" data-id="fitness-fixture"><span>Full report/);
+assert.match(savedReports,/data-action="offer-report" data-id="heart-fixture"><span>Full report/);
+assert.match(savedReports,/data-action="offer-report" data-id="blood-fixture"><span>Full report/);
+assert.doesNotMatch(savedReports,/data-action="library-page"/,'Three saved reports fit on one page.');
+const estimate={model:'clinical-phenoage-2018-demo-v1',labFasting:'Yes',sample:false};
+const comparisons=comparableHistory([
+ {...estimate,value:48,labDate:'2026-09-01',saved:'2026-09-03T10:00:00Z'},
+ {...estimate,value:49,labDate:'2026-09-01',saved:'2026-09-04T10:00:00Z'},
+ {...estimate,value:55,labDate:'2026-10-01',saved:'2026-10-02T10:00:00Z',labFasting:'No'},
+ {...estimate,value:44,labDate:'2026-10-01',saved:'2026-10-02T10:00:00Z',sample:true},
+ {...estimate,value:47,labDate:'2026-11-01',saved:'2026-11-03T10:00:00Z'},
+]);
+assert.equal(comparisons.length,1);
+assert.deepEqual(comparisons[0].points.map(({date,value})=>[date,value]),[['2026-09-01',49],['2026-11-01',47]]);
 assert.match(renderReportLibrary(guest),/data-action="sample-report"/,'Reports are useful before an account exists.');
 assert.match(renderReportLibrary({...guest,draft:{labSubmitted:true}}),/data-action="report"/,'The current assessment report stays reachable without saving.');
-assert.match(renderReportLibrary({...guest,latest:history.at(-1)}),/data-action="open-report" data-id="heart-fixture"[^>]*>.*>LATEST ASSESSMENT<.*>Heart & Vascular</s);
+assert.match(renderReportLibrary({...guest,latest:history.at(-1)}),/data-action="offer-report" data-id="heart-fixture"[^>]*>.*>LATEST ASSESSMENT<.*>Heart & Vascular</s);
 const kidneySample={id:'kidney-sample',assessmentType:'kidney',sample:true};
 const kidneyPersonal={id:'kidney-personal',assessmentType:'kidney',sample:false};
 assert.equal(previousAssessment([kidneySample],'kidney'),kidneySample,'A saved sample can open the restart choice.');

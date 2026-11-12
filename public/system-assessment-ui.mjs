@@ -1,3 +1,4 @@
+import {reportSaveButton} from './report-controls.mjs';
 import {renderEditorialSources,renderFamilyRecord,renderClinicalMethods} from './report-editorial-ui.mjs';
 import {isFamilyFolio} from './report-folio.mjs';
 import {assessSystem, systemAssessment, systemExtras, systemField, systemSteps} from './system-assessments.mjs';
@@ -286,11 +287,11 @@ const methodCopy = {
 
 export const systemMethods = type => methodCopy[type].map(paragraph => `<p>${esc(paragraph)}</p>`).join('');
 
-export function renderSystemReport({type, system, saved, savedReport, sample, hasDraftBackup, pagesPreview, sourceLinks, tab = 'summary'}) {
+export function renderSystemReport({type, system, saved, savedReport, sample, hasDraftBackup, pagesPreview, sourceLinks, tab = 'summary', full = true, profileAnswers}) {
   const spec = systemAssessment(type);
   const {inputs, result, review} = system;
   const ready = result.status === 'ready';
-  const document = savedReport?.document || (saved || savedReport ? null : composeReportDocument({state:{assessmentType:type,system,sample}}));
+  const document = full ? savedReport?.document || (saved || savedReport ? null : composeReportDocument({state:{answers:profileAnswers,assessmentType:type,system,sample}})) : null;
   const narrative = renderReportDocument(document, {sourceLinks});
   const folio=isFamilyFolio(document?.editorial);
   const boundLabel = {'at-least':'At least',below:'Below',above:'Above'}[result.ageRange];
@@ -321,13 +322,13 @@ export function renderSystemReport({type, system, saved, savedReport, sample, ha
   const tabs = [['summary','Your report'], ['measurements','Your data'], ['methods','Method & evidence']];
   const selected = Object.hasOwn(panels, tab) ? tab : 'summary';
   return `<div class="wrap app-screen report-workspace personal-report-workspace system-report">
-    <header class="report-heading" data-theme-part><div><span class="eyebrow">${sample ? 'ILLUSTRATIVE SAMPLE' : 'ASSESSMENT REPORT'}</span><h1>${esc(spec.title)}</h1>${saved ? '<p>Saved assessment</p>' : ''}</div>
-    <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print" data-export="report">${uiIcon('report')}<span>Report PDF</span></button><button class="text-btn" data-action="print" data-export="technical">${uiIcon('report')}<span>Data & methods PDF</span></button></div></header>
+    <header class="report-heading" data-theme-part><div><span class="eyebrow">${sample ? 'ILLUSTRATIVE SAMPLE' : 'ASSESSMENT REPORT'}</span><h1>${esc(spec.title)}</h1>${saved ? '<p>Saved assessment'+(typeof saved==='string'?' · '+esc(saved.slice(0,10)):'')+'</p>' : ''}</div>
+    <div class="report-tools no-print">${reportSaveButton(saved,pagesPreview)}<button class="text-btn" data-action="print" data-export="report">${uiIcon('report')}<span>Report PDF</span></button><button class="text-btn" data-action="print" data-export="technical">${uiIcon('report')}<span>Data & methods PDF</span></button></div></header>
     ${sample && hasDraftBackup ? '<button class="text-link no-print" data-action="restore-draft">Return to your assessment</button>' : ''}
     <nav class="report-tabs heart-report-tabs no-print" aria-label="Report sections">${tabs.map(([id, label]) => `<button type="button" data-action="report-tab" data-tab="${id}"${id === selected ? ' aria-current="page"' : ''}>${label}</button>`).join('')}</nav>
     <article class="report-paper${folio?' has-clinical-folio':''}">${tabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" data-export-scope="${id === 'summary' ? 'report' : 'technical'}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}
-      ${folio?'':'<p class="print-only report-footnote">Educational report. Prepared automatically; not clinically reviewed.</p>'}
+      ${folio?'':'<p class="print-only report-footnote">This report is not a diagnosis. Please always discuss any health-related matters with your clinician.</p>'}
     </article>
-    ${folio?'':'<p class="report-footnote">Educational estimates · Not clinically reviewed.</p>'}
+    ${folio?'':'<p class="report-footnote">This report is not a diagnosis. Please always discuss any health-related matters with your clinician.</p>'}
   </div>`;
 }

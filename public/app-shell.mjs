@@ -1,9 +1,10 @@
-import {THEMES} from './theme-system.mjs';
+import {DEFAULT_THEME,THEMES} from './theme-system.mjs';
 import {icon} from './icons.mjs';
 import {launchMarkup} from './launch-screen.mjs';
 import {APP_NAME,PUBLISHER_NAME} from './brand.mjs';
 const brand = `<button class="brand" data-action="home" aria-label="${APP_NAME} home"><img src="/assets/kolequant-mark.webp" width="19" height="28" alt=""/><span>${APP_NAME}<em>${PUBLISHER_NAME}</em></span></button>`;
 const accountDestination = `<button class="workspace-link" data-action="account" data-route="settings">${icon('person')}<span>Account</span></button>`;
+const defaultAppearance = THEMES.find(theme => theme.id === DEFAULT_THEME);
 const destinations = `<button class="workspace-link" data-action="home" data-route="home">${icon('home')}<span>Overview</span></button><button class="workspace-link" data-action="account-area" data-tab="history" data-route="history">${icon('history')}<span>Assessments</span></button><button class="workspace-link" data-action="account-area" data-tab="reports" data-route="reports">${icon('report')}<span>Reports</span></button>`;
 export const renderShell = ({consultations = true} = {}) => `
 ${launchMarkup}
@@ -21,8 +22,8 @@ ${launchMarkup}
       <div class="workspace-breadcrumb"><span>Workspace</span><span aria-hidden="true">/</span><strong id="workspace-current">Overview</strong></div>
       <nav class="header-actions" id="account-actions" aria-label="Appearance and language">
         <details class="appearance-control" id="appearance-control">
-          <summary aria-label="Theme: Black Metal. Change theme"><span class="current-theme-icon">${icon('diamond')}</span><span id="appearance-label">Black Metal</span><span class="theme-chevron" aria-hidden="true">${icon('down')}</span></summary>
-          <div class="appearance-menu" role="group" aria-label="Choose a theme">${THEMES.map(theme=>`<button type="button" data-theme-preference="${theme.id}" aria-pressed="${theme.id==='black-metal'}"><span class="theme-choice-symbol" aria-hidden="true">${icon(theme.icon)}</span><span>${theme.label}</span><span class="theme-check" aria-hidden="true">${icon('check')}</span></button>`).join('')}</div>
+          <summary aria-label="Theme: ${defaultAppearance.label}. Change theme"><span class="current-theme-icon">${icon(defaultAppearance.icon)}</span><span id="appearance-label">${defaultAppearance.label}</span><span class="theme-chevron" aria-hidden="true">${icon('down')}</span></summary>
+          <div class="appearance-menu" role="group" aria-label="Choose a theme">${THEMES.map(theme=>`<button type="button" data-theme-preference="${theme.id}" aria-pressed="${theme.id===DEFAULT_THEME}"><span class="theme-choice-symbol" aria-hidden="true">${icon(theme.icon)}</span><span>${theme.label}</span><span class="theme-check" aria-hidden="true">${icon('check')}</span></button>`).join('')}</div>
         </details>
         <button id="language-toggle" class="language-toggle" type="button" data-no-translate aria-label="Switch to Bulgarian" title="Български">EN</button>
       </nav>

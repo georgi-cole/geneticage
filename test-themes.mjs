@@ -7,23 +7,23 @@ import {liquidElementFrames,liquidPaintPolygon} from './public/theme-motion.mjs'
 
 assert.deepEqual(THEMES.map(t=>t.id),['black-metal','blood-moon','bionic']);
 assert.equal(new Set(THEMES.map(t=>t.icon)).size,3);
-assert.equal(DEFAULT_THEME,'black-metal');
+assert.equal(DEFAULT_THEME,'blood-moon');
 
 function boot(values={},blocked=false){
   const root={dataset:{},style:{}};
   vm.runInNewContext(themeBootstrap,{document:{documentElement:root},localStorage:{getItem(key){if(blocked)throw Error('blocked');return values[key]??null;}}});
   return root;
 }
-assert.equal(boot().dataset.theme,'black-metal');
-assert.equal(boot({},true).dataset.theme,'black-metal');
-assert.equal(boot({[THEME_KEY]:'invalid','kq-appearance-v1':'light'}).dataset.theme,'black-metal');
-assert.equal(boot({'kq-appearance-v1':'light'}).dataset.theme,'black-metal');
-assert.equal(boot({'kq-appearance-v1':'dark'}).dataset.theme,'black-metal');
+assert.equal(boot().dataset.theme,'blood-moon');
+assert.equal(boot({},true).dataset.theme,'blood-moon');
+assert.equal(boot({[THEME_KEY]:'invalid','kq-appearance-v1':'light'}).dataset.theme,'blood-moon');
+assert.equal(boot({'kq-appearance-v1':'light'}).dataset.theme,'blood-moon');
+assert.equal(boot({'kq-appearance-v1':'dark'}).dataset.theme,'blood-moon');
 assert.equal(boot({[THEME_KEY]:'futuristic'}).dataset.theme,'bionic');
 assert.equal(normalizeTheme('futuristic'),'bionic');
 for(const archived of ['royal-purple','silverbolt','moonshine']){
-  assert.equal(boot({[THEME_KEY]:archived}).dataset.theme,'black-metal');
-  assert.equal(normalizeTheme(archived),'black-metal');
+  assert.equal(boot({[THEME_KEY]:archived}).dataset.theme,'blood-moon');
+  assert.equal(normalizeTheme(archived),'blood-moon');
 }
 for(const theme of THEMES){
   const result=boot({[THEME_KEY]:theme.id,'kq-appearance-v1':'light'});
@@ -32,8 +32,8 @@ for(const theme of THEMES){
   assert.equal(result.style.colorScheme,theme.scheme);
   assert.equal(normalizeTheme(theme.id),theme.id);
 }
-assert.equal(normalizeTheme('<script>'),'black-metal');
-assert.equal(normalizeTheme(null,'system'),'black-metal');
+assert.equal(normalizeTheme('<script>'),'blood-moon');
+assert.equal(normalizeTheme(null,'system'),'blood-moon');
 
 // New material paints at full opacity across a curved edge; the interface never moves.
 for(const incoming of [true,false]){
@@ -53,4 +53,4 @@ assert.ok(!renderThemeHome({value:null,gap:'—'}).includes('data-count-to'));
 const css=await readFile('./public/themes.css','utf8');
 const original=await readFile('./public/styles.css','utf8');
 for(const theme of THEMES)assert.ok((css+original).includes(`[data-theme=${theme.id}]`));
-console.log('Passed: three active themes, Black Metal default, archived preference fallback, Bionic migration, saved/invalid/blocked-storage bootstrap, full-opacity liquid paint masks, a shared result instrument, and assessment navigation.');
+console.log('Passed: three active themes, Blood Moon default, archived preference fallback, Bionic migration, saved/invalid/blocked-storage bootstrap, full-opacity liquid paint masks, a shared result instrument, and assessment navigation.');

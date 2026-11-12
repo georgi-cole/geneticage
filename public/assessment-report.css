@@ -86,6 +86,28 @@
 .report-estimate p {font-size:11px;color:var(--result-muted)}
 .report-estimate h2 {color:var(--result-ink);margin:7px 0 13px}
 .report-estimate .text-btn {font-size:12px;color:var(--result-ink);margin-top:14px}
+.report-tools .text-btn {white-space:nowrap}
+.report-saved:disabled {cursor:default;color:var(--muted)}
+.report-offer-price {display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--line);border-radius:14px;background:var(--paper);padding:16px}
+.report-offer-price strong {display:block;font-size:28px;font-weight:500;line-height:1.2}
+.report-offer-price span {font-size:.85rem;color:var(--muted)}
+.report-offer ul {padding-inline-start:1.25rem;display:grid;gap:9px}
+.report-offer li strong,.report-offer li span {display:block}
+.report-offer li span {color:var(--muted);font-size:.875rem;line-height:1.5}
+.report-readiness {display:grid;gap:9px;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.report-readiness h3 {font-size:1rem;margin:0}
+.report-readiness p {font-size:.85rem;line-height:1.45;margin:0;color:var(--muted)}
+.report-readiness-group {font-size:.85rem}
+.report-readiness ul {gap:4px;margin:4px 0 0}
+.report-readiness>.text-link {justify-self:start;text-align:left;min-height:32px}
+.report-readiness>.text-link svg {width:14px;vertical-align:middle}
+.report-offer-contents {margin-top:12px}
+.report-offer-contents ul {margin:0 15px 15px}
+.report-offer-actions {display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.trend-filter {display:grid;gap:5px;margin:0 0 14px}
+.trend svg {display:block;width:100%;height:auto}
+.trend-values {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 10px}
+.trend-values dd {margin:0;text-align:right}
 .heart-report-tabs {grid-template-columns:repeat(3,minmax(0,1fr))}
 .heart-estimate {--cover-art-size:clamp(86px,26vw,172px)}
 .heart-estimate .heart-result-main {position:relative;min-height:clamp(130px,23vw,184px);display:flex;flex-direction:column;justify-content:center;padding-inline-end:calc(var(--cover-art-size) + 10px)}

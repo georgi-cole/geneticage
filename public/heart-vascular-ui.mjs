@@ -1,3 +1,4 @@
+import {reportSaveButton} from './report-controls.mjs';
 import {renderEditorialSources,renderFamilyRecord,renderClinicalMethods} from './report-editorial-ui.mjs';
 import {isFamilyFolio} from './report-folio.mjs';
 import {
@@ -609,9 +610,9 @@ function finishVascularAge(missing, isPday) {
   </section>`;
 }
 
-export function renderHeartReport({heart, saved, savedReport, sample, pagesPreview, sourceLinks, tab = 'summary'}) {
+export function renderHeartReport({heart, saved, savedReport, sample, pagesPreview, sourceLinks, tab = 'summary', full = true, profileAnswers}) {
   const {inputs, result, review} = heart;
-  const document = savedReport?.document || (saved || savedReport ? null : composeReportDocument({state:{assessmentType:'heart-vascular',heart,sample}}));
+  const document = full ? savedReport?.document || (saved || savedReport ? null : composeReportDocument({state:{answers:profileAnswers,assessmentType:'heart-vascular',heart,sample}})) : null;
   const narrative = renderReportDocument(document, {sourceLinks});
   const folio=isFamilyFolio(document?.editorial);
   const readout = result.reason ? null : heartAgeReadout(result);
@@ -646,13 +647,13 @@ export function renderHeartReport({heart, saved, savedReport, sample, pagesPrevi
   }else panels.summary+=narrative;
   return `<div class="wrap app-screen report-workspace personal-report-workspace heart-report-screen">
     <header class="report-heading" data-theme-part>
-      <div><span class="eyebrow">ASSESSMENT REPORT</span><h1>Heart & Vascular</h1>${saved ? '<p>Saved assessment</p>' : ''}</div>
-      <div class="report-tools no-print">${!saved && !pagesPreview ? '<button class="text-btn" data-action="save">Save</button>' : ''}<button class="text-btn" data-action="print" data-export="report">${uiIcon('report')}<span>Report PDF</span></button><button class="text-btn" data-action="print" data-export="technical">${uiIcon('report')}<span>Data & methods PDF</span></button></div>
+      <div><span class="eyebrow">ASSESSMENT REPORT</span><h1>Heart & Vascular</h1>${saved ? '<p>Saved assessment'+(typeof saved==='string'?' · '+esc(saved.slice(0,10)):'')+'</p>' : ''}</div>
+      <div class="report-tools no-print">${reportSaveButton(saved,pagesPreview)}<button class="text-btn" data-action="print" data-export="report">${uiIcon('report')}<span>Report PDF</span></button><button class="text-btn" data-action="print" data-export="technical">${uiIcon('report')}<span>Data & methods PDF</span></button></div>
     </header>
     <nav class="report-tabs heart-report-tabs no-print" aria-label="Report sections">${reportTabs.map(([id, label]) => `<button type="button" data-action="report-tab" data-tab="${id}"${id === selected ? ' aria-current="page"' : ''}>${label}</button>`).join('')}</nav>
     <article class="report-paper${folio?' has-clinical-folio':''}">${reportTabs.map(([id, label]) => `<section class="report-panel" data-report-panel="${id}" data-export-scope="${id === 'summary' ? 'report' : 'technical'}" aria-label="${label}"${id === selected ? '' : ' hidden'}>${panels[id]}</section>`).join('')}
-      ${folio?'':'<p class="print-only report-footnote">Educational report. Prepared automatically; not clinically reviewed.</p>'}
+      ${folio?'':'<p class="print-only report-footnote">This report is not a diagnosis. Please always discuss any health-related matters with your clinician.</p>'}
     </article>
-    ${folio?'':'<p class="report-footnote">Educational estimates · Not clinically reviewed.</p>'}
+    ${folio?'':'<p class="report-footnote">This report is not a diagnosis. Please always discuss any health-related matters with your clinician.</p>'}
   </div>`;
 }

@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import {JSDOM} from 'jsdom';
+import {DatabaseSync} from 'node:sqlite';
+import {randomBytes} from 'node:crypto';
+import {readFileSync,readdirSync} from 'node:fs';
+import {shell} from '../public/app-shell.mjs';
+import {handleAccountApi,CONSENT_VERSION} from '../lib/account-api.mjs';
+
+test('saving through the app disables unchanged saves and creates a new immutable snapshot after editing',async t=>{
+ const db=new DatabaseSync(':memory:');
+ db.exec('PRAGMA foreign_keys=ON');
+ const migrations=new URL('../drizzle/',import.meta.url);
+ for(const name of readdirSync(migrations).filter(name=>name.endsWith('.sql')).sort())db.exec(readFileSync(new URL(name,migrations),'utf8'));
+ const prepared=(sql,values=[])=>({bind:(...args)=>prepared(sql,args),async first(){return db.prepare(sql).get(...values)??null;},async all(){return {results:db.prepare(sql).all(...values)};},async run(){return {meta:{changes:Number(db.prepare(sql).run(...values).changes)}};}});
+ const env={DB:{prepare:prepared,async batch(statements){return Promise.all(statements.map(statement=>statement.run()));}},ASSESSMENT_ENCRYPTION_KEY:randomBytes(32).toString('base64'),PAYMENTS_ENABLED:'false',REPORT_REVIEW_MODE:'true'};
+ const user={userId:'fictional-ui-report-owner'};
+ const session=await handleAccountApi(new Request('https://site.test/api/session'),env,user);
+ const {csrf}=await session.json();
+ const registered=await handleAccountApi(new Request('https://site.test/api/account',{method:'POST',headers:{Origin:'https://site.test','Content-Type':'application/json','X-KQ-CSRF':csrf},body:JSON.stringify({name:'Fictional UI fixture',adult:true,consent:true,consentVersion:CONSENT_VERSION})}),env,user);
+ assert.equal(registered.status,201);
+ const dom=new JSDOM('<!doctype html><html lang="en" data-theme="blood-moon"><body>'+shell+'</body></html>',{url:'https://site.test/',pretendToBeVisual:true});
+ const {window}=dom;
+ window.matchMedia=()=>({matches:true,addEventListener(){},removeEventListener(){}});
+ for(const key of ['window','document','NodeFilter','MutationObserver','CustomEvent','localStorage','location','history'])Object.defineProperty(globalThis,key,{configurable:true,value:key==='window'?window:window[key]});
+ for(const key of ['requestAnimationFrame','cancelAnimationFrame','getComputedStyle'])globalThis[key]=window[key].bind(window);
+ globalThis.fetch=async(input,init={})=>{
+  const headers=new Headers(init.headers);if(init.method&&init.method!=='GET')headers.set('Origin','https://site.test');
+  return handleAccountApi(new Request(new URL(input,'https://site.test'),{...init,headers}),env,user);
+ };
+ t.after(()=>{window.close();db.close();});
+ const $=selector=>document.querySelector(selector);
+ const until=async condition=>{const end=Date.now()+10000;while(!condition()){assert.ok(Date.now()<end,'The app operation must finish.');await new Promise(resolve=>setTimeout(resolve,10));}};
+ let moving;
+ const historyGo=history.go.bind(history);
+ history.go=delta=>{moving=new Promise(resolve=>window.addEventListener('popstate',resolve,{once:true}));historyGo(delta);};
+ const click=async selector=>{
+  assert.ok($(selector),selector+' '+($('.modal')?.textContent||''));$(selector).click();await new Promise(resolve=>setImmediate(resolve));
+  while(moving){const traversal=moving;await traversal;if(moving===traversal)moving=null;}
+ };
+ await import('../public/app.mjs');
+ await until(()=>!$('.sync-status'));
+ await click('.sidebar-nav [data-route="reports"]');
+ await click('.sample-report-grid [data-type="labs"]');
+ await click('.report-tools [data-action="save"]');
+ await click('[data-action="confirm-save"]');
+ await until(()=>$('.report-saved:disabled'));
+ const records=()=>db.prepare('SELECT id,payload,report FROM assessments ORDER BY created_at,id').all();
+ assert.equal(records().length,1);
+ const original={...records()[0]};
+ await click('[data-action="report-tab"][data-tab="data"]');
+ assert.ok($('.report-saved:disabled'));
+ await click('.kq-clinical-support [data-action="labs"]');
+ await click('#labs-form [type="submit"]');
+ const glucose=$('[data-lab="glucose"]');assert.ok(glucose);glucose.value='5.2';glucose.dispatchEvent(new window.Event('input',{bubbles:true}));
+ for(let step=0;step<4;step++)await click('#labs-form [type="submit"]');
+ await until(()=>$('.report-tools [data-action="save"]'));
+ assert.equal($('.report-saved'),null);
+ await click('.report-tools [data-action="save"]');
+ await click('[data-action="confirm-save"]');
+ await until(()=>$('.report-saved:disabled'));
+ assert.equal(records().length,2,'Changed input is a second dated assessment.');
+ const earlier=records().find(row=>row.id===original.id);
+ assert.ok(earlier.payload===original.payload&&earlier.report===original.report,'The earlier encrypted assessment and report remain byte-for-byte intact.');
+ assert.equal($('.modal'),null);
+});

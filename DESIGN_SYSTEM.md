@@ -1,6 +1,6 @@
 # GeneticAge / App design system
 
-Revised 5 November 2026. A mobile application prototype with a consistent interface, three material themes and one focal result. Black Metal remains the default. This revision implements the app interaction model in the existing Sites prototype; it does not package a native iOS or Android binary.
+Revised 9 November 2026. The mobile app and Sites preview share a consistent interface, three material themes and one focal result. Blood Moon is the default.
 
 ## Research translated into this project
 
@@ -44,11 +44,11 @@ All themes share their DOM, screen order, typography, controls, spacing and navi
 
 | Theme | Canvas | Accent | Material identity |
 | --- | --- | --- | --- |
-| Black Metal (default) | `#09090b` | Platinum silver `#cbd1dc` | Black-diamond facets, black polished controls and a cool silver sheen |
+| Black Metal | `#09090b` | Platinum silver `#cbd1dc` | Black-diamond facets, black polished controls and a cool silver sheen |
 | Blood Moon | `#100d0e` | Copper `#e7a18e` | Garnet atmosphere, a cropped upper-right moon and restrained fine branches |
 | Bionic | `#efeeea` | Metallic blue `#2f6494` | Porcelain canvas, smoky result glass, titanium ribs and steel-blue mechanical details |
 
-Royal Purple, Silverbolt, Moonshine and earlier alternative layouts remain in `design/theme-archive/`. They are not offered in the active selector. Legacy Futuristic preferences migrate to Bionic. Invalid, archived or unavailable preferences resolve to Black Metal.
+Royal Purple, Silverbolt, Moonshine and earlier alternative layouts remain in `design/theme-archive/`. They are not offered in the active selector. Legacy Futuristic preferences migrate to Bionic. Invalid, archived or unavailable preferences resolve to Blood Moon. Existing active choices are preserved.
 
 ## Result instrument
 
