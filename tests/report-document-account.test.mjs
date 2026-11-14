@@ -69,6 +69,17 @@ const clinicalEntry = (overrides = {}) => ({
   sample:false, ...overrides,
 });
 
+test('profile birth year survives server validation without changing snapshot age',()=>{
+ const year=new Date().getFullYear();
+ const entry=clinicalEntry();
+ entry.answers={...entry.answers,birthYear:String(year-45),ageRecordedYear:String(year)};
+ const validated=validateSnapshot(entry);
+ assert.equal(validated.answers.birthYear,String(year-45));
+ assert.equal(validated.answers.ageRecordedYear,String(year));
+ assert.equal(validated.answers.age,String(entry.answers.age));
+ assert.throws(()=>validateSnapshot({...entry,answers:{...entry.answers,birthYear:'invalid'}}));
+});
+
 test('new report documents are composed from server facts and encrypted with the snapshot', async t => {
   const f = await accountFixture(t);
   const forged = 'CLIENT FORGED PERSONAL REPORT';

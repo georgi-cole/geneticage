@@ -1,3 +1,4 @@
+import {functionalMethods, FUNCTIONAL_VERSION} from './functional-assessment.mjs';
 import {reportSaveButton} from './report-controls.mjs';
 import {renderEditorialSources,renderFamilyRecord,renderClinicalMethods} from './report-editorial-ui.mjs';
 import {isFamilyFolio} from './report-folio.mjs';
@@ -102,7 +103,7 @@ export function renderSystemForm({type, inputs, step, prefilled, errors, mode, t
   const last = mode || current === route.at(-1);
   const skip = !mode && current.skip;
   const next = last ? 'View report' : 'Continue';
-  const entered = current.fields.some(id => inputs[id]?.value || typeof inputs[id] === 'string' && inputs[id]);
+  const entered = current.fields.some(id => !id.endsWith('Status')&&(inputs[id]?.value || typeof inputs[id] === 'string' && inputs[id]));
   const index = route.findIndex(item => item.id === current.id);
   const back = backButton('system-back', mode === 'report' ? 'Keep current results' : backLabel || (index === 0 && !mode ? entryLabel : 'Back'));
   return `<div class="wrap app-screen task-screen question-screen heart-entry system-entry">
@@ -114,7 +115,7 @@ export function renderSystemForm({type, inputs, step, prefilled, errors, mode, t
       ${review ? reviewPrefill(type, inputs, current.fields) : `<div class="heart-measurements system-fields" data-theme-part>
         ${mode ? `<h2>${esc(current.title)}</h2>` : ''}
         ${current.hint ? `<p class="hint">${esc(current.hint)}</p>` : ''}
-        ${current.fields.map(id => {
+        ${current.fields.filter(id=>!['functional','fitness'].includes(type)||!id.endsWith('Status')).map(id => {
           const field = systemField(type, id);
           return field.options ? choice(field, inputs[id], errors, current.fields.length === 1 && !field.select)
             : measurement(field, inputs[id], errors, touched[id] === false || errors[id] || errors[id+'Reference'] ? null : measurements.fields[id], mode && field.label === current.title);
@@ -122,6 +123,7 @@ export function renderSystemForm({type, inputs, step, prefilled, errors, mode, t
       </div>`}
       ${prefillUnavailable && current.id === 'age' ? '<p class="hint">Earlier answers could not be loaded. You can enter them here.</p>' : ''}
       ${current.specialist ? specialistHelp() : ''}
+      ${current.testId&&!mode?'<button class="text-btn system-alternate" type="button" data-action="system-skip-test">Skip this test</button>':''}
       ${current.id === 'creatinine' && !mode ? '<button class="text-btn system-alternate" type="button" data-action="system-partial">I don’t have this result yet</button>' : ''}
       ${index === 0 && !mode ? systemSampleButton(type, true) : ''}
       <div class="form-nav">
@@ -158,6 +160,10 @@ export function readSystemForm(type, form, previous) {
   for (const element of form.querySelectorAll('input[type=radio], select')) {
     if (systemField(type, element.name)?.options) inputs[element.name] = data.get(element.name) || '';
   }
+  if(['functional','fitness'].includes(type))for(const control of form.querySelectorAll('[data-system-field]')){
+    const id=control.dataset.systemField;
+    if(systemField(type,id+'Status'))inputs[id+'Status']=String(inputs[id]?.value??'').trim()?'Completed as instructed':'Not attempted';
+  }
   return inputs;
 }
 
@@ -176,6 +182,7 @@ export function refreshSystemFeedback(type, form, inputs, touched) {
 }
 
 const resultCopy = {
+ [FUNCTIONAL_VERSION]:['Experimental reference profile','All five physical measurements contribute through the published multivariable equation.'],
   'gdrs-2022-age-v1': ['Questionnaire and body measurements', 'This is the age at which the reference profile has a similar modeled 10-year risk of type 2 diabetes.'],
   'gdrs-2022-a1c-age-v1': ['HbA1c included', 'This is the age at which the reference profile has a similar modeled 10-year risk of type 2 diabetes.'],
   'ckd-epi-2021-europe-age-v1': ['Creatinine-based filtration', 'Your estimated filtration is matched to typical values from healthy European adults.'],
@@ -186,6 +193,12 @@ const resultCopy = {
 };
 
 const nextSteps = {
+ 'functional-vigorous':['The younger-adult field battery needs a qualified readiness and protocol check before the run and jump.','Review field-test readiness','vigorous-ready'],
+ 'functional-values':['The combined value is outside the reporting range. Check units and protocols with a qualified assessor before interpreting an age.','Review measurements','context'],
+ 'functional-readiness':['Do not attempt physical tests until symptoms or exercise restrictions have been reviewed.','Review readiness','readiness'],
+ 'functional-setup':['Prepare a safe space and a helper before attempting these tasks.','Review setup','setup'],
+ 'functional-coverage':['The physical-function record remains available. This published home-test equation is supported at ages 20–94 using different age-specific equations.','Review age','age'],
+ 'functional-protocol':['A combined age needs the full set of tests completed safely and as instructed. You can keep your completed results and return to the others another day.','Review testing conditions','quality'],
   'metabolic-age':['The age equation was tested through age 79. If you have an HbA1c or fasting glucose result, you can review it here and discuss any follow-up with your clinician.', 'Review glucose tests', 'metabolic-labs'],
   'diabetes-known':['The model estimates the chance of developing type 2 diabetes. If you already have diabetes, ask your care team which HbA1c target fits your situation.', 'Review diabetes history', 'diabetes'],
   'metabolic-pregnancy':['Pregnancy changes how blood sugar is assessed. Ask your care team about the glucose testing that applies during pregnancy.', 'Review health context', 'pregnancy'],
@@ -265,6 +278,7 @@ function followUp(type, result, saved) {
 }
 
 const methodCopy = {
+ functional:functionalMethods,
   metabolic:[
     'The German Diabetes Risk Score estimates the 10-year chance of developing type 2 diabetes in adults aged 18–79. The published HbA1c equation uses the same outcome. Blood sugar readings at diabetes testing thresholds prompt review.',
     'The app matches the predicted risk to the same lower-risk reference at different ages. The reference uses your height, waist equal to half that height, no known hypertension or family history, no smoking, five hours of activity per week, 100 g of whole grain bread or muesli, one coffee and no red meat per day.',
@@ -278,6 +292,8 @@ const methodCopy = {
     'Your lab interval comes first. Published comparisons use ABIM for creatinine, Mayo Clinic Laboratories for cystatin C and KDIGO for urine ACR.',
   ],
   fitness:[
+    'Fitness brings aerobic capacity and optional physical tests into one profile. A complete compatible physical battery supplies the headline age. Otherwise a supported aerobic estimate is used. Ages from different equations are never averaged. Optional readings add context without acquiring invented coefficients.',
+    ...functionalMethods,
     'For ages 20–89, HUNT estimates oxygen uptake from waist, resting pulse and activity. The app matches the estimate to HUNT age-group averages.',
     'Ages 18–19 use Bradshaw’s equation with body measurements, comfortable pace and activity. Ages 90–96 use the equation recalibrated in the Baltimore Longitudinal Study of Aging. Both estimates are matched to FRIEND treadmill references. Evidence is thinner at the oldest ages.',
     'A supervised treadmill or cycle test can be matched to the adult FRIEND comparison groups aged 20–89. We use typical values for the same test and sex when peak RER is at least 1.0.',
@@ -302,7 +318,7 @@ export function renderSystemReport({type, system, saved, savedReport, sample, ha
   const actions=sample?'':saved?'<button class="text-btn no-print" data-action="system-copy">Update from this report ↗</button>':result.issue==='fitness-age'?'':extraActions(type,inputs);
   const panels = {
     summary:`${ready ? ageReadout(type, result) : followUp(type, result, saved)}
-      ${ready ? `<section class="report-explanation">${narrative ? '' : `<h2>What this tells you</h2><p>${esc(resultCopy[result.version][1])}</p>`}${derived ? `<dl>${derived}</dl>` : ''}</section>` : ''}
+      ${ready ? `<section class="report-explanation">${narrative ? '' : `<h2>What this tells you</h2><p>${esc(resultCopy[result.version]?.[1] || 'All measurements required by the selected published equation contribute to this research fitness-age estimate.')}</p>`}${derived ? `<dl>${derived}</dl>` : ''}</section>` : ''}
       ${review.a1cOutside ? '<p class="heart-reading-context">HbA1c is below the app’s calculation range. The age uses your questionnaire and body measurements.</p>' : ''}
       ${review.testIncomplete ? '<p class="heart-reading-context">For a measured comparison, check the test type and peak RER on your report.</p>' : ''}
       ${!ready && readings ? `<section class="heart-reading"><h2>Readings to review</h2><dl>${readings}</dl></section>` : ''}
@@ -310,7 +326,7 @@ export function renderSystemReport({type, system, saved, savedReport, sample, ha
       ${actions}`,
     measurements:`${record}<section class="heart-reading"><h2>Your answers and measurements</h2><dl>${derived}${measurementRows(type, inputs, review)}</dl>
       ${saved || sample ? '' : '<button class="text-btn no-print" data-action="system-edit" data-part="age" data-review-all>Review answers ↗</button>'}</section>`,
-    methods:`${renderEditorialSources(document)}<section class="report-explanation"><h2>How this comparison works</h2>${systemMethods(type)}${sourceLinks(spec.sources)}</section>
+    methods:`${renderEditorialSources(document)}<section class="report-explanation"><h2>How this comparison works</h2>${systemMethods(type)}${(type==='functional'||review.integrated?.primary==='physical')&&(review.contributions||review.integrated?.physical?.review.contributions)?.length?`<details><summary>Calculation details</summary><p>These are mathematical parts of the combined calculation, not separate ages or predictions of how exercise will change your age.</p><ul>${(review.contributions||review.integrated.physical.review.contributions).map(term=>`<li>${esc(term.title)}: ${Number(term.value.toFixed(2))} ${esc(term.unit)} × ${term.coefficient} = ${Number(term.term.toFixed(3))} years.</li>`).join('')}</ul></details>`:''}${sourceLinks(spec.sources)}</section>
       <section class="report-provenance"><h3>About this report</h3><dl>${row('Model version',result.version || 'Not available')}${document ? row('Report edition',document.version) : ''}</dl></section>`,
   };
   if(folio){

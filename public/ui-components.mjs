@@ -107,7 +107,7 @@ export function renderAssessments({profile,history=[],loading=false,error='',pag
   <section class="system-routes" aria-labelledby="system-routes-title"><div class="section-caption"><h2 id="system-routes-title">System assessments</h2></div>
     <div class="system-route-grid">
       ${systemRouteCard('Heart & Vascular', 'pulse', heartDraft ? 'Continue your assessment' : 'Circulation and everyday health', 'start-heart')}
-      ${Object.entries(systemAssessments).map(([type, spec])=>systemRouteCard(spec.title,spec.icon,systemDrafts[type]?'Continue your assessment':spec.caption,'start-system',type)).join('')}
+      ${Object.entries(systemAssessments).filter(([,spec])=>!spec.legacy).map(([type, spec])=>systemRouteCard(spec.title,spec.icon,systemDrafts[type]?'Continue your assessment':spec.caption,'start-system',type)).join('')}
     </div>
   </section>
   ${canStartNew?`<div class="assessment-controls"><button class="text-btn new-assessment-link" data-action="new-assessment">Start a new assessment</button>${removeLocalButton(currentRecordId)}</div>`:''}

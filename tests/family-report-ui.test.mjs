@@ -77,7 +77,8 @@ test('the family folios change their lead and content when the available evidenc
  const kidney=compose('kidney',assessSystem('kidney',{...systemSampleInputs('kidney'),acr:{value:'8',unit:'mg/g'}}));
  assert.match(kidney.folio.pages[0].title,/urine albumin together/);
  const fitness=compose('fitness',assessSystem('fitness',{...systemSampleInputs('fitness'),testType:'Treadmill test',vo2peak:{value:'44',unit:'mL/kg/min'},rer:{value:'1.12',unit:'ratio'}}));
- assert.match(fitness.folio.pages[0].title,/test you took/);
+ assert.match(text(fitness),/oxygen uptake was measured during a supervised exercise test/);
+ assert.doesNotMatch(text(fitness),/aerobic capacity was estimated from the questionnaire/);
  const profile=composeReportDocument({state:{answers:{age:'45',sleep:'6',rested:'Sometimes'}}}).editorial;
  assert.match(profile.folio.pages[0].title,/how you feel after sleep/);
 });

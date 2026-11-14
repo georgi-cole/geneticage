@@ -21,8 +21,10 @@ export function historyMeasurement(assessment, saved) {
   return make(result.version+'|'+inputs.sex,result.method,'Estimated kidney filtration',review?.egfr,'mL/min/1.73 m²');
  }
  if(assessment.assessmentType==='fitness'){
-  const measured=result.method==='FRIEND';
-  return make([result.version,inputs.sex,measured?inputs.testType:'estimated'].join('|'),result.method,
+  const reference=review?.integrated?.aerobic?.result||result;
+  if(reference.status!=='ready')return null;
+  const measured=reference.method==='FRIEND';
+  return make([reference.version,inputs.sex,measured?inputs.testType:'estimated'].join('|'),reference.method,
    measured?'Measured VO₂peak':'Estimated VO₂peak',measured?Number(inputs.vo2peak?.value):review?.estimatedVo2,'mL/kg/min');
  }
  if(assessment.assessmentType==='metabolic'&&!result.ageRange&&!result.ageBand&&isReportableAge(result.age)){

@@ -166,7 +166,7 @@ test('family reports preserve their own meaning and supplied outputs', () => {
       assert.match(prose(document), /No urine albumin-to-creatinine ratio/);
       assert.equal(document.facts.find(fact => fact.id === 'kidney.review.egfr').value, system.review.egfr);
     }
-    if (type === 'fitness') assert.match(prose(document), /not a directly measured exercise-test result/);
+    if (type === 'fitness') assert.match(prose(document), /estimated from the questionnaire and measurements/);
   }
   const heart = assessHeartVascular({age:50, country:'Germany', sex:'Male', smoking:'Yes', conditions:'No', treatment:'No', systolic:{value:'140', unit:'mmHg'}, total:{value:'5.5', unit:'mmol/L'}, hdl:{value:'1.3', unit:'mmol/L'}});
   const document = composeReportDocument({state:{assessmentType:'heart-vascular', heart}});

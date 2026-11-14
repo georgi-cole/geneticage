@@ -1,5 +1,7 @@
+import {functionalSources} from './functional-assessment.mjs';
 export const CONTENT_VERSION='2026-11-07-assessment-v5';
 export const references=[
+ ...functionalSources,
  {id:'gdrs',label:'Schiborn et al. (2022) · German Diabetes Risk Score',url:'https://doi.org/10.3238/arztebl.m2022.0268'},
  {id:'gdrs-coefficients',label:'German Diabetes Risk Score · Published equations and example',url:'https://pureadmin.qub.ac.uk/ws/portalfiles/portal/402092431/m651.pdf'},
  {id:'diabetes-diagnosis',label:'American Diabetes Association (2026) · Diabetes testing',url:'https://doi.org/10.2337/dc26-S002'},
