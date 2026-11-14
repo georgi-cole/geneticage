@@ -23,7 +23,7 @@ for (const [link, filename] of stylesheetLinks) {
   }
   html = html.replace(link, () => `<style>${css.replace(/<\/style/gi, '<\\/style')}</style>`);
 }
-const hashes = [...html.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/g)]
+const hashes = [...html.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/gi)]
   .map(([, source]) => `'sha256-${createHash('sha256').update(source).digest('base64')}'`);
 const policy = `default-src 'none'; script-src ${hashes.join(' ')}; style-src 'unsafe-inline'; img-src 'self' data: file:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'self'; object-src 'none'`;
 html = html.replace(/<meta http-equiv="Content-Security-Policy" content="[^"]*">/, () => `<meta http-equiv="Content-Security-Policy" content="${policy}">`);
