@@ -3,6 +3,7 @@ import {FAMILY_FOLIO_VERSION} from './report-family-art.mjs';
 import {CLINICAL_COPY as L} from './report-knowledge/clinical-copy.mjs';
 import {EDITORIAL_COPY as C} from './report-knowledge/copy.mjs';
 import {expandFamilyEducation,RESULT_INTERPRETATION_VERSION} from './report-family-education.mjs';
+import {fitnessContext,fitnessMethods} from './fitness-assessment.mjs';
 
 const themes={
  'heart-vascular':'heart',metabolic:'metabolic',kidney:'kidney',fitness:'fitness','health-profile':'profile',
@@ -67,7 +68,15 @@ export function composeFamilyFolio(document,{state,chapters,record,metric,method
  if(ready&&type==='kidney')coverReadings.push(...valueReading('eGFR from creatinine',review.egfr,'mL/min/1.73 m²'));
  const bound=age?.direction?[block('bound','familyBoundNote',document.sourceIds,'aside')]:[];
 
- if(!profile&&!ready){
+ if(type==='fitness'&&review.integrated){
+  chapters.splice(0,chapters.length);
+  for(const section of fitnessContext(inputs,review.integrated)){
+   const blocks=section.paragraphs.map((text,index)=>paragraph(section.id+'-'+index,text,document.sourceIds));
+   add(section.id,section.title,{literal:true,lead:blocks.slice(0,1),columns:[blocks.slice(1,3),blocks.slice(3)].filter(column=>column.length)});
+  }
+  methods.unshift(...fitnessMethods.map(freezeText));
+  for(const term of review.integrated.physical?.review.contributions||[])methods.push(freezeText(`${term.title}: ${Number(term.value.toFixed(2))} ${term.unit} × ${term.coefficient} = ${Number(term.term.toFixed(3))} years. This is an equation term, not a separate age or an intervention effect.`));
+ }else if(!profile&&!ready){
   const reviewBlocks=existing('perspective')?.blocks||[];
   const statusTitle=critical?'clinicalLeadSafety':resultState==='missing'?'familyReviewTitle':'clinicalLeadReview';
   opening(statusTitle,reviewBlocks.filter(item=>item.id!=='family-meaning-1'),[],reviewBlocks.filter(item=>item.id==='family-meaning-1'));
@@ -174,7 +183,8 @@ export function composeFamilyFolio(document,{state,chapters,record,metric,method
   methods.unshift(phrase('familyProfileMethod'));
  }
 
- expandFamilyEducation(document,{inputs,answers,result,review,derivedFacts,critical,established,limited,sleepConcern,routineKnown,safeRoutine,knownDiabetes,specialContext},
+ const physicalLimited=inputs.pain==='Yes'||review.integrated?.physical?.result.issue==='functional-readiness';
+ expandFamilyEducation(document,{inputs,answers,result:review.integrated?.aerobic.result||result,review,derivedFacts,critical,established,limited:limited||physicalLimited,sleepConcern,routineKnown,safeRoutine:safeRoutine&&!physicalLimited,knownDiabetes,specialContext},
   {add,pages,existing,reading,readings,valueReading,block,paragraph,phrase,freezeText,joinText});
  methods.push(phrase('educationEvidenceChecked'));
  methods.push(phrase('resultEvidence'));
@@ -190,7 +200,7 @@ export function composeFamilyFolio(document,{state,chapters,record,metric,method
  const coverMessage=profile?phrase('familyProfileMark'):C.notcalculated;
  const overview=pages.slice(0,3).map(({id,title})=>({id,title}));
  return {
-  version:FAMILY_FOLIO_VERSION,knowledgeVersion:RESULT_INTERPRETATION_VERSION,footer:phrase('clinicalClinicianNote'),headline:phrase(key+'Cover'),deck:phrase(key+'Deck'),
+  version:FAMILY_FOLIO_VERSION,knowledgeVersion:RESULT_INTERPRETATION_VERSION,footer:phrase('clinicalClinicianNote'),headline:review.integrated?freezeText('Your fitness, in context'):phrase(key+'Cover'),deck:review.integrated?freezeText('Endurance, strength and everyday movement in one profile.'):phrase(key+'Deck'),
   coverReadings,coverMessage,overview,pages,urgent:critical,
  };
 }

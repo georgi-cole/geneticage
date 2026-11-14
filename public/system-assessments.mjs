@@ -1,4 +1,7 @@
+import {functionalFields, functionalSteps, functionalOutcome, functionalSample} from './functional-assessment.mjs';
 import {heartDecimal} from './heart-measurements.mjs';
+import {currentProfileAge} from './profile-age.mjs';
+import {fitnessPhysicalSteps,integrateFitness} from './fitness-assessment.mjs';
 import {labs} from './lab-definitions.mjs';
 import {compareLabReference, reviewLabReference, validateReferenceLimits} from './lab-review.mjs';
 import {REFERENCE_CATALOG_VERSION} from './lab-reference-catalog.mjs';
@@ -6,6 +9,7 @@ import {reviewLabSafety} from './lab-safety.mjs';
 import {metabolicAge, kidneyFiltration, kidneyAge, estimatedFitness, youngAdultFitness, olderAdultFitness, fitnessAge} from './system-age-models.mjs';
 
 export const systemAssessments = {
+  functional:{title:'Fitness (earlier functional assessment)',legacy:true,icon:'fitness',caption:'Strength, endurance, balance and mobility',readout:'EXPERIMENTAL FUNCTIONAL AGE',sources:['functional-oak','functional-yoon','functional-sts','functional-balance','functional-sppb','functional-strength','functional-activity','functional-bmi']},
   metabolic: {
     title:'Metabolic', icon:'metabolic', caption:'Daily habits and body measures',
     readout:'APPROXIMATE METABOLIC AGE',
@@ -17,15 +21,16 @@ export const systemAssessments = {
     sources:['ckd-epi-2021', 'egfr-europe', 'egfr-reference-table', 'kdigo-ckd', 'adult-intervals', 'cystatin-reference'],
   },
   fitness: {
-    title:'Fitness', icon:'fitness', caption:'Movement and resting measures',
+    title:'Fitness', icon:'fitness', caption:'Endurance, strength and everyday movement',
     readout:'APPROXIMATE FITNESS AGE',
-    sources:['hunt-nonexercise', 'hunt-activity', 'hunt-reference', 'friend-2022', 'bradshaw-fitness', 'blsa-fitness'],
+    sources:['hunt-nonexercise', 'hunt-activity', 'hunt-reference', 'friend-2022', 'bradshaw-fitness', 'blsa-fitness','functional-oak','functional-yoon','functional-activity','functional-bmi'],
   },
 };
 
 export const systemAssessment = type => typeof type === 'string' && Object.hasOwn(systemAssessments, type) ? systemAssessments[type] : null;
 
 const sampleInputs = {
+  functional:functionalSample,
   metabolic: {
     age:{value:'42',unit:'years'}, diabetes:'No', pregnancy:'No', height:{value:'180',unit:'cm'}, waist:{value:'90',unit:'cm'},
     hypertension:'No', smoking:'Never smoked', activity:{value:'5',unit:'hours/week'}, coffee:{value:'1',unit:'cups/day'},
@@ -38,6 +43,7 @@ const sampleInputs = {
   fitness: {
     age:{value:'33',unit:'years'}, sex:'Male', fitnessContext:'None of these', waist:{value:'85',unit:'cm'},
     pulse:{value:'62',unit:'beats/min'}, moderate:{value:'130',unit:'min / week'}, vigorous:{value:'15',unit:'min / week'},
+    physicalTests:'Include physical tests',height:{value:'180',unit:'cm'},weight:{value:'81',unit:'kg'},readiness:'No symptoms or exercise restrictions',setup:'Yes',vigorousReady:'Yes',daily:'No limitation',pain:'No',protocol:'Yes',pacerStatus:'Completed as instructed',pacer:{value:'30',unit:'completed shuttles'},jumpStatus:'Completed as instructed',jump:{value:'40',unit:'cm'},reachStatus:'Not attempted',situpsStatus:'Not attempted',
   },
 };
 
@@ -68,6 +74,7 @@ function ratingQuestion(id, label, ratings, start) {
   return question(id, label, options, {select:true, labels:Object.fromEntries(options.map((key, index) => [key, ratings[index]]))});
 }
 const fieldsets = {
+  functional:functionalFields,
   metabolic: {
     age:age('How old are you?'),
     diabetes:question('diabetes', 'Has a clinician diagnosed you with diabetes?', yesNo),
@@ -110,6 +117,8 @@ const fieldsets = {
     }),
   },
   fitness: {
+    ...functionalFields,
+    physicalTests:question('physicalTests','Would you like to include physical tests?',['Include physical tests','Continue without physical tests'],{optional:true}),
     age:age('How old were you when these readings were taken?'),
     sex,
     fitnessContext:question('fitnessContext', 'Do any of these affect your resting pulse or exercise?', [
@@ -133,6 +142,8 @@ const fieldsets = {
   },
 };
 
+// Missing routine predictors withhold their equation, but need not block tests.
+for(const id of ['height','weight','waist','pulse','moderate','vigorous','milePace','threeMilePace','activityRating','selfRatedHealth','weeklyExercise'])fieldsets.fitness[id]={...fieldsets.fitness[id],optional:true};
 const step = (id, title, fields, hint = '') => ({id, title, fields, hint});
 const metabolicHistory = [
   step('body', 'Body measurements', ['height', 'waist']),
@@ -161,6 +172,7 @@ const fitnessTestStep = {
   action:'Add supervised test', change:'Edit supervised test', skip:'Continue without a test', specialist:true, benefit:'Uses a measured fitness result',
 };
 const extraSteps = {
+  functional:[],
   metabolic:[glucoseStep],
   kidney:[urineStep, cystatinStep],
   fitness:[fitnessTestStep],
@@ -191,6 +203,7 @@ const fitnessOlder = [
 const fitnessPath = age => age < 20 ? fitnessYoung : age >= 90 ? fitnessOlder : fitnessRoutine;
 
 export function systemSteps(type, inputs = {}) {
+  if(type==='functional')return functionalSteps(inputs);
   if (type === 'metabolic') {
     const basics = [
       step('age', 'About you', ['age']),
@@ -217,9 +230,12 @@ export function systemSteps(type, inputs = {}) {
   const age = explicitAge(inputs);
   const health = step('fitness-context', 'Health context', ['fitnessContext']);
   const path = [...basics, health, fitnessTestStep];
-  if (fitnessTestReady(inputs) || age > 96 ||
-    inputs.fitnessContext && inputs.fitnessContext !== 'None of these') return path;
-  return [...path, ...fitnessPath(age ?? 20)];
+  if (age > 96 || inputs.fitnessContext && inputs.fitnessContext !== 'None of these') return path;
+  const baseline=fitnessTestReady(inputs)?path:[...path,...fitnessPath(age??20)];
+  const collected=new Set(baseline.flatMap(s=>s.fields));
+  const context=['height','weight','compositionMethod','bodyFat','skeletalMuscle'].filter(id=>!collected.has(id));
+  baseline.push({...step('fitness-composition','Body measurements in context',context,'Optional: add measurements you already have. Body composition helps interpret weight alongside performance.'),skip:'Continue with available details'});
+  return [...baseline,...fitnessPhysicalSteps(inputs,baseline)];
 }
 
 const present = value => value != null && (typeof value !== 'string' || value.trim() !== '');
@@ -228,7 +244,8 @@ const normalizedValue = (field, value, unit) => field.convert ? field.convert(va
 
 function measurementEntry(field, raw, errors) {
   const {id, units, range, integer, allowLimit} = field;
-  const value = heartDecimal(raw?.value, allowLimit);
+  const signed = field.signed && typeof raw?.value === 'string' && /^-?\d+(?:[.,]\d+)?$/.test(raw.value.trim());
+  const value = signed ? raw.value.trim().replace(',', '.') : heartDecimal(raw?.value, allowLimit);
   const amount = value === null ? NaN : Number(value.replace(/^[<>≤≥]/, ''));
   const normalized = normalizedValue(field, amount, raw?.unit);
   if (!units.includes(raw?.unit) || !testRange(normalized, range) || integer && !Number.isInteger(amount)) {
@@ -339,7 +356,7 @@ function assessKidney(inputs, values, review) {
   return readyResult('CKD-EPI 2021', 'ckd-epi-2021-europe-age-v1', kidneyAge(review.egfr, inputs.sex));
 }
 
-function assessFitness(inputs, values, review) {
+function assessAerobicFitness(inputs, values, review) {
   if (!inputs.age) return missingResult(['age']);
   if (!inputs.sex) return missingResult(['sex']);
   if (fitnessTestReady(inputs)) return readyResult('FRIEND', 'friend-2022-fitness-age-v1', fitnessAge(values.vo2peak, inputs.sex, inputs.testType));
@@ -358,8 +375,12 @@ function assessFitness(inputs, values, review) {
   return readyResult(method, version, fitnessAge(review.estimatedVo2, inputs.sex, norms));
 }
 
+function assessFitness(inputs,values,review){
+ return integrateFitness(inputs,values,review,assessAerobicFitness(inputs,values,review));
+}
+
 const fieldsetOptional = (type, id) => systemField(type, id)?.optional;
-const assess = {metabolic:assessMetabolic, kidney:assessKidney, fitness:assessFitness};
+const assess = {functional:functionalOutcome,metabolic:assessMetabolic, kidney:assessKidney, fitness:assessFitness};
 
 export function assessSystem(type, raw = {}) {
   const inputs = {}, values = {}, errors = {}, fields = {};
@@ -367,6 +388,7 @@ export function assessSystem(type, raw = {}) {
   for (const field of Object.values(fieldsets[type])) {
     const {id, options} = field;
     const value = raw[id];
+    if(['functional','fitness'].includes(type)&&field.units&&raw[id+'Status']&&raw[id+'Status']!=='Completed as instructed')continue;
     if (!available.has(id) || value == null || value === '') continue;
     if (options) {
       if (options.includes(value)) inputs[id] = value;
@@ -382,6 +404,9 @@ export function assessSystem(type, raw = {}) {
   }
   if (type === 'fitness' && values.moderate + values.vigorous > 10080) errors.vigorous = 'The activity minutes add up to more than a week.';
   const review = {fields};
+  if(['functional','fitness'].includes(type))for(const id of available){
+    if(id.endsWith('Status')&&!inputs[id])inputs[id]=inputs[id.slice(0,-6)]?'Completed as instructed':'Not attempted';
+  }
   const result = !inputs.age ? missingResult(['age']) : assess[type](inputs, values, review);
   return {inputs, result, review, errors};
 }
@@ -389,7 +414,7 @@ export function assessSystem(type, raw = {}) {
 // Only transfer answers whose meaning matches the new model's input.
 export function systemPrefill(type, answers = {}, heart = {}, blood = {}) {
   const draft = {};
-  const reportedAge = heartDecimal(type === 'kidney' && blood.labSubmitted ? blood.labAge : answers.age ?? heart.age);
+  const reportedAge = heartDecimal(type === 'kidney' && blood.labSubmitted ? blood.labAge : currentProfileAge(answers) ?? heart.age);
   if (reportedAge && Number.isInteger(Number(reportedAge)) && testRange(Number(reportedAge), [18, 120])) {
     draft.age = {value:reportedAge, unit:'years'};
   }
@@ -402,6 +427,14 @@ export function systemPrefill(type, answers = {}, heart = {}, blood = {}) {
     else if (conditions.includes('None')) draft.kidneyHistory = 'No known kidney disease';
     const creatinine = measurementEntry(fieldsets.kidney.creatinine, blood.lab?.creatinine, {});
     if (blood.labSubmitted && draft.age && creatinine) draft.creatinine = creatinine;
+  }
+  if(type==='functional'||type==='fitness'){
+    for(const id of ['height','weight','bodyFat','skeletalMuscle']){
+      const field=functionalFields[id];
+      const entry=measurementEntry(field,{value:answers[id],unit:answers[id+'Unit']||field.units[0]},{});
+      if(entry)draft[id]=entry;
+    }
+    if(functionalFields.compositionMethod.options.includes(answers.compositionMethod))draft.compositionMethod=answers.compositionMethod;
   }
   if (type === 'fitness') {
     if (conditions.includes('Heart or blood-vessel disease') || conditions.includes('Long-term lung disease')) draft.fitnessContext = 'Heart or lung condition';

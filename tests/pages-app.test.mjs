@@ -396,7 +396,7 @@ test('Pages runs the actual app without a backend, fake account or stored health
   assert.equal(document.querySelectorAll('.sample-report-grid [data-action="sample-report"]').length,6);
   await click('.sample-report-grid [data-type="'+type+'"]');
   assert.equal($('.report-heading h1').textContent,title);
-  assert.ok($('.kq-editorial'),'Every sample opens the current editorial report.');
+  assert.ok(type==='functional'?$('.personal-report-document'):$('.kq-editorial'),'Every sample opens its supported report reader.');
   assert.deepEqual([...document.querySelectorAll('.report-tools [data-action="print"]')].map(button=>button.dataset.export),['report','technical']);
   assert.match($('#main').textContent,/This report is not a diagnosis/);
  }

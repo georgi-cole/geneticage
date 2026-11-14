@@ -281,7 +281,7 @@ try{
  const profile={...sampleAnswers,moderate:'70',sleep:'6',rested:'Sometimes',alcohol:'No, I have never drunk alcohol regularly'};
  for(let i=0;i<40&&!await exists('.review-screen');i++){
   await waitFor('#questions','profile intake');
-  const field=await evaluate(()=>{const input=document.querySelector('#questions [data-answer]');return input?{id:input.dataset.answer,type:input.type}:null;});
+  const field=await evaluate(()=>{const input=document.querySelector('#questions [data-answer]:not([data-answer="birthYear"])');return input?{id:input.dataset.answer,type:input.type}:null;});
   const value=field?profile[field.id]:undefined;
   if(value===undefined){
    await click('#questions [data-action="skip"]');

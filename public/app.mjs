@@ -30,6 +30,7 @@ import {resultInstrument,screenHeading,uiIcon,backButton,renderAssessments,rende
 import {questionContext,questionDestination,questionNextLabel,renderQuestionnaire,renderLabForm,labErrorStep} from './flow-ui.mjs';
 import {sections,labs,validateLabs,assessClinical,validateQuestionnaire,profileMeasurementErrors,profileBmi,profileWaistRatio,EXCLUSIVE_ANSWERS,sampleAnswers,sampleLabs} from './model.mjs';
 import {references,clockComparison} from './evidence.mjs';
+import {birthYearAge} from './profile-age.mjs';
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state={...freshAssessment(),view:'home'},draftBackup=null;
 const parkedAssessments=new Map();
@@ -644,6 +645,7 @@ function captureQuestion(){
  const q=questionContext(state).question;
  if(q.type==='multi')state.answers[q.id]=[...form.querySelectorAll('input[data-answer][type=checkbox]:checked')].map(input=>input.value);
  for(const input of form.querySelectorAll('select[data-unit]'))state.answers[input.dataset.unit+'Unit']=input.value;
+ if(q.id==='age'&&state.answers.age)state.answers.ageRecordedYear=String(new Date().getFullYear());
 }
 function captureLabs(){
  const form=$('#labs-form');if(!form)return;
@@ -763,9 +765,9 @@ function returnToHeartReview(){
 async function enterSystem(fromConsent=false){
  const draft=state, type=state.assessmentType, view=state.view, accountTab=state.accountTab;
  if(draft.system.result){goto('report');return;}
- if(!draft.systemPrefillLoaded){
+ if(!draft.systemPrefillLoaded||!draft.system.inputs.age){
   const profile=parkedAssessments.get('profile');
-  let answers=profile?.answers, blood=profile?.labSubmitted?profile:null, heart=parkedAssessments.get(HEART_ASSESSMENT)?.heart?.inputs;
+  let answers=profile?.sample?null:profile?.answers, blood=profile?.labSubmitted&&!profile.sample?profile:null, heart=parkedAssessments.get(HEART_ASSESSMENT)?.heart?.inputs;
   if(!PAGES_PREVIEW){
    if(accountRefresh)await accountRefresh;
    if(auth.profile){
@@ -1085,6 +1087,10 @@ document.addEventListener('click',async e=>{
   const form=$('#system-form');
   if(form)captureSystem(form);
   if(act==='system-back')backSystem();
+  if(act==='system-skip-test'){
+   const id=currentSystemStep().testId;
+   if(id){delete state.system.inputs[id];state.system.inputs[id+'Status']='Not attempted';submitSystem();}
+  }
   if(act==='system-partial')submitSystem(true);
   if(act==='system-review-edit')editSystem(b.dataset.part,'review');
   if(act==='system-finish'){
@@ -1403,6 +1409,12 @@ for(const event of ['input','change','focusout']){
  });
 }
 document.addEventListener('focusout',e=>{const t=e.target;if(t.form?.id==='heart-arterial-form')reviewArterialField(t,false);if(t.form?.id==='heart-form'&&(t.dataset.heartValue||t.dataset.heartReference&&t.type==='text'))reviewHeartField(t);});
+document.addEventListener('input',e=>{
+ if(e.target.dataset.answer!=='birthYear')return;
+ const age=birthYearAge(e.target.value);
+ const field=e.target.form?.querySelector('[data-answer="age"]');
+ if(age&&field)field.value=age;
+});
 document.addEventListener('input',e=>{const t=e.target;if(t.id==='auth-email')syncEmailSubmit(t.form);clearContactFeedback(t);if(t.dataset.answer!==undefined||t.dataset.lab||t.dataset.drink!==undefined||['lab-age','lab-date'].includes(t.id))dirty();if(t.dataset.answer!==undefined&&!['radio','checkbox'].includes(t.type)){state.answers[t.dataset.answer]=t.value;if(['weight','weightYearAgo'].includes(t.dataset.answer))delete state.answers.weightChangeIntent;}if(t.dataset.lab){state.lab[t.dataset.lab]??={unit:labs.find(l=>l.id===t.dataset.lab).units[0]};state.lab[t.dataset.lab].value=t.value;}if(t.dataset.drink!==undefined)state.answers.drinks[Number(t.dataset.drink)][t.dataset.key]=t.value;if(t.id==='lab-age')state.labAge=t.value;if(t.id==='lab-date')state.labDate=t.value;});
 document.addEventListener('change',e=>{
  const t=e.target;
@@ -1431,7 +1443,7 @@ document.addEventListener('submit',async e=>{
  if(f.id==='questions'){
   captureQuestion();
   const q=questionContext(state).question,errors=validateQuestionnaire(state.answers,{requireMeasurements:true});
-  state.errors=errors[q.id]?{[q.id]:errors[q.id]}:{};
+  state.errors=q.id==='age'?Object.fromEntries(Object.entries(errors).filter(([id])=>['age','birthYear'].includes(id))):errors[q.id]?{[q.id]:errors[q.id]}:{};
   if(Object.keys(state.errors).length){render();return;}
   advanceQuestion(e.submitter);return;
  }

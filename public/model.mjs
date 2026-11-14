@@ -107,6 +107,7 @@ export function assessClinical({age,lab,contextConfirmed,fasting}){
 }
 export function validateQuestionnaire(a,{requireAge=true,requireMeasurements=false}={}){
  const errors={};
+ if(a.birthYear&&(!/^\d{4}$/.test(String(a.birthYear))||Number(a.birthYear)<new Date().getFullYear()-121||Number(a.birthYear)>new Date().getFullYear()-18))errors.birthYear='Check your four-digit birth year.';
  for(const q of sections.flatMap(s=>s.questions).filter(q=>!q.show||q.show(a))){
   if(q.type!=='number'&&q.type!=='measure')continue;
   const value=a[q.id];

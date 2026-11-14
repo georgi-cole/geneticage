@@ -1,4 +1,5 @@
 import {composeEditorialReport} from './report-editorial.mjs';
+import {fitnessContext} from './fitness-assessment.mjs';
 import {sections, profileSectionsV1, legacySections, ASSESSMENT_PROTOCOL, insights} from './model.mjs';
 import {labs} from './lab-definitions.mjs';
 import {CONTENT_VERSION, references} from './evidence.mjs';
@@ -353,7 +354,55 @@ function composeFamily(state, generatedAt) {
 
 /** Compose explanations around supplied results. Never runs an age/risk model. */
 export function composeReportDocument({state = {}, clinical = null, priorities, generatedAt = null} = {}) {
+  if(state.assessmentType==='fitness'&&state.system?.review?.integrated)return composeFitness(state,generatedAt);
+  if(state.assessmentType==='functional')return composeFunctional(state,generatedAt);
   const base = state.assessmentType === HEART_ASSESSMENT || systemAssessment(state.assessmentType)
     ? composeFamily(state, generatedAt) : composeBase(state, clinical, priorities, generatedAt);
   return composeEditorialReport(base, state);
+}
+
+function composeFitness(state,generatedAt){
+ const {inputs={},result={},review={}}=state.system;
+ const builder=documentBuilder(state,'fitness',result.status==='ready'?'ready':result.status==='missing'?'missing':'withheld',generatedAt,result);
+ familyFacts(builder,'fitness',inputs,result,review);
+ const sources=systemAssessment('fitness').sources;
+ for(const section of fitnessContext(inputs,review.integrated))builder.section(section.id,section.id==='fitness-plan'?'plan':'context',section.title,section.paragraphs,sources);
+ const domains=review.integrated.physical?.review.domains||[];
+ return composeEditorialReport(builder.finish({completed:domains.filter(d=>d.value!==null).length,total:domains.length}),state);
+}
+
+function composeFunctional(state,generatedAt){
+ const {inputs={},result={},review={}}=state.system||{};
+ const builder=documentBuilder(state,'functional',result.status==='ready'?'ready':result.status==='missing'?'missing':'withheld',generatedAt,result);
+ familyFacts(builder,'functional',inputs,result,review);
+ const sources=systemAssessment('functional').sources;
+ builder.section('opening','intro','Your functional profile',[
+  result.status==='ready'?`Your estimated functional fitness age is ${result.age} years. Your age today is ${inputs.age.value}. This is a research comparison, so it should not be read as an exact measure of your health or how quickly you are aging.`:'Your completed tests are shown below. A combined fitness age needs the full set of tests; skipped tests are left unscored.',
+  'Your results bring together several aspects of physical fitness. Read each test below to see what it measures and how you can work on it.'
+ ],sources);
+ if(review.expectedChair)builder.section('reference','context','Your chair reference',[
+  `Your age-group median: ${review.expectedChair[0]} repetitions. Central 50%: ${review.expectedChair[1]}–${review.expectedChair[2]} repetitions.`,
+  ...(review.chairBand?[`Your chair result is closest to the median for ages ${review.chairBand.from}–${review.chairBand.to}. This describes this task, not your whole-body age.`]:[])
+ ],['functional-sts']);
+ const rounded=value=>Number(Number(value).toFixed(1));
+ if(review.bmi!==undefined||inputs.compositionMethod||inputs.bodyFat||inputs.skeletalMuscle)builder.section('body-context','context','Your body measurements',[
+  ...(review.bmi===undefined?[]:[`Your BMI is ${rounded(review.bmi)}. BMI compares weight with height. It cannot tell how much of your weight comes from muscle, fat or bone.`,
+  'This fitness-age calculation includes BMI because the published model requires it. A higher BMI alone does not show that you have excess body fat or that you should lose weight.']),
+  ...(inputs.compositionMethod?[`Your body composition reading was taken using: ${inputs.compositionMethod}.`]:[]),
+  ...(inputs.bodyFat?[`Your recorded body fat is ${rounded(inputs.bodyFat.value)}%.`]:[]),
+  ...(inputs.skeletalMuscle?[`Your recorded skeletal muscle is ${rounded(inputs.skeletalMuscle.value)}%.`]:[]),
+  'Body composition readings add context to BMI. Compare readings from the same method under similar conditions; they do not add or subtract years from this model.'
+ ],['functional-bmi']);
+ for(const d of review.domains||[]){
+  const entry=inputs[d.id];
+  const paragraphs=d.value===null
+   ? ['You skipped this test. It has not been treated as a score of zero.']
+   : [`Your result: ${rounded(entry?.value??d.value)} ${entry?.unit??d.unit}. This helps describe your ${d.domain.toLowerCase()}.`,d.plan];
+  builder.section(d.id,'context',d.title,paragraphs,sources,['functional.inputs.'+d.id]);
+ }
+ builder.section('plan','plan','Your next assessment',[
+  'Choose two practical priorities from the completed tasks. Build activity gradually within your capabilities; review pain, falls or exercise symptoms before increasing demands.',
+  'Repeat under comparable conditions after a period of practice. Record the same chair, path, test variant, equipment and recovery. A changing comparison is not proof of reversed biological aging.'
+ ],['functional-activity']);
+ return builder.finish({completed:(review.domains||[]).filter(d=>d.value!==null).length,total:review.domains?.length||5});
 }
